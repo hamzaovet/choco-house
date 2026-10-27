@@ -47,9 +47,9 @@ jobs:
         run: |
           cd android
           ./gradlew :app:assembleDebug --stacktrace 2>&1 | tee ../gradle-build.log
-          mkdir -p ../dist-apk
-          find . -name "*.apk" -exec cp {} ../dist-apk/choco-house.apk \;
           cd ..
+          mkdir -p dist-apk
+          cp android/app/build/outputs/apk/debug/app-debug.apk dist-apk/choco-house.apk
           ls -lh dist-apk/choco-house.apk
 
       - name: Push Error Log on Failure
