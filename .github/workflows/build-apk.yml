@@ -46,21 +46,14 @@ jobs:
           ANDROID_HOME: /usr/local/lib/android/sdk
         run: |
           cd android
-          ./gradlew assembleDebug --stacktrace 2>&1 | tee ../gradle.log
-
-      - name: Report Build Logs on Failure
-        if: failure()
-        run: |
-          echo "### ❌ Gradle Build Error Log" >> $GITHUB_STEP_SUMMARY
-          echo '```text' >> $GITHUB_STEP_SUMMARY
-          tail -n 120 gradle.log >> $GITHUB_STEP_SUMMARY || true
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          ./gradlew assembleDebug --stacktrace
 
       - name: Prepare APK Asset
         run: |
           mkdir -p dist-apk
-          cp android/app/build/outputs/apk/debug/app-debug.apk dist-apk/choco-house.apk
-          ls -la dist-apk/choco-house.apk
+          find android/ -name "*.apk"
+          find android/ -name "*.apk" -exec cp {} dist-apk/choco-house.apk \;
+          ls -lh dist-apk/choco-house.apk
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
