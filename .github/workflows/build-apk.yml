@@ -46,23 +46,24 @@ jobs:
           ANDROID_HOME: /usr/local/lib/android/sdk
         run: |
           cd android
-          ./gradlew :app:assembleDebug --stacktrace
-          echo "=== APK Files Found ==="
-          find . -name "*.apk"
-
-      - name: Upload Build Log on Failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: gradle-build-log
-          path: |
-            android/app/build/reports/
-            android/app/build/outputs/
+          ./gradlew :app:assembleDebug --stacktrace 2>&1 | tee ../build.log || {
+            echo "Gradle failed, saving log..."
+            cd ..
+            git config user.name "github-actions"
+            git config user.email "github-actions@github.com"
+            git checkout -B build-log
+            tail -n 250 build.log > build-error.txt
+            git add build-error.txt
+            git commit -m "chore: record build error"
+            git push origin build-log -f
+            exit 1
+          }
 
       - name: Prepare APK Asset
         run: |
           mkdir -p dist-apk
-          cp android/app/build/outputs/apk/debug/*.apk dist-apk/choco-house.apk || find android -name "*.apk" -exec cp {} dist-apk/choco-house.apk \;
+          find android/ -name "*.apk" -ls
+          find android/ -name "*.apk" -exec cp {} dist-apk/choco-house.apk \;
           ls -lh dist-apk/choco-house.apk
 
       - name: Upload APK Artifact
