@@ -46,12 +46,19 @@ jobs:
           ANDROID_HOME: /usr/local/lib/android/sdk
         run: |
           cd android
-          ./gradlew assembleDebug --stacktrace
+          ./gradlew assembleDebug --stacktrace 2>&1 | tee ../gradle.log || (echo "=== GRADLE FAILED ===" && tail -n 120 ../gradle.log && exit 1)
+
+      - name: Upload Build Log on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-build-log
+          path: gradle.log
 
       - name: Prepare APK Asset
         run: |
           mkdir -p dist-apk
-          find android/ -name "*.apk"
+          find android/ -name "*.apk" -ls
           find android/ -name "*.apk" -exec cp {} dist-apk/choco-house.apk \;
           ls -lh dist-apk/choco-house.apk
 
