@@ -9,7 +9,7 @@ import {
   ChefHat, BarChart3, MessageCircle, LogIn, LogOut,
   ChevronDown, LayoutDashboard, Menu, X, Shield,
   Store, UtensilsCrossed, ClipboardList, Package,
-  CircleDollarSign, ShoppingBag, Globe, Users, ShieldCheck,
+  CircleDollarSign, ShoppingBag, Globe, Users, ShieldCheck, User,
 } from "lucide-react";
 
 const C = {
@@ -29,8 +29,9 @@ export default function Navbar() {
   const [mobileMenuOpen,   setMobileMenuOpen]   = useState(false);
   const [cartCount,        setCartCount]         = useState(0);
   const [lang,             setLang]              = useState<"ar"|"en">("ar");
+  const [customer,         setCustomer]          = useState<{ id: string; name: string; phone: string; email?: string } | null>(null);
 
-  /* Read cart count from localStorage & sync language */
+  /* Read cart count & customer from localStorage & sync language */
   useEffect(() => {
     function syncCart() {
       try {
@@ -38,8 +39,16 @@ export default function Navbar() {
         setCartCount(raw ? parseInt(raw, 10) : 0);
       } catch { setCartCount(0); }
     }
+    function syncCustomer() {
+      try {
+        const raw = localStorage.getItem("choco_customer");
+        setCustomer(raw ? JSON.parse(raw) : null);
+      } catch { setCustomer(null); }
+    }
     syncCart();
+    syncCustomer();
     window.addEventListener("choco_cart_update", syncCart);
+    window.addEventListener("choco_customer_updated", syncCustomer);
 
     try {
       const urlParams = new URLSearchParams(window.location.search);
@@ -61,9 +70,15 @@ export default function Navbar() {
 
     return () => {
       window.removeEventListener("choco_cart_update", syncCart);
+      window.removeEventListener("choco_customer_updated", syncCustomer);
       window.removeEventListener("choco_lang_change", onLangChange);
     };
   }, []);
+
+  function openCustomer() {
+    playSound("click");
+    window.dispatchEvent(new CustomEvent("choco_open_customer"));
+  }
 
   function toggleLanguage() {
     const nextLang = lang === "ar" ? "en" : "ar";
@@ -288,6 +303,40 @@ export default function Navbar() {
                 <span style={{ fontWeight: 800 }}>{lang === "ar" ? "EN" : "ع"}</span>
               </button>
 
+              {/* Customer Account Button */}
+              <button
+                onClick={openCustomer}
+                className="ch-nav-desktop"
+                title={customer ? `أهلاً، ${customer.name}` : (lang === "en" ? "Customer Account" : "حساب العميل")}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "7px",
+                  background: customer ? "rgba(204, 160, 67, 0.18)" : "transparent",
+                  border: "1px solid rgba(204, 160, 67, 0.45)",
+                  color: "#cca043",
+                  borderRadius: "9px",
+                  height: "40px",
+                  padding: "0 14px",
+                  fontSize: "13px",
+                  fontWeight: 800,
+                  cursor: "pointer",
+                  transition: "all 0.18s ease",
+                  fontFamily: "var(--font-cairo), system-ui, sans-serif",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "#cca043";
+                  e.currentTarget.style.background = "rgba(204, 160, 67, 0.25)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(204, 160, 67, 0.45)";
+                  e.currentTarget.style.background = customer ? "rgba(204, 160, 67, 0.18)" : "transparent";
+                }}
+              >
+                <User size={15} color="#cca043" />
+                <span>{customer ? customer.name.split(" ")[0] : (lang === "en" ? "Account" : "حسابي")}</span>
+              </button>
+
               {/* Staff Login — Outlined button with shield icon */}
               <Link
                 href={isAuthenticated && currentUser ? permissions.defaultRoute : "/login"}
@@ -454,6 +503,31 @@ export default function Navbar() {
               >
                 <Globe size={16} />
                 <span>{lang === "ar" ? "English 🇬🇧" : "العربية 🇪🇬"}</span>
+              </button>
+
+              {/* Mobile Customer Account Button */}
+              <button
+                onClick={() => {
+                  openCustomer();
+                  setMobileMenuOpen(false);
+                }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  padding: "11px 14px",
+                  borderRadius: "10px",
+                  border: "1px solid rgba(204, 160, 67, 0.45)",
+                  background: customer ? "rgba(204, 160, 67, 0.2)" : "rgba(255,255,255,0.03)",
+                  color: "#cca043",
+                  fontWeight: 700,
+                  fontSize: "14px",
+                  cursor: "pointer",
+                }}
+              >
+                <User size={16} />
+                <span>{customer ? `${customer.name} (حسابي وطلباتي 📦)` : (lang === "en" ? "My Account / Orders 👤" : "حسابي / طلباتي 👤")}</span>
               </button>
 
               <Link

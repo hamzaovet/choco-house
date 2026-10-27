@@ -40,7 +40,7 @@ model Order {
   phone         String
   address       String?
   zone          String   @default("الحي الثاني")
-  status        String   @default("new") // new, preparing, ready, delivered, cancelled
+  status        String   @default("new") // new, preparing, ready, with_captain, delivered, cancelled
   items         String // JSON: [{productId, nameAr, nameEn, qty, unitPrice, extras:[]}]
   subtotal      Float
   deliveryFee   Float    @default(15)
@@ -50,10 +50,37 @@ model Order {
   paymentMethod String   @default("cash") // cash, instapay, wallet, card
   notes         String?
   assignedChef  String?
+  captainName   String? // الطيار المسئول عن التوصيل
+  captainPhone  String? // رقم هاتف الطيار
+  customerEmail String? // إيميل العميل (اختياري)
+  customerId    String? // معرف حساب العميل المسجل
   timeline      String   @default("[]") // JSON: [{stage, at, by}]
   saro5RefId    String? // رابط مع صاروخ لاحقاً
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+model Customer {
+  id         String    @id @default(cuid())
+  name       String
+  phone      String    @unique
+  email      String?   @unique
+  address    String?
+  zone       String?
+  otpCode    String?
+  otpExpires DateTime?
+  isVerified Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Captain {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String   @unique
+  vehicle   String?  @default("سكوتر / موتوسيكل") // سكوتر، موتوسيكل، عجلة
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
 }
 
 model Ingredient {
@@ -77,12 +104,15 @@ model Expense {
 }
 
 model ChatMessage {
-  id         String   @id @default(cuid())
-  senderId   String?
-  senderName String
-  senderRole String?
-  text       String
-  createdAt  DateTime @default(now())
+  id            String   @id @default(cuid())
+  senderId      String?
+  senderName    String
+  senderRole    String?
+  text          String
+  orderId       String?
+  customerPhone String?
+  isStaff       Boolean  @default(false)
+  createdAt     DateTime @default(now())
 }
 
 model SystemSettings {

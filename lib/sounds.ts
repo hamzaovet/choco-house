@@ -28,7 +28,7 @@ export function setSoundEnabled(enabled: boolean): void {
 }
 
 export function playSound(
-  type: "click" | "order" | "chat" | "alert" | "success" | "kitchen"
+  type: "click" | "order" | "chat" | "alert" | "success" | "kitchen" | "alarm"
 ): void {
   if (!isSoundEnabled()) return;
   const ctx = getAudioContext();
@@ -43,6 +43,15 @@ export function playSound(
         [1318, 0.28, 0.18],
       ],
       wave: "sine",
+    },
+    alarm: {
+      tones: [
+        [784, 0, 0.14],
+        [1046, 0.15, 0.16],
+        [784, 0.36, 0.14],
+        [1046, 0.52, 0.22],
+      ],
+      wave: "triangle",
     },
     chat: {
       tones: [

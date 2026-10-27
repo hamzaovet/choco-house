@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { playSound } from "@/lib/sounds";
+import CustomerAccountModal from "@/components/CustomerAccountModal";
+import CustomerChatWidget from "@/components/CustomerChatWidget";
 import {
   ShoppingCart, X, Plus, Minus, Search,
   MapPin, Phone, Clock, CheckCircle2, Loader2,
@@ -392,6 +394,10 @@ export default function HomePage() {
   const currentZones  = lang === "en" ? ZONES_EN : ZONES_AR;
   const currentExtras = lang === "en" ? EXTRAS_EN : EXTRAS_AR;
 
+  // Customer Account & Modal
+  const [customerModalOpen, setCustomerModalOpen] = useState(false);
+  const [customerProfile, setCustomerProfile]     = useState<any>(null);
+
   // Checkout
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [orderForm, setOrderForm] = useState({
@@ -408,6 +414,22 @@ export default function HomePage() {
   const [trackError, setTrackError]   = useState("");
 
   useEffect(() => {
+    // Load customer profile from storage if available
+    try {
+      const rawCust = localStorage.getItem("choco_customer");
+      if (rawCust) {
+        const cust = JSON.parse(rawCust);
+        setCustomerProfile(cust);
+        setOrderForm((prev) => ({
+          ...prev,
+          customerName: prev.customerName || cust.name || "",
+          phone: prev.phone || cust.phone || "",
+          address: prev.address || cust.address || "",
+          zone: cust.zone || prev.zone,
+        }));
+      }
+    } catch {}
+
     fetch("/api/public/menu")
       .then((r) => r.json())
       .then((d) => { setProducts(Array.isArray(d) ? d : []); setLoading(false); })
@@ -424,9 +446,14 @@ export default function HomePage() {
     const onOpen = () => setCartOpen(true);
     window.addEventListener("choco_open_cart", onOpen);
 
+    // Listen to navbar customer account event
+    const onOpenCustomer = () => setCustomerModalOpen(true);
+    window.addEventListener("choco_open_customer", onOpenCustomer);
+
     return () => {
       clearInterval(iv);
       window.removeEventListener("choco_open_cart", onOpen);
+      window.removeEventListener("choco_open_customer", onOpenCustomer);
     };
   }, []);
 
@@ -486,6 +513,7 @@ export default function HomePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...orderForm,
+          customerEmail: customerProfile?.email || null,
           items: cart.map((i) => ({ productId: i.product.id, nameAr: i.product.nameAr, nameEn: i.product.nameEn, qty: i.qty, unitPrice: i.unitPrice, extras: i.extras })),
           subtotal: cartTotal,
           deliveryFee: currentZone.fee,
@@ -494,6 +522,20 @@ export default function HomePage() {
       const data = await res.json();
       if (res.ok && data.orderNumber) {
         setOrderResult(data);
+        // Save customer profile locally for 1-click future orders
+        try {
+          const profile = {
+            id: data.customerId || customerProfile?.id || `cust_${Date.now()}`,
+            name: orderForm.customerName,
+            phone: orderForm.phone,
+            address: orderForm.address,
+            zone: orderForm.zone,
+            email: customerProfile?.email || null,
+          };
+          localStorage.setItem("choco_customer", JSON.stringify(profile));
+          setCustomerProfile(profile);
+          window.dispatchEvent(new CustomEvent("choco_customer_updated"));
+        } catch {}
         setCart([]);
         setCheckoutOpen(false);
         setCartOpen(false);
@@ -1877,17 +1919,83 @@ export default function HomePage() {
                 {orderResult.orderNumber}
               </p>
             </div>
-            <button onClick={() => setOrderResult(null)} style={{
-              width: "100%",
-              background: `linear-gradient(135deg, ${C.gold}, ${C.goldL})`,
-              color: C.dark, fontWeight: 900, padding: "15px",
-              borderRadius: "14px", border: "none", cursor: "pointer", fontSize: "16px",
-            }}>
-              {lang === "en" ? "Awesome! Track order 🍫" : "ممتاز! تابع طلبك 🍫"}
+            {/* WhatsApp 100% Free Confirmation Button */}
+            <a
+              href={`https://wa.me/201091413470?text=${encodeURIComponent(
+                `مرحباً بيت الشوكولاتة Choco House 🍫\nأنا العميل: ${orderForm.customerName}\nقمت بطلب أوردر جديد رقم: #${orderResult.orderNumber}\nالمطلوب تحصيله: ${grandTotal} ج.م\nالعنوان: ${orderForm.address || ""} (${orderForm.zone})\nبرجاء التأكيد والتجهيز طازج!`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => playSound("click")}
+              style={{
+                width: "100%",
+                background: "#22c55e",
+                color: "#ffffff",
+                fontWeight: 900,
+                padding: "13px",
+                borderRadius: "14px",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "14.5px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                textDecoration: "none",
+                marginBottom: "10px",
+                boxShadow: "0 4px 14px rgba(34, 197, 94, 0.35)",
+                boxSizing: "border-box",
+              }}
+            >
+              <span>تأكيد واستلام الفاتورة عبر واتساب 💬</span>
+            </a>
+
+            {/* Track Live in Customer Account Modal */}
+            <button
+              onClick={() => {
+                setOrderResult(null);
+                setCustomerModalOpen(true);
+                playSound("click");
+              }}
+              style={{
+                width: "100%",
+                background: `linear-gradient(135deg, ${C.gold}, ${C.goldL})`,
+                color: C.dark,
+                fontWeight: 900,
+                padding: "14px",
+                borderRadius: "14px",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "15px",
+              }}
+            >
+              {lang === "en" ? "Awesome! Track order live 📍" : "ممتاز! تتبع طلبك لايف 📍"}
             </button>
           </div>
         </div>
       )}
+
+      {/* ── Customer Account & Orders Modal ── */}
+      <CustomerAccountModal
+        isOpen={customerModalOpen}
+        onClose={() => setCustomerModalOpen(false)}
+        lang={lang}
+        onCustomerUpdated={(c) => {
+          setCustomerProfile(c);
+          if (c) {
+            setOrderForm((prev) => ({
+              ...prev,
+              customerName: c.name || prev.customerName,
+              phone: c.phone || prev.phone,
+              address: c.address || prev.address,
+              zone: c.zone || prev.zone,
+            }));
+          }
+        }}
+      />
+
+      {/* ── Customer Live Chat Widget ── */}
+      <CustomerChatWidget lang={lang} />
     </div>
   );
 }

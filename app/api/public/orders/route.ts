@@ -36,10 +36,42 @@ export async function POST(req: Request) {
         remaining,
         paymentMethod: body.paymentMethod || "cash",
         notes: body.notes || "",
+        customerEmail: body.customerEmail || null,
+        customerId: body.customerId || null,
         timeline,
         status: "new",
       },
     });
+
+    // Auto-save/update customer in Customer database
+    try {
+      const cleanPhone = String(body.phone).trim();
+      const cleanName = String(body.customerName).trim();
+      const cleanAddr = String(body.address || "").trim();
+      const cleanZone = String(body.zone || "الحي الثاني").trim();
+      const cleanEmail = body.customerEmail ? String(body.customerEmail).trim().toLowerCase() : null;
+
+      await prisma.$executeRawUnsafe(`
+        INSERT INTO choco."Customer" (id, name, phone, email, address, zone, "isVerified", "updatedAt")
+        VALUES (
+          ${`'cust_${Date.now()}'`},
+          ${`'${cleanName.replace(/'/g, "''")}'`},
+          ${`'${cleanPhone.replace(/'/g, "''")}'`},
+          ${cleanEmail ? `'${cleanEmail.replace(/'/g, "''")}'` : 'NULL'},
+          ${`'${cleanAddr.replace(/'/g, "''")}'`},
+          ${`'${cleanZone.replace(/'/g, "''")}'`},
+          false,
+          NOW()
+        )
+        ON CONFLICT (phone) DO UPDATE SET
+          name = EXCLUDED.name,
+          address = EXCLUDED.address,
+          zone = EXCLUDED.zone,
+          "updatedAt" = NOW();
+      `);
+    } catch (custErr) {
+      console.warn("Auto-save customer error:", custErr);
+    }
 
     return NextResponse.json({ success: true, orderNumber, orderId: order.id }, { status: 201 });
   } catch (err: unknown) {

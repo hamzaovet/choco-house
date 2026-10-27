@@ -29,6 +29,16 @@ export type Product = $Result.DefaultSelection<Prisma.$ProductPayload>
  */
 export type Order = $Result.DefaultSelection<Prisma.$OrderPayload>
 /**
+ * Model Customer
+ * 
+ */
+export type Customer = $Result.DefaultSelection<Prisma.$CustomerPayload>
+/**
+ * Model Captain
+ * 
+ */
+export type Captain = $Result.DefaultSelection<Prisma.$CaptainPayload>
+/**
  * Model Ingredient
  * 
  */
@@ -209,6 +219,26 @@ export class PrismaClient<
     * ```
     */
   get order(): Prisma.OrderDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.customer`: Exposes CRUD operations for the **Customer** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Customers
+    * const customers = await prisma.customer.findMany()
+    * ```
+    */
+  get customer(): Prisma.CustomerDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.captain`: Exposes CRUD operations for the **Captain** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Captains
+    * const captains = await prisma.captain.findMany()
+    * ```
+    */
+  get captain(): Prisma.CaptainDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.ingredient`: Exposes CRUD operations for the **Ingredient** model.
@@ -719,6 +749,8 @@ export namespace Prisma {
     User: 'User',
     Product: 'Product',
     Order: 'Order',
+    Customer: 'Customer',
+    Captain: 'Captain',
     Ingredient: 'Ingredient',
     Expense: 'Expense',
     ChatMessage: 'ChatMessage',
@@ -740,7 +772,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "product" | "order" | "ingredient" | "expense" | "chatMessage" | "systemSettings" | "inventoryAudit" | "purchase"
+      modelProps: "user" | "product" | "order" | "customer" | "captain" | "ingredient" | "expense" | "chatMessage" | "systemSettings" | "inventoryAudit" | "purchase"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -963,6 +995,154 @@ export namespace Prisma {
           count: {
             args: Prisma.OrderCountArgs<ExtArgs>
             result: $Utils.Optional<OrderCountAggregateOutputType> | number
+          }
+        }
+      }
+      Customer: {
+        payload: Prisma.$CustomerPayload<ExtArgs>
+        fields: Prisma.CustomerFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.CustomerFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustomerPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CustomerFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustomerPayload>
+          }
+          findFirst: {
+            args: Prisma.CustomerFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustomerPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CustomerFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustomerPayload>
+          }
+          findMany: {
+            args: Prisma.CustomerFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustomerPayload>[]
+          }
+          create: {
+            args: Prisma.CustomerCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustomerPayload>
+          }
+          createMany: {
+            args: Prisma.CustomerCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.CustomerCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustomerPayload>[]
+          }
+          delete: {
+            args: Prisma.CustomerDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustomerPayload>
+          }
+          update: {
+            args: Prisma.CustomerUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustomerPayload>
+          }
+          deleteMany: {
+            args: Prisma.CustomerDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CustomerUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.CustomerUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustomerPayload>[]
+          }
+          upsert: {
+            args: Prisma.CustomerUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustomerPayload>
+          }
+          aggregate: {
+            args: Prisma.CustomerAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCustomer>
+          }
+          groupBy: {
+            args: Prisma.CustomerGroupByArgs<ExtArgs>
+            result: $Utils.Optional<CustomerGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CustomerCountArgs<ExtArgs>
+            result: $Utils.Optional<CustomerCountAggregateOutputType> | number
+          }
+        }
+      }
+      Captain: {
+        payload: Prisma.$CaptainPayload<ExtArgs>
+        fields: Prisma.CaptainFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.CaptainFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CaptainPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CaptainFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CaptainPayload>
+          }
+          findFirst: {
+            args: Prisma.CaptainFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CaptainPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CaptainFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CaptainPayload>
+          }
+          findMany: {
+            args: Prisma.CaptainFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CaptainPayload>[]
+          }
+          create: {
+            args: Prisma.CaptainCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CaptainPayload>
+          }
+          createMany: {
+            args: Prisma.CaptainCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.CaptainCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CaptainPayload>[]
+          }
+          delete: {
+            args: Prisma.CaptainDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CaptainPayload>
+          }
+          update: {
+            args: Prisma.CaptainUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CaptainPayload>
+          }
+          deleteMany: {
+            args: Prisma.CaptainDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CaptainUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.CaptainUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CaptainPayload>[]
+          }
+          upsert: {
+            args: Prisma.CaptainUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CaptainPayload>
+          }
+          aggregate: {
+            args: Prisma.CaptainAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCaptain>
+          }
+          groupBy: {
+            args: Prisma.CaptainGroupByArgs<ExtArgs>
+            result: $Utils.Optional<CaptainGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CaptainCountArgs<ExtArgs>
+            result: $Utils.Optional<CaptainCountAggregateOutputType> | number
           }
         }
       }
@@ -1536,6 +1716,8 @@ export namespace Prisma {
     user?: UserOmit
     product?: ProductOmit
     order?: OrderOmit
+    customer?: CustomerOmit
+    captain?: CaptainOmit
     ingredient?: IngredientOmit
     expense?: ExpenseOmit
     chatMessage?: ChatMessageOmit
@@ -3835,6 +4017,10 @@ export namespace Prisma {
     paymentMethod: string | null
     notes: string | null
     assignedChef: string | null
+    captainName: string | null
+    captainPhone: string | null
+    customerEmail: string | null
+    customerId: string | null
     timeline: string | null
     saro5RefId: string | null
     createdAt: Date | null
@@ -3858,6 +4044,10 @@ export namespace Prisma {
     paymentMethod: string | null
     notes: string | null
     assignedChef: string | null
+    captainName: string | null
+    captainPhone: string | null
+    customerEmail: string | null
+    customerId: string | null
     timeline: string | null
     saro5RefId: string | null
     createdAt: Date | null
@@ -3881,6 +4071,10 @@ export namespace Prisma {
     paymentMethod: number
     notes: number
     assignedChef: number
+    captainName: number
+    captainPhone: number
+    customerEmail: number
+    customerId: number
     timeline: number
     saro5RefId: number
     createdAt: number
@@ -3922,6 +4116,10 @@ export namespace Prisma {
     paymentMethod?: true
     notes?: true
     assignedChef?: true
+    captainName?: true
+    captainPhone?: true
+    customerEmail?: true
+    customerId?: true
     timeline?: true
     saro5RefId?: true
     createdAt?: true
@@ -3945,6 +4143,10 @@ export namespace Prisma {
     paymentMethod?: true
     notes?: true
     assignedChef?: true
+    captainName?: true
+    captainPhone?: true
+    customerEmail?: true
+    customerId?: true
     timeline?: true
     saro5RefId?: true
     createdAt?: true
@@ -3968,6 +4170,10 @@ export namespace Prisma {
     paymentMethod?: true
     notes?: true
     assignedChef?: true
+    captainName?: true
+    captainPhone?: true
+    customerEmail?: true
+    customerId?: true
     timeline?: true
     saro5RefId?: true
     createdAt?: true
@@ -4078,6 +4284,10 @@ export namespace Prisma {
     paymentMethod: string
     notes: string | null
     assignedChef: string | null
+    captainName: string | null
+    captainPhone: string | null
+    customerEmail: string | null
+    customerId: string | null
     timeline: string
     saro5RefId: string | null
     createdAt: Date
@@ -4120,6 +4330,10 @@ export namespace Prisma {
     paymentMethod?: boolean
     notes?: boolean
     assignedChef?: boolean
+    captainName?: boolean
+    captainPhone?: boolean
+    customerEmail?: boolean
+    customerId?: boolean
     timeline?: boolean
     saro5RefId?: boolean
     createdAt?: boolean
@@ -4143,6 +4357,10 @@ export namespace Prisma {
     paymentMethod?: boolean
     notes?: boolean
     assignedChef?: boolean
+    captainName?: boolean
+    captainPhone?: boolean
+    customerEmail?: boolean
+    customerId?: boolean
     timeline?: boolean
     saro5RefId?: boolean
     createdAt?: boolean
@@ -4166,6 +4384,10 @@ export namespace Prisma {
     paymentMethod?: boolean
     notes?: boolean
     assignedChef?: boolean
+    captainName?: boolean
+    captainPhone?: boolean
+    customerEmail?: boolean
+    customerId?: boolean
     timeline?: boolean
     saro5RefId?: boolean
     createdAt?: boolean
@@ -4189,13 +4411,17 @@ export namespace Prisma {
     paymentMethod?: boolean
     notes?: boolean
     assignedChef?: boolean
+    captainName?: boolean
+    captainPhone?: boolean
+    customerEmail?: boolean
+    customerId?: boolean
     timeline?: boolean
     saro5RefId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type OrderOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "orderNumber" | "customerName" | "phone" | "address" | "zone" | "status" | "items" | "subtotal" | "deliveryFee" | "total" | "deposit" | "remaining" | "paymentMethod" | "notes" | "assignedChef" | "timeline" | "saro5RefId" | "createdAt" | "updatedAt", ExtArgs["result"]["order"]>
+  export type OrderOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "orderNumber" | "customerName" | "phone" | "address" | "zone" | "status" | "items" | "subtotal" | "deliveryFee" | "total" | "deposit" | "remaining" | "paymentMethod" | "notes" | "assignedChef" | "captainName" | "captainPhone" | "customerEmail" | "customerId" | "timeline" | "saro5RefId" | "createdAt" | "updatedAt", ExtArgs["result"]["order"]>
 
   export type $OrderPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Order"
@@ -4217,6 +4443,10 @@ export namespace Prisma {
       paymentMethod: string
       notes: string | null
       assignedChef: string | null
+      captainName: string | null
+      captainPhone: string | null
+      customerEmail: string | null
+      customerId: string | null
       timeline: string
       saro5RefId: string | null
       createdAt: Date
@@ -4660,6 +4890,10 @@ export namespace Prisma {
     readonly paymentMethod: FieldRef<"Order", 'String'>
     readonly notes: FieldRef<"Order", 'String'>
     readonly assignedChef: FieldRef<"Order", 'String'>
+    readonly captainName: FieldRef<"Order", 'String'>
+    readonly captainPhone: FieldRef<"Order", 'String'>
+    readonly customerEmail: FieldRef<"Order", 'String'>
+    readonly customerId: FieldRef<"Order", 'String'>
     readonly timeline: FieldRef<"Order", 'String'>
     readonly saro5RefId: FieldRef<"Order", 'String'>
     readonly createdAt: FieldRef<"Order", 'DateTime'>
@@ -5032,6 +5266,2097 @@ export namespace Prisma {
      * Omit specific fields from the Order
      */
     omit?: OrderOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model Customer
+   */
+
+  export type AggregateCustomer = {
+    _count: CustomerCountAggregateOutputType | null
+    _min: CustomerMinAggregateOutputType | null
+    _max: CustomerMaxAggregateOutputType | null
+  }
+
+  export type CustomerMinAggregateOutputType = {
+    id: string | null
+    name: string | null
+    phone: string | null
+    email: string | null
+    address: string | null
+    zone: string | null
+    otpCode: string | null
+    otpExpires: Date | null
+    isVerified: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type CustomerMaxAggregateOutputType = {
+    id: string | null
+    name: string | null
+    phone: string | null
+    email: string | null
+    address: string | null
+    zone: string | null
+    otpCode: string | null
+    otpExpires: Date | null
+    isVerified: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type CustomerCountAggregateOutputType = {
+    id: number
+    name: number
+    phone: number
+    email: number
+    address: number
+    zone: number
+    otpCode: number
+    otpExpires: number
+    isVerified: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type CustomerMinAggregateInputType = {
+    id?: true
+    name?: true
+    phone?: true
+    email?: true
+    address?: true
+    zone?: true
+    otpCode?: true
+    otpExpires?: true
+    isVerified?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type CustomerMaxAggregateInputType = {
+    id?: true
+    name?: true
+    phone?: true
+    email?: true
+    address?: true
+    zone?: true
+    otpCode?: true
+    otpExpires?: true
+    isVerified?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type CustomerCountAggregateInputType = {
+    id?: true
+    name?: true
+    phone?: true
+    email?: true
+    address?: true
+    zone?: true
+    otpCode?: true
+    otpExpires?: true
+    isVerified?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type CustomerAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Customer to aggregate.
+     */
+    where?: CustomerWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Customers to fetch.
+     */
+    orderBy?: CustomerOrderByWithRelationInput | CustomerOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: CustomerWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Customers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Customers.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Customers
+    **/
+    _count?: true | CustomerCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CustomerMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CustomerMaxAggregateInputType
+  }
+
+  export type GetCustomerAggregateType<T extends CustomerAggregateArgs> = {
+        [P in keyof T & keyof AggregateCustomer]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCustomer[P]>
+      : GetScalarType<T[P], AggregateCustomer[P]>
+  }
+
+
+
+
+  export type CustomerGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CustomerWhereInput
+    orderBy?: CustomerOrderByWithAggregationInput | CustomerOrderByWithAggregationInput[]
+    by: CustomerScalarFieldEnum[] | CustomerScalarFieldEnum
+    having?: CustomerScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CustomerCountAggregateInputType | true
+    _min?: CustomerMinAggregateInputType
+    _max?: CustomerMaxAggregateInputType
+  }
+
+  export type CustomerGroupByOutputType = {
+    id: string
+    name: string
+    phone: string
+    email: string | null
+    address: string | null
+    zone: string | null
+    otpCode: string | null
+    otpExpires: Date | null
+    isVerified: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: CustomerCountAggregateOutputType | null
+    _min: CustomerMinAggregateOutputType | null
+    _max: CustomerMaxAggregateOutputType | null
+  }
+
+  type GetCustomerGroupByPayload<T extends CustomerGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<CustomerGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CustomerGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CustomerGroupByOutputType[P]>
+            : GetScalarType<T[P], CustomerGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CustomerSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    phone?: boolean
+    email?: boolean
+    address?: boolean
+    zone?: boolean
+    otpCode?: boolean
+    otpExpires?: boolean
+    isVerified?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["customer"]>
+
+  export type CustomerSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    phone?: boolean
+    email?: boolean
+    address?: boolean
+    zone?: boolean
+    otpCode?: boolean
+    otpExpires?: boolean
+    isVerified?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["customer"]>
+
+  export type CustomerSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    phone?: boolean
+    email?: boolean
+    address?: boolean
+    zone?: boolean
+    otpCode?: boolean
+    otpExpires?: boolean
+    isVerified?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["customer"]>
+
+  export type CustomerSelectScalar = {
+    id?: boolean
+    name?: boolean
+    phone?: boolean
+    email?: boolean
+    address?: boolean
+    zone?: boolean
+    otpCode?: boolean
+    otpExpires?: boolean
+    isVerified?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type CustomerOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "phone" | "email" | "address" | "zone" | "otpCode" | "otpExpires" | "isVerified" | "createdAt" | "updatedAt", ExtArgs["result"]["customer"]>
+
+  export type $CustomerPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Customer"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      name: string
+      phone: string
+      email: string | null
+      address: string | null
+      zone: string | null
+      otpCode: string | null
+      otpExpires: Date | null
+      isVerified: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["customer"]>
+    composites: {}
+  }
+
+  type CustomerGetPayload<S extends boolean | null | undefined | CustomerDefaultArgs> = $Result.GetResult<Prisma.$CustomerPayload, S>
+
+  type CustomerCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<CustomerFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: CustomerCountAggregateInputType | true
+    }
+
+  export interface CustomerDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Customer'], meta: { name: 'Customer' } }
+    /**
+     * Find zero or one Customer that matches the filter.
+     * @param {CustomerFindUniqueArgs} args - Arguments to find a Customer
+     * @example
+     * // Get one Customer
+     * const customer = await prisma.customer.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends CustomerFindUniqueArgs>(args: SelectSubset<T, CustomerFindUniqueArgs<ExtArgs>>): Prisma__CustomerClient<$Result.GetResult<Prisma.$CustomerPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Customer that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {CustomerFindUniqueOrThrowArgs} args - Arguments to find a Customer
+     * @example
+     * // Get one Customer
+     * const customer = await prisma.customer.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends CustomerFindUniqueOrThrowArgs>(args: SelectSubset<T, CustomerFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CustomerClient<$Result.GetResult<Prisma.$CustomerPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Customer that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CustomerFindFirstArgs} args - Arguments to find a Customer
+     * @example
+     * // Get one Customer
+     * const customer = await prisma.customer.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends CustomerFindFirstArgs>(args?: SelectSubset<T, CustomerFindFirstArgs<ExtArgs>>): Prisma__CustomerClient<$Result.GetResult<Prisma.$CustomerPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Customer that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CustomerFindFirstOrThrowArgs} args - Arguments to find a Customer
+     * @example
+     * // Get one Customer
+     * const customer = await prisma.customer.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends CustomerFindFirstOrThrowArgs>(args?: SelectSubset<T, CustomerFindFirstOrThrowArgs<ExtArgs>>): Prisma__CustomerClient<$Result.GetResult<Prisma.$CustomerPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Customers that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CustomerFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Customers
+     * const customers = await prisma.customer.findMany()
+     * 
+     * // Get first 10 Customers
+     * const customers = await prisma.customer.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const customerWithIdOnly = await prisma.customer.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends CustomerFindManyArgs>(args?: SelectSubset<T, CustomerFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CustomerPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Customer.
+     * @param {CustomerCreateArgs} args - Arguments to create a Customer.
+     * @example
+     * // Create one Customer
+     * const Customer = await prisma.customer.create({
+     *   data: {
+     *     // ... data to create a Customer
+     *   }
+     * })
+     * 
+     */
+    create<T extends CustomerCreateArgs>(args: SelectSubset<T, CustomerCreateArgs<ExtArgs>>): Prisma__CustomerClient<$Result.GetResult<Prisma.$CustomerPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Customers.
+     * @param {CustomerCreateManyArgs} args - Arguments to create many Customers.
+     * @example
+     * // Create many Customers
+     * const customer = await prisma.customer.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends CustomerCreateManyArgs>(args?: SelectSubset<T, CustomerCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Customers and returns the data saved in the database.
+     * @param {CustomerCreateManyAndReturnArgs} args - Arguments to create many Customers.
+     * @example
+     * // Create many Customers
+     * const customer = await prisma.customer.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Customers and only return the `id`
+     * const customerWithIdOnly = await prisma.customer.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends CustomerCreateManyAndReturnArgs>(args?: SelectSubset<T, CustomerCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CustomerPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Customer.
+     * @param {CustomerDeleteArgs} args - Arguments to delete one Customer.
+     * @example
+     * // Delete one Customer
+     * const Customer = await prisma.customer.delete({
+     *   where: {
+     *     // ... filter to delete one Customer
+     *   }
+     * })
+     * 
+     */
+    delete<T extends CustomerDeleteArgs>(args: SelectSubset<T, CustomerDeleteArgs<ExtArgs>>): Prisma__CustomerClient<$Result.GetResult<Prisma.$CustomerPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Customer.
+     * @param {CustomerUpdateArgs} args - Arguments to update one Customer.
+     * @example
+     * // Update one Customer
+     * const customer = await prisma.customer.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends CustomerUpdateArgs>(args: SelectSubset<T, CustomerUpdateArgs<ExtArgs>>): Prisma__CustomerClient<$Result.GetResult<Prisma.$CustomerPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Customers.
+     * @param {CustomerDeleteManyArgs} args - Arguments to filter Customers to delete.
+     * @example
+     * // Delete a few Customers
+     * const { count } = await prisma.customer.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends CustomerDeleteManyArgs>(args?: SelectSubset<T, CustomerDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Customers.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CustomerUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Customers
+     * const customer = await prisma.customer.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends CustomerUpdateManyArgs>(args: SelectSubset<T, CustomerUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Customers and returns the data updated in the database.
+     * @param {CustomerUpdateManyAndReturnArgs} args - Arguments to update many Customers.
+     * @example
+     * // Update many Customers
+     * const customer = await prisma.customer.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Customers and only return the `id`
+     * const customerWithIdOnly = await prisma.customer.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends CustomerUpdateManyAndReturnArgs>(args: SelectSubset<T, CustomerUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CustomerPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Customer.
+     * @param {CustomerUpsertArgs} args - Arguments to update or create a Customer.
+     * @example
+     * // Update or create a Customer
+     * const customer = await prisma.customer.upsert({
+     *   create: {
+     *     // ... data to create a Customer
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Customer we want to update
+     *   }
+     * })
+     */
+    upsert<T extends CustomerUpsertArgs>(args: SelectSubset<T, CustomerUpsertArgs<ExtArgs>>): Prisma__CustomerClient<$Result.GetResult<Prisma.$CustomerPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Customers.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CustomerCountArgs} args - Arguments to filter Customers to count.
+     * @example
+     * // Count the number of Customers
+     * const count = await prisma.customer.count({
+     *   where: {
+     *     // ... the filter for the Customers we want to count
+     *   }
+     * })
+    **/
+    count<T extends CustomerCountArgs>(
+      args?: Subset<T, CustomerCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CustomerCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Customer.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CustomerAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CustomerAggregateArgs>(args: Subset<T, CustomerAggregateArgs>): Prisma.PrismaPromise<GetCustomerAggregateType<T>>
+
+    /**
+     * Group by Customer.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CustomerGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CustomerGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CustomerGroupByArgs['orderBy'] }
+        : { orderBy?: CustomerGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CustomerGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCustomerGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Customer model
+   */
+  readonly fields: CustomerFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Customer.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__CustomerClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Customer model
+   */
+  interface CustomerFieldRefs {
+    readonly id: FieldRef<"Customer", 'String'>
+    readonly name: FieldRef<"Customer", 'String'>
+    readonly phone: FieldRef<"Customer", 'String'>
+    readonly email: FieldRef<"Customer", 'String'>
+    readonly address: FieldRef<"Customer", 'String'>
+    readonly zone: FieldRef<"Customer", 'String'>
+    readonly otpCode: FieldRef<"Customer", 'String'>
+    readonly otpExpires: FieldRef<"Customer", 'DateTime'>
+    readonly isVerified: FieldRef<"Customer", 'Boolean'>
+    readonly createdAt: FieldRef<"Customer", 'DateTime'>
+    readonly updatedAt: FieldRef<"Customer", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Customer findUnique
+   */
+  export type CustomerFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Customer
+     */
+    select?: CustomerSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Customer
+     */
+    omit?: CustomerOmit<ExtArgs> | null
+    /**
+     * Filter, which Customer to fetch.
+     */
+    where: CustomerWhereUniqueInput
+  }
+
+  /**
+   * Customer findUniqueOrThrow
+   */
+  export type CustomerFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Customer
+     */
+    select?: CustomerSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Customer
+     */
+    omit?: CustomerOmit<ExtArgs> | null
+    /**
+     * Filter, which Customer to fetch.
+     */
+    where: CustomerWhereUniqueInput
+  }
+
+  /**
+   * Customer findFirst
+   */
+  export type CustomerFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Customer
+     */
+    select?: CustomerSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Customer
+     */
+    omit?: CustomerOmit<ExtArgs> | null
+    /**
+     * Filter, which Customer to fetch.
+     */
+    where?: CustomerWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Customers to fetch.
+     */
+    orderBy?: CustomerOrderByWithRelationInput | CustomerOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Customers.
+     */
+    cursor?: CustomerWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Customers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Customers.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Customers.
+     */
+    distinct?: CustomerScalarFieldEnum | CustomerScalarFieldEnum[]
+  }
+
+  /**
+   * Customer findFirstOrThrow
+   */
+  export type CustomerFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Customer
+     */
+    select?: CustomerSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Customer
+     */
+    omit?: CustomerOmit<ExtArgs> | null
+    /**
+     * Filter, which Customer to fetch.
+     */
+    where?: CustomerWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Customers to fetch.
+     */
+    orderBy?: CustomerOrderByWithRelationInput | CustomerOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Customers.
+     */
+    cursor?: CustomerWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Customers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Customers.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Customers.
+     */
+    distinct?: CustomerScalarFieldEnum | CustomerScalarFieldEnum[]
+  }
+
+  /**
+   * Customer findMany
+   */
+  export type CustomerFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Customer
+     */
+    select?: CustomerSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Customer
+     */
+    omit?: CustomerOmit<ExtArgs> | null
+    /**
+     * Filter, which Customers to fetch.
+     */
+    where?: CustomerWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Customers to fetch.
+     */
+    orderBy?: CustomerOrderByWithRelationInput | CustomerOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Customers.
+     */
+    cursor?: CustomerWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Customers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Customers.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Customers.
+     */
+    distinct?: CustomerScalarFieldEnum | CustomerScalarFieldEnum[]
+  }
+
+  /**
+   * Customer create
+   */
+  export type CustomerCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Customer
+     */
+    select?: CustomerSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Customer
+     */
+    omit?: CustomerOmit<ExtArgs> | null
+    /**
+     * The data needed to create a Customer.
+     */
+    data: XOR<CustomerCreateInput, CustomerUncheckedCreateInput>
+  }
+
+  /**
+   * Customer createMany
+   */
+  export type CustomerCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Customers.
+     */
+    data: CustomerCreateManyInput | CustomerCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Customer createManyAndReturn
+   */
+  export type CustomerCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Customer
+     */
+    select?: CustomerSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Customer
+     */
+    omit?: CustomerOmit<ExtArgs> | null
+    /**
+     * The data used to create many Customers.
+     */
+    data: CustomerCreateManyInput | CustomerCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Customer update
+   */
+  export type CustomerUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Customer
+     */
+    select?: CustomerSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Customer
+     */
+    omit?: CustomerOmit<ExtArgs> | null
+    /**
+     * The data needed to update a Customer.
+     */
+    data: XOR<CustomerUpdateInput, CustomerUncheckedUpdateInput>
+    /**
+     * Choose, which Customer to update.
+     */
+    where: CustomerWhereUniqueInput
+  }
+
+  /**
+   * Customer updateMany
+   */
+  export type CustomerUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Customers.
+     */
+    data: XOR<CustomerUpdateManyMutationInput, CustomerUncheckedUpdateManyInput>
+    /**
+     * Filter which Customers to update
+     */
+    where?: CustomerWhereInput
+    /**
+     * Limit how many Customers to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Customer updateManyAndReturn
+   */
+  export type CustomerUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Customer
+     */
+    select?: CustomerSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Customer
+     */
+    omit?: CustomerOmit<ExtArgs> | null
+    /**
+     * The data used to update Customers.
+     */
+    data: XOR<CustomerUpdateManyMutationInput, CustomerUncheckedUpdateManyInput>
+    /**
+     * Filter which Customers to update
+     */
+    where?: CustomerWhereInput
+    /**
+     * Limit how many Customers to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Customer upsert
+   */
+  export type CustomerUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Customer
+     */
+    select?: CustomerSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Customer
+     */
+    omit?: CustomerOmit<ExtArgs> | null
+    /**
+     * The filter to search for the Customer to update in case it exists.
+     */
+    where: CustomerWhereUniqueInput
+    /**
+     * In case the Customer found by the `where` argument doesn't exist, create a new Customer with this data.
+     */
+    create: XOR<CustomerCreateInput, CustomerUncheckedCreateInput>
+    /**
+     * In case the Customer was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<CustomerUpdateInput, CustomerUncheckedUpdateInput>
+  }
+
+  /**
+   * Customer delete
+   */
+  export type CustomerDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Customer
+     */
+    select?: CustomerSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Customer
+     */
+    omit?: CustomerOmit<ExtArgs> | null
+    /**
+     * Filter which Customer to delete.
+     */
+    where: CustomerWhereUniqueInput
+  }
+
+  /**
+   * Customer deleteMany
+   */
+  export type CustomerDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Customers to delete
+     */
+    where?: CustomerWhereInput
+    /**
+     * Limit how many Customers to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Customer without action
+   */
+  export type CustomerDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Customer
+     */
+    select?: CustomerSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Customer
+     */
+    omit?: CustomerOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model Captain
+   */
+
+  export type AggregateCaptain = {
+    _count: CaptainCountAggregateOutputType | null
+    _min: CaptainMinAggregateOutputType | null
+    _max: CaptainMaxAggregateOutputType | null
+  }
+
+  export type CaptainMinAggregateOutputType = {
+    id: string | null
+    name: string | null
+    phone: string | null
+    vehicle: string | null
+    isActive: boolean | null
+    createdAt: Date | null
+  }
+
+  export type CaptainMaxAggregateOutputType = {
+    id: string | null
+    name: string | null
+    phone: string | null
+    vehicle: string | null
+    isActive: boolean | null
+    createdAt: Date | null
+  }
+
+  export type CaptainCountAggregateOutputType = {
+    id: number
+    name: number
+    phone: number
+    vehicle: number
+    isActive: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type CaptainMinAggregateInputType = {
+    id?: true
+    name?: true
+    phone?: true
+    vehicle?: true
+    isActive?: true
+    createdAt?: true
+  }
+
+  export type CaptainMaxAggregateInputType = {
+    id?: true
+    name?: true
+    phone?: true
+    vehicle?: true
+    isActive?: true
+    createdAt?: true
+  }
+
+  export type CaptainCountAggregateInputType = {
+    id?: true
+    name?: true
+    phone?: true
+    vehicle?: true
+    isActive?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type CaptainAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Captain to aggregate.
+     */
+    where?: CaptainWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Captains to fetch.
+     */
+    orderBy?: CaptainOrderByWithRelationInput | CaptainOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: CaptainWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Captains from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Captains.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Captains
+    **/
+    _count?: true | CaptainCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CaptainMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CaptainMaxAggregateInputType
+  }
+
+  export type GetCaptainAggregateType<T extends CaptainAggregateArgs> = {
+        [P in keyof T & keyof AggregateCaptain]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCaptain[P]>
+      : GetScalarType<T[P], AggregateCaptain[P]>
+  }
+
+
+
+
+  export type CaptainGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CaptainWhereInput
+    orderBy?: CaptainOrderByWithAggregationInput | CaptainOrderByWithAggregationInput[]
+    by: CaptainScalarFieldEnum[] | CaptainScalarFieldEnum
+    having?: CaptainScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CaptainCountAggregateInputType | true
+    _min?: CaptainMinAggregateInputType
+    _max?: CaptainMaxAggregateInputType
+  }
+
+  export type CaptainGroupByOutputType = {
+    id: string
+    name: string
+    phone: string
+    vehicle: string | null
+    isActive: boolean
+    createdAt: Date
+    _count: CaptainCountAggregateOutputType | null
+    _min: CaptainMinAggregateOutputType | null
+    _max: CaptainMaxAggregateOutputType | null
+  }
+
+  type GetCaptainGroupByPayload<T extends CaptainGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<CaptainGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CaptainGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CaptainGroupByOutputType[P]>
+            : GetScalarType<T[P], CaptainGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CaptainSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    phone?: boolean
+    vehicle?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["captain"]>
+
+  export type CaptainSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    phone?: boolean
+    vehicle?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["captain"]>
+
+  export type CaptainSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    phone?: boolean
+    vehicle?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["captain"]>
+
+  export type CaptainSelectScalar = {
+    id?: boolean
+    name?: boolean
+    phone?: boolean
+    vehicle?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+  }
+
+  export type CaptainOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "phone" | "vehicle" | "isActive" | "createdAt", ExtArgs["result"]["captain"]>
+
+  export type $CaptainPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Captain"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      name: string
+      phone: string
+      vehicle: string | null
+      isActive: boolean
+      createdAt: Date
+    }, ExtArgs["result"]["captain"]>
+    composites: {}
+  }
+
+  type CaptainGetPayload<S extends boolean | null | undefined | CaptainDefaultArgs> = $Result.GetResult<Prisma.$CaptainPayload, S>
+
+  type CaptainCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<CaptainFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: CaptainCountAggregateInputType | true
+    }
+
+  export interface CaptainDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Captain'], meta: { name: 'Captain' } }
+    /**
+     * Find zero or one Captain that matches the filter.
+     * @param {CaptainFindUniqueArgs} args - Arguments to find a Captain
+     * @example
+     * // Get one Captain
+     * const captain = await prisma.captain.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends CaptainFindUniqueArgs>(args: SelectSubset<T, CaptainFindUniqueArgs<ExtArgs>>): Prisma__CaptainClient<$Result.GetResult<Prisma.$CaptainPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Captain that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {CaptainFindUniqueOrThrowArgs} args - Arguments to find a Captain
+     * @example
+     * // Get one Captain
+     * const captain = await prisma.captain.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends CaptainFindUniqueOrThrowArgs>(args: SelectSubset<T, CaptainFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CaptainClient<$Result.GetResult<Prisma.$CaptainPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Captain that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CaptainFindFirstArgs} args - Arguments to find a Captain
+     * @example
+     * // Get one Captain
+     * const captain = await prisma.captain.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends CaptainFindFirstArgs>(args?: SelectSubset<T, CaptainFindFirstArgs<ExtArgs>>): Prisma__CaptainClient<$Result.GetResult<Prisma.$CaptainPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Captain that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CaptainFindFirstOrThrowArgs} args - Arguments to find a Captain
+     * @example
+     * // Get one Captain
+     * const captain = await prisma.captain.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends CaptainFindFirstOrThrowArgs>(args?: SelectSubset<T, CaptainFindFirstOrThrowArgs<ExtArgs>>): Prisma__CaptainClient<$Result.GetResult<Prisma.$CaptainPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Captains that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CaptainFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Captains
+     * const captains = await prisma.captain.findMany()
+     * 
+     * // Get first 10 Captains
+     * const captains = await prisma.captain.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const captainWithIdOnly = await prisma.captain.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends CaptainFindManyArgs>(args?: SelectSubset<T, CaptainFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CaptainPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Captain.
+     * @param {CaptainCreateArgs} args - Arguments to create a Captain.
+     * @example
+     * // Create one Captain
+     * const Captain = await prisma.captain.create({
+     *   data: {
+     *     // ... data to create a Captain
+     *   }
+     * })
+     * 
+     */
+    create<T extends CaptainCreateArgs>(args: SelectSubset<T, CaptainCreateArgs<ExtArgs>>): Prisma__CaptainClient<$Result.GetResult<Prisma.$CaptainPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Captains.
+     * @param {CaptainCreateManyArgs} args - Arguments to create many Captains.
+     * @example
+     * // Create many Captains
+     * const captain = await prisma.captain.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends CaptainCreateManyArgs>(args?: SelectSubset<T, CaptainCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Captains and returns the data saved in the database.
+     * @param {CaptainCreateManyAndReturnArgs} args - Arguments to create many Captains.
+     * @example
+     * // Create many Captains
+     * const captain = await prisma.captain.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Captains and only return the `id`
+     * const captainWithIdOnly = await prisma.captain.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends CaptainCreateManyAndReturnArgs>(args?: SelectSubset<T, CaptainCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CaptainPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Captain.
+     * @param {CaptainDeleteArgs} args - Arguments to delete one Captain.
+     * @example
+     * // Delete one Captain
+     * const Captain = await prisma.captain.delete({
+     *   where: {
+     *     // ... filter to delete one Captain
+     *   }
+     * })
+     * 
+     */
+    delete<T extends CaptainDeleteArgs>(args: SelectSubset<T, CaptainDeleteArgs<ExtArgs>>): Prisma__CaptainClient<$Result.GetResult<Prisma.$CaptainPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Captain.
+     * @param {CaptainUpdateArgs} args - Arguments to update one Captain.
+     * @example
+     * // Update one Captain
+     * const captain = await prisma.captain.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends CaptainUpdateArgs>(args: SelectSubset<T, CaptainUpdateArgs<ExtArgs>>): Prisma__CaptainClient<$Result.GetResult<Prisma.$CaptainPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Captains.
+     * @param {CaptainDeleteManyArgs} args - Arguments to filter Captains to delete.
+     * @example
+     * // Delete a few Captains
+     * const { count } = await prisma.captain.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends CaptainDeleteManyArgs>(args?: SelectSubset<T, CaptainDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Captains.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CaptainUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Captains
+     * const captain = await prisma.captain.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends CaptainUpdateManyArgs>(args: SelectSubset<T, CaptainUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Captains and returns the data updated in the database.
+     * @param {CaptainUpdateManyAndReturnArgs} args - Arguments to update many Captains.
+     * @example
+     * // Update many Captains
+     * const captain = await prisma.captain.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Captains and only return the `id`
+     * const captainWithIdOnly = await prisma.captain.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends CaptainUpdateManyAndReturnArgs>(args: SelectSubset<T, CaptainUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CaptainPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Captain.
+     * @param {CaptainUpsertArgs} args - Arguments to update or create a Captain.
+     * @example
+     * // Update or create a Captain
+     * const captain = await prisma.captain.upsert({
+     *   create: {
+     *     // ... data to create a Captain
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Captain we want to update
+     *   }
+     * })
+     */
+    upsert<T extends CaptainUpsertArgs>(args: SelectSubset<T, CaptainUpsertArgs<ExtArgs>>): Prisma__CaptainClient<$Result.GetResult<Prisma.$CaptainPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Captains.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CaptainCountArgs} args - Arguments to filter Captains to count.
+     * @example
+     * // Count the number of Captains
+     * const count = await prisma.captain.count({
+     *   where: {
+     *     // ... the filter for the Captains we want to count
+     *   }
+     * })
+    **/
+    count<T extends CaptainCountArgs>(
+      args?: Subset<T, CaptainCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CaptainCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Captain.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CaptainAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CaptainAggregateArgs>(args: Subset<T, CaptainAggregateArgs>): Prisma.PrismaPromise<GetCaptainAggregateType<T>>
+
+    /**
+     * Group by Captain.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CaptainGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CaptainGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CaptainGroupByArgs['orderBy'] }
+        : { orderBy?: CaptainGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CaptainGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCaptainGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Captain model
+   */
+  readonly fields: CaptainFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Captain.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__CaptainClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Captain model
+   */
+  interface CaptainFieldRefs {
+    readonly id: FieldRef<"Captain", 'String'>
+    readonly name: FieldRef<"Captain", 'String'>
+    readonly phone: FieldRef<"Captain", 'String'>
+    readonly vehicle: FieldRef<"Captain", 'String'>
+    readonly isActive: FieldRef<"Captain", 'Boolean'>
+    readonly createdAt: FieldRef<"Captain", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Captain findUnique
+   */
+  export type CaptainFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Captain
+     */
+    select?: CaptainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Captain
+     */
+    omit?: CaptainOmit<ExtArgs> | null
+    /**
+     * Filter, which Captain to fetch.
+     */
+    where: CaptainWhereUniqueInput
+  }
+
+  /**
+   * Captain findUniqueOrThrow
+   */
+  export type CaptainFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Captain
+     */
+    select?: CaptainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Captain
+     */
+    omit?: CaptainOmit<ExtArgs> | null
+    /**
+     * Filter, which Captain to fetch.
+     */
+    where: CaptainWhereUniqueInput
+  }
+
+  /**
+   * Captain findFirst
+   */
+  export type CaptainFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Captain
+     */
+    select?: CaptainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Captain
+     */
+    omit?: CaptainOmit<ExtArgs> | null
+    /**
+     * Filter, which Captain to fetch.
+     */
+    where?: CaptainWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Captains to fetch.
+     */
+    orderBy?: CaptainOrderByWithRelationInput | CaptainOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Captains.
+     */
+    cursor?: CaptainWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Captains from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Captains.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Captains.
+     */
+    distinct?: CaptainScalarFieldEnum | CaptainScalarFieldEnum[]
+  }
+
+  /**
+   * Captain findFirstOrThrow
+   */
+  export type CaptainFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Captain
+     */
+    select?: CaptainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Captain
+     */
+    omit?: CaptainOmit<ExtArgs> | null
+    /**
+     * Filter, which Captain to fetch.
+     */
+    where?: CaptainWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Captains to fetch.
+     */
+    orderBy?: CaptainOrderByWithRelationInput | CaptainOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Captains.
+     */
+    cursor?: CaptainWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Captains from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Captains.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Captains.
+     */
+    distinct?: CaptainScalarFieldEnum | CaptainScalarFieldEnum[]
+  }
+
+  /**
+   * Captain findMany
+   */
+  export type CaptainFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Captain
+     */
+    select?: CaptainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Captain
+     */
+    omit?: CaptainOmit<ExtArgs> | null
+    /**
+     * Filter, which Captains to fetch.
+     */
+    where?: CaptainWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Captains to fetch.
+     */
+    orderBy?: CaptainOrderByWithRelationInput | CaptainOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Captains.
+     */
+    cursor?: CaptainWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Captains from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Captains.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Captains.
+     */
+    distinct?: CaptainScalarFieldEnum | CaptainScalarFieldEnum[]
+  }
+
+  /**
+   * Captain create
+   */
+  export type CaptainCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Captain
+     */
+    select?: CaptainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Captain
+     */
+    omit?: CaptainOmit<ExtArgs> | null
+    /**
+     * The data needed to create a Captain.
+     */
+    data: XOR<CaptainCreateInput, CaptainUncheckedCreateInput>
+  }
+
+  /**
+   * Captain createMany
+   */
+  export type CaptainCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Captains.
+     */
+    data: CaptainCreateManyInput | CaptainCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Captain createManyAndReturn
+   */
+  export type CaptainCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Captain
+     */
+    select?: CaptainSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Captain
+     */
+    omit?: CaptainOmit<ExtArgs> | null
+    /**
+     * The data used to create many Captains.
+     */
+    data: CaptainCreateManyInput | CaptainCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Captain update
+   */
+  export type CaptainUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Captain
+     */
+    select?: CaptainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Captain
+     */
+    omit?: CaptainOmit<ExtArgs> | null
+    /**
+     * The data needed to update a Captain.
+     */
+    data: XOR<CaptainUpdateInput, CaptainUncheckedUpdateInput>
+    /**
+     * Choose, which Captain to update.
+     */
+    where: CaptainWhereUniqueInput
+  }
+
+  /**
+   * Captain updateMany
+   */
+  export type CaptainUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Captains.
+     */
+    data: XOR<CaptainUpdateManyMutationInput, CaptainUncheckedUpdateManyInput>
+    /**
+     * Filter which Captains to update
+     */
+    where?: CaptainWhereInput
+    /**
+     * Limit how many Captains to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Captain updateManyAndReturn
+   */
+  export type CaptainUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Captain
+     */
+    select?: CaptainSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Captain
+     */
+    omit?: CaptainOmit<ExtArgs> | null
+    /**
+     * The data used to update Captains.
+     */
+    data: XOR<CaptainUpdateManyMutationInput, CaptainUncheckedUpdateManyInput>
+    /**
+     * Filter which Captains to update
+     */
+    where?: CaptainWhereInput
+    /**
+     * Limit how many Captains to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Captain upsert
+   */
+  export type CaptainUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Captain
+     */
+    select?: CaptainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Captain
+     */
+    omit?: CaptainOmit<ExtArgs> | null
+    /**
+     * The filter to search for the Captain to update in case it exists.
+     */
+    where: CaptainWhereUniqueInput
+    /**
+     * In case the Captain found by the `where` argument doesn't exist, create a new Captain with this data.
+     */
+    create: XOR<CaptainCreateInput, CaptainUncheckedCreateInput>
+    /**
+     * In case the Captain was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<CaptainUpdateInput, CaptainUncheckedUpdateInput>
+  }
+
+  /**
+   * Captain delete
+   */
+  export type CaptainDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Captain
+     */
+    select?: CaptainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Captain
+     */
+    omit?: CaptainOmit<ExtArgs> | null
+    /**
+     * Filter which Captain to delete.
+     */
+    where: CaptainWhereUniqueInput
+  }
+
+  /**
+   * Captain deleteMany
+   */
+  export type CaptainDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Captains to delete
+     */
+    where?: CaptainWhereInput
+    /**
+     * Limit how many Captains to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Captain without action
+   */
+  export type CaptainDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Captain
+     */
+    select?: CaptainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Captain
+     */
+    omit?: CaptainOmit<ExtArgs> | null
   }
 
 
@@ -7179,6 +9504,9 @@ export namespace Prisma {
     senderName: string | null
     senderRole: string | null
     text: string | null
+    orderId: string | null
+    customerPhone: string | null
+    isStaff: boolean | null
     createdAt: Date | null
   }
 
@@ -7188,6 +9516,9 @@ export namespace Prisma {
     senderName: string | null
     senderRole: string | null
     text: string | null
+    orderId: string | null
+    customerPhone: string | null
+    isStaff: boolean | null
     createdAt: Date | null
   }
 
@@ -7197,6 +9528,9 @@ export namespace Prisma {
     senderName: number
     senderRole: number
     text: number
+    orderId: number
+    customerPhone: number
+    isStaff: number
     createdAt: number
     _all: number
   }
@@ -7208,6 +9542,9 @@ export namespace Prisma {
     senderName?: true
     senderRole?: true
     text?: true
+    orderId?: true
+    customerPhone?: true
+    isStaff?: true
     createdAt?: true
   }
 
@@ -7217,6 +9554,9 @@ export namespace Prisma {
     senderName?: true
     senderRole?: true
     text?: true
+    orderId?: true
+    customerPhone?: true
+    isStaff?: true
     createdAt?: true
   }
 
@@ -7226,6 +9566,9 @@ export namespace Prisma {
     senderName?: true
     senderRole?: true
     text?: true
+    orderId?: true
+    customerPhone?: true
+    isStaff?: true
     createdAt?: true
     _all?: true
   }
@@ -7308,6 +9651,9 @@ export namespace Prisma {
     senderName: string
     senderRole: string | null
     text: string
+    orderId: string | null
+    customerPhone: string | null
+    isStaff: boolean
     createdAt: Date
     _count: ChatMessageCountAggregateOutputType | null
     _min: ChatMessageMinAggregateOutputType | null
@@ -7334,6 +9680,9 @@ export namespace Prisma {
     senderName?: boolean
     senderRole?: boolean
     text?: boolean
+    orderId?: boolean
+    customerPhone?: boolean
+    isStaff?: boolean
     createdAt?: boolean
   }, ExtArgs["result"]["chatMessage"]>
 
@@ -7343,6 +9692,9 @@ export namespace Prisma {
     senderName?: boolean
     senderRole?: boolean
     text?: boolean
+    orderId?: boolean
+    customerPhone?: boolean
+    isStaff?: boolean
     createdAt?: boolean
   }, ExtArgs["result"]["chatMessage"]>
 
@@ -7352,6 +9704,9 @@ export namespace Prisma {
     senderName?: boolean
     senderRole?: boolean
     text?: boolean
+    orderId?: boolean
+    customerPhone?: boolean
+    isStaff?: boolean
     createdAt?: boolean
   }, ExtArgs["result"]["chatMessage"]>
 
@@ -7361,10 +9716,13 @@ export namespace Prisma {
     senderName?: boolean
     senderRole?: boolean
     text?: boolean
+    orderId?: boolean
+    customerPhone?: boolean
+    isStaff?: boolean
     createdAt?: boolean
   }
 
-  export type ChatMessageOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "senderId" | "senderName" | "senderRole" | "text" | "createdAt", ExtArgs["result"]["chatMessage"]>
+  export type ChatMessageOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "senderId" | "senderName" | "senderRole" | "text" | "orderId" | "customerPhone" | "isStaff" | "createdAt", ExtArgs["result"]["chatMessage"]>
 
   export type $ChatMessagePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "ChatMessage"
@@ -7375,6 +9733,9 @@ export namespace Prisma {
       senderName: string
       senderRole: string | null
       text: string
+      orderId: string | null
+      customerPhone: string | null
+      isStaff: boolean
       createdAt: Date
     }, ExtArgs["result"]["chatMessage"]>
     composites: {}
@@ -7804,6 +10165,9 @@ export namespace Prisma {
     readonly senderName: FieldRef<"ChatMessage", 'String'>
     readonly senderRole: FieldRef<"ChatMessage", 'String'>
     readonly text: FieldRef<"ChatMessage", 'String'>
+    readonly orderId: FieldRef<"ChatMessage", 'String'>
+    readonly customerPhone: FieldRef<"ChatMessage", 'String'>
+    readonly isStaff: FieldRef<"ChatMessage", 'Boolean'>
     readonly createdAt: FieldRef<"ChatMessage", 'DateTime'>
   }
     
@@ -11582,6 +13946,10 @@ export namespace Prisma {
     paymentMethod: 'paymentMethod',
     notes: 'notes',
     assignedChef: 'assignedChef',
+    captainName: 'captainName',
+    captainPhone: 'captainPhone',
+    customerEmail: 'customerEmail',
+    customerId: 'customerId',
     timeline: 'timeline',
     saro5RefId: 'saro5RefId',
     createdAt: 'createdAt',
@@ -11589,6 +13957,35 @@ export namespace Prisma {
   };
 
   export type OrderScalarFieldEnum = (typeof OrderScalarFieldEnum)[keyof typeof OrderScalarFieldEnum]
+
+
+  export const CustomerScalarFieldEnum: {
+    id: 'id',
+    name: 'name',
+    phone: 'phone',
+    email: 'email',
+    address: 'address',
+    zone: 'zone',
+    otpCode: 'otpCode',
+    otpExpires: 'otpExpires',
+    isVerified: 'isVerified',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type CustomerScalarFieldEnum = (typeof CustomerScalarFieldEnum)[keyof typeof CustomerScalarFieldEnum]
+
+
+  export const CaptainScalarFieldEnum: {
+    id: 'id',
+    name: 'name',
+    phone: 'phone',
+    vehicle: 'vehicle',
+    isActive: 'isActive',
+    createdAt: 'createdAt'
+  };
+
+  export type CaptainScalarFieldEnum = (typeof CaptainScalarFieldEnum)[keyof typeof CaptainScalarFieldEnum]
 
 
   export const IngredientScalarFieldEnum: {
@@ -11623,6 +14020,9 @@ export namespace Prisma {
     senderName: 'senderName',
     senderRole: 'senderRole',
     text: 'text',
+    orderId: 'orderId',
+    customerPhone: 'customerPhone',
+    isStaff: 'isStaff',
     createdAt: 'createdAt'
   };
 
@@ -11952,6 +14352,10 @@ export namespace Prisma {
     paymentMethod?: StringFilter<"Order"> | string
     notes?: StringNullableFilter<"Order"> | string | null
     assignedChef?: StringNullableFilter<"Order"> | string | null
+    captainName?: StringNullableFilter<"Order"> | string | null
+    captainPhone?: StringNullableFilter<"Order"> | string | null
+    customerEmail?: StringNullableFilter<"Order"> | string | null
+    customerId?: StringNullableFilter<"Order"> | string | null
     timeline?: StringFilter<"Order"> | string
     saro5RefId?: StringNullableFilter<"Order"> | string | null
     createdAt?: DateTimeFilter<"Order"> | Date | string
@@ -11975,6 +14379,10 @@ export namespace Prisma {
     paymentMethod?: SortOrder
     notes?: SortOrderInput | SortOrder
     assignedChef?: SortOrderInput | SortOrder
+    captainName?: SortOrderInput | SortOrder
+    captainPhone?: SortOrderInput | SortOrder
+    customerEmail?: SortOrderInput | SortOrder
+    customerId?: SortOrderInput | SortOrder
     timeline?: SortOrder
     saro5RefId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
@@ -12001,6 +14409,10 @@ export namespace Prisma {
     paymentMethod?: StringFilter<"Order"> | string
     notes?: StringNullableFilter<"Order"> | string | null
     assignedChef?: StringNullableFilter<"Order"> | string | null
+    captainName?: StringNullableFilter<"Order"> | string | null
+    captainPhone?: StringNullableFilter<"Order"> | string | null
+    customerEmail?: StringNullableFilter<"Order"> | string | null
+    customerId?: StringNullableFilter<"Order"> | string | null
     timeline?: StringFilter<"Order"> | string
     saro5RefId?: StringNullableFilter<"Order"> | string | null
     createdAt?: DateTimeFilter<"Order"> | Date | string
@@ -12024,6 +14436,10 @@ export namespace Prisma {
     paymentMethod?: SortOrder
     notes?: SortOrderInput | SortOrder
     assignedChef?: SortOrderInput | SortOrder
+    captainName?: SortOrderInput | SortOrder
+    captainPhone?: SortOrderInput | SortOrder
+    customerEmail?: SortOrderInput | SortOrder
+    customerId?: SortOrderInput | SortOrder
     timeline?: SortOrder
     saro5RefId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
@@ -12055,10 +14471,153 @@ export namespace Prisma {
     paymentMethod?: StringWithAggregatesFilter<"Order"> | string
     notes?: StringNullableWithAggregatesFilter<"Order"> | string | null
     assignedChef?: StringNullableWithAggregatesFilter<"Order"> | string | null
+    captainName?: StringNullableWithAggregatesFilter<"Order"> | string | null
+    captainPhone?: StringNullableWithAggregatesFilter<"Order"> | string | null
+    customerEmail?: StringNullableWithAggregatesFilter<"Order"> | string | null
+    customerId?: StringNullableWithAggregatesFilter<"Order"> | string | null
     timeline?: StringWithAggregatesFilter<"Order"> | string
     saro5RefId?: StringNullableWithAggregatesFilter<"Order"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Order"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Order"> | Date | string
+  }
+
+  export type CustomerWhereInput = {
+    AND?: CustomerWhereInput | CustomerWhereInput[]
+    OR?: CustomerWhereInput[]
+    NOT?: CustomerWhereInput | CustomerWhereInput[]
+    id?: StringFilter<"Customer"> | string
+    name?: StringFilter<"Customer"> | string
+    phone?: StringFilter<"Customer"> | string
+    email?: StringNullableFilter<"Customer"> | string | null
+    address?: StringNullableFilter<"Customer"> | string | null
+    zone?: StringNullableFilter<"Customer"> | string | null
+    otpCode?: StringNullableFilter<"Customer"> | string | null
+    otpExpires?: DateTimeNullableFilter<"Customer"> | Date | string | null
+    isVerified?: BoolFilter<"Customer"> | boolean
+    createdAt?: DateTimeFilter<"Customer"> | Date | string
+    updatedAt?: DateTimeFilter<"Customer"> | Date | string
+  }
+
+  export type CustomerOrderByWithRelationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    phone?: SortOrder
+    email?: SortOrderInput | SortOrder
+    address?: SortOrderInput | SortOrder
+    zone?: SortOrderInput | SortOrder
+    otpCode?: SortOrderInput | SortOrder
+    otpExpires?: SortOrderInput | SortOrder
+    isVerified?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CustomerWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    phone?: string
+    email?: string
+    AND?: CustomerWhereInput | CustomerWhereInput[]
+    OR?: CustomerWhereInput[]
+    NOT?: CustomerWhereInput | CustomerWhereInput[]
+    name?: StringFilter<"Customer"> | string
+    address?: StringNullableFilter<"Customer"> | string | null
+    zone?: StringNullableFilter<"Customer"> | string | null
+    otpCode?: StringNullableFilter<"Customer"> | string | null
+    otpExpires?: DateTimeNullableFilter<"Customer"> | Date | string | null
+    isVerified?: BoolFilter<"Customer"> | boolean
+    createdAt?: DateTimeFilter<"Customer"> | Date | string
+    updatedAt?: DateTimeFilter<"Customer"> | Date | string
+  }, "id" | "phone" | "email">
+
+  export type CustomerOrderByWithAggregationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    phone?: SortOrder
+    email?: SortOrderInput | SortOrder
+    address?: SortOrderInput | SortOrder
+    zone?: SortOrderInput | SortOrder
+    otpCode?: SortOrderInput | SortOrder
+    otpExpires?: SortOrderInput | SortOrder
+    isVerified?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: CustomerCountOrderByAggregateInput
+    _max?: CustomerMaxOrderByAggregateInput
+    _min?: CustomerMinOrderByAggregateInput
+  }
+
+  export type CustomerScalarWhereWithAggregatesInput = {
+    AND?: CustomerScalarWhereWithAggregatesInput | CustomerScalarWhereWithAggregatesInput[]
+    OR?: CustomerScalarWhereWithAggregatesInput[]
+    NOT?: CustomerScalarWhereWithAggregatesInput | CustomerScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Customer"> | string
+    name?: StringWithAggregatesFilter<"Customer"> | string
+    phone?: StringWithAggregatesFilter<"Customer"> | string
+    email?: StringNullableWithAggregatesFilter<"Customer"> | string | null
+    address?: StringNullableWithAggregatesFilter<"Customer"> | string | null
+    zone?: StringNullableWithAggregatesFilter<"Customer"> | string | null
+    otpCode?: StringNullableWithAggregatesFilter<"Customer"> | string | null
+    otpExpires?: DateTimeNullableWithAggregatesFilter<"Customer"> | Date | string | null
+    isVerified?: BoolWithAggregatesFilter<"Customer"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"Customer"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Customer"> | Date | string
+  }
+
+  export type CaptainWhereInput = {
+    AND?: CaptainWhereInput | CaptainWhereInput[]
+    OR?: CaptainWhereInput[]
+    NOT?: CaptainWhereInput | CaptainWhereInput[]
+    id?: StringFilter<"Captain"> | string
+    name?: StringFilter<"Captain"> | string
+    phone?: StringFilter<"Captain"> | string
+    vehicle?: StringNullableFilter<"Captain"> | string | null
+    isActive?: BoolFilter<"Captain"> | boolean
+    createdAt?: DateTimeFilter<"Captain"> | Date | string
+  }
+
+  export type CaptainOrderByWithRelationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    phone?: SortOrder
+    vehicle?: SortOrderInput | SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type CaptainWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    phone?: string
+    AND?: CaptainWhereInput | CaptainWhereInput[]
+    OR?: CaptainWhereInput[]
+    NOT?: CaptainWhereInput | CaptainWhereInput[]
+    name?: StringFilter<"Captain"> | string
+    vehicle?: StringNullableFilter<"Captain"> | string | null
+    isActive?: BoolFilter<"Captain"> | boolean
+    createdAt?: DateTimeFilter<"Captain"> | Date | string
+  }, "id" | "phone">
+
+  export type CaptainOrderByWithAggregationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    phone?: SortOrder
+    vehicle?: SortOrderInput | SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    _count?: CaptainCountOrderByAggregateInput
+    _max?: CaptainMaxOrderByAggregateInput
+    _min?: CaptainMinOrderByAggregateInput
+  }
+
+  export type CaptainScalarWhereWithAggregatesInput = {
+    AND?: CaptainScalarWhereWithAggregatesInput | CaptainScalarWhereWithAggregatesInput[]
+    OR?: CaptainScalarWhereWithAggregatesInput[]
+    NOT?: CaptainScalarWhereWithAggregatesInput | CaptainScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Captain"> | string
+    name?: StringWithAggregatesFilter<"Captain"> | string
+    phone?: StringWithAggregatesFilter<"Captain"> | string
+    vehicle?: StringNullableWithAggregatesFilter<"Captain"> | string | null
+    isActive?: BoolWithAggregatesFilter<"Captain"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"Captain"> | Date | string
   }
 
   export type IngredientWhereInput = {
@@ -12198,6 +14757,9 @@ export namespace Prisma {
     senderName?: StringFilter<"ChatMessage"> | string
     senderRole?: StringNullableFilter<"ChatMessage"> | string | null
     text?: StringFilter<"ChatMessage"> | string
+    orderId?: StringNullableFilter<"ChatMessage"> | string | null
+    customerPhone?: StringNullableFilter<"ChatMessage"> | string | null
+    isStaff?: BoolFilter<"ChatMessage"> | boolean
     createdAt?: DateTimeFilter<"ChatMessage"> | Date | string
   }
 
@@ -12207,6 +14769,9 @@ export namespace Prisma {
     senderName?: SortOrder
     senderRole?: SortOrderInput | SortOrder
     text?: SortOrder
+    orderId?: SortOrderInput | SortOrder
+    customerPhone?: SortOrderInput | SortOrder
+    isStaff?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -12219,6 +14784,9 @@ export namespace Prisma {
     senderName?: StringFilter<"ChatMessage"> | string
     senderRole?: StringNullableFilter<"ChatMessage"> | string | null
     text?: StringFilter<"ChatMessage"> | string
+    orderId?: StringNullableFilter<"ChatMessage"> | string | null
+    customerPhone?: StringNullableFilter<"ChatMessage"> | string | null
+    isStaff?: BoolFilter<"ChatMessage"> | boolean
     createdAt?: DateTimeFilter<"ChatMessage"> | Date | string
   }, "id">
 
@@ -12228,6 +14796,9 @@ export namespace Prisma {
     senderName?: SortOrder
     senderRole?: SortOrderInput | SortOrder
     text?: SortOrder
+    orderId?: SortOrderInput | SortOrder
+    customerPhone?: SortOrderInput | SortOrder
+    isStaff?: SortOrder
     createdAt?: SortOrder
     _count?: ChatMessageCountOrderByAggregateInput
     _max?: ChatMessageMaxOrderByAggregateInput
@@ -12243,6 +14814,9 @@ export namespace Prisma {
     senderName?: StringWithAggregatesFilter<"ChatMessage"> | string
     senderRole?: StringNullableWithAggregatesFilter<"ChatMessage"> | string | null
     text?: StringWithAggregatesFilter<"ChatMessage"> | string
+    orderId?: StringNullableWithAggregatesFilter<"ChatMessage"> | string | null
+    customerPhone?: StringNullableWithAggregatesFilter<"ChatMessage"> | string | null
+    isStaff?: BoolWithAggregatesFilter<"ChatMessage"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"ChatMessage"> | Date | string
   }
 
@@ -12700,6 +15274,10 @@ export namespace Prisma {
     paymentMethod?: string
     notes?: string | null
     assignedChef?: string | null
+    captainName?: string | null
+    captainPhone?: string | null
+    customerEmail?: string | null
+    customerId?: string | null
     timeline?: string
     saro5RefId?: string | null
     createdAt?: Date | string
@@ -12723,6 +15301,10 @@ export namespace Prisma {
     paymentMethod?: string
     notes?: string | null
     assignedChef?: string | null
+    captainName?: string | null
+    captainPhone?: string | null
+    customerEmail?: string | null
+    customerId?: string | null
     timeline?: string
     saro5RefId?: string | null
     createdAt?: Date | string
@@ -12746,6 +15328,10 @@ export namespace Prisma {
     paymentMethod?: StringFieldUpdateOperationsInput | string
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     assignedChef?: NullableStringFieldUpdateOperationsInput | string | null
+    captainName?: NullableStringFieldUpdateOperationsInput | string | null
+    captainPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    customerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    customerId?: NullableStringFieldUpdateOperationsInput | string | null
     timeline?: StringFieldUpdateOperationsInput | string
     saro5RefId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12769,6 +15355,10 @@ export namespace Prisma {
     paymentMethod?: StringFieldUpdateOperationsInput | string
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     assignedChef?: NullableStringFieldUpdateOperationsInput | string | null
+    captainName?: NullableStringFieldUpdateOperationsInput | string | null
+    captainPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    customerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    customerId?: NullableStringFieldUpdateOperationsInput | string | null
     timeline?: StringFieldUpdateOperationsInput | string
     saro5RefId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12792,6 +15382,10 @@ export namespace Prisma {
     paymentMethod?: string
     notes?: string | null
     assignedChef?: string | null
+    captainName?: string | null
+    captainPhone?: string | null
+    customerEmail?: string | null
+    customerId?: string | null
     timeline?: string
     saro5RefId?: string | null
     createdAt?: Date | string
@@ -12815,6 +15409,10 @@ export namespace Prisma {
     paymentMethod?: StringFieldUpdateOperationsInput | string
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     assignedChef?: NullableStringFieldUpdateOperationsInput | string | null
+    captainName?: NullableStringFieldUpdateOperationsInput | string | null
+    captainPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    customerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    customerId?: NullableStringFieldUpdateOperationsInput | string | null
     timeline?: StringFieldUpdateOperationsInput | string
     saro5RefId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12838,10 +15436,175 @@ export namespace Prisma {
     paymentMethod?: StringFieldUpdateOperationsInput | string
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     assignedChef?: NullableStringFieldUpdateOperationsInput | string | null
+    captainName?: NullableStringFieldUpdateOperationsInput | string | null
+    captainPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    customerEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    customerId?: NullableStringFieldUpdateOperationsInput | string | null
     timeline?: StringFieldUpdateOperationsInput | string
     saro5RefId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CustomerCreateInput = {
+    id?: string
+    name: string
+    phone: string
+    email?: string | null
+    address?: string | null
+    zone?: string | null
+    otpCode?: string | null
+    otpExpires?: Date | string | null
+    isVerified?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CustomerUncheckedCreateInput = {
+    id?: string
+    name: string
+    phone: string
+    email?: string | null
+    address?: string | null
+    zone?: string | null
+    otpCode?: string | null
+    otpExpires?: Date | string | null
+    isVerified?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CustomerUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    address?: NullableStringFieldUpdateOperationsInput | string | null
+    zone?: NullableStringFieldUpdateOperationsInput | string | null
+    otpCode?: NullableStringFieldUpdateOperationsInput | string | null
+    otpExpires?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isVerified?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CustomerUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    address?: NullableStringFieldUpdateOperationsInput | string | null
+    zone?: NullableStringFieldUpdateOperationsInput | string | null
+    otpCode?: NullableStringFieldUpdateOperationsInput | string | null
+    otpExpires?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isVerified?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CustomerCreateManyInput = {
+    id?: string
+    name: string
+    phone: string
+    email?: string | null
+    address?: string | null
+    zone?: string | null
+    otpCode?: string | null
+    otpExpires?: Date | string | null
+    isVerified?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CustomerUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    address?: NullableStringFieldUpdateOperationsInput | string | null
+    zone?: NullableStringFieldUpdateOperationsInput | string | null
+    otpCode?: NullableStringFieldUpdateOperationsInput | string | null
+    otpExpires?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isVerified?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CustomerUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    address?: NullableStringFieldUpdateOperationsInput | string | null
+    zone?: NullableStringFieldUpdateOperationsInput | string | null
+    otpCode?: NullableStringFieldUpdateOperationsInput | string | null
+    otpExpires?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isVerified?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CaptainCreateInput = {
+    id?: string
+    name: string
+    phone: string
+    vehicle?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+  }
+
+  export type CaptainUncheckedCreateInput = {
+    id?: string
+    name: string
+    phone: string
+    vehicle?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+  }
+
+  export type CaptainUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    vehicle?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CaptainUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    vehicle?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CaptainCreateManyInput = {
+    id?: string
+    name: string
+    phone: string
+    vehicle?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+  }
+
+  export type CaptainUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    vehicle?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CaptainUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    vehicle?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type IngredientCreateInput = {
@@ -12990,6 +15753,9 @@ export namespace Prisma {
     senderName: string
     senderRole?: string | null
     text: string
+    orderId?: string | null
+    customerPhone?: string | null
+    isStaff?: boolean
     createdAt?: Date | string
   }
 
@@ -12999,6 +15765,9 @@ export namespace Prisma {
     senderName: string
     senderRole?: string | null
     text: string
+    orderId?: string | null
+    customerPhone?: string | null
+    isStaff?: boolean
     createdAt?: Date | string
   }
 
@@ -13008,6 +15777,9 @@ export namespace Prisma {
     senderName?: StringFieldUpdateOperationsInput | string
     senderRole?: NullableStringFieldUpdateOperationsInput | string | null
     text?: StringFieldUpdateOperationsInput | string
+    orderId?: NullableStringFieldUpdateOperationsInput | string | null
+    customerPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    isStaff?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -13017,6 +15789,9 @@ export namespace Prisma {
     senderName?: StringFieldUpdateOperationsInput | string
     senderRole?: NullableStringFieldUpdateOperationsInput | string | null
     text?: StringFieldUpdateOperationsInput | string
+    orderId?: NullableStringFieldUpdateOperationsInput | string | null
+    customerPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    isStaff?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -13026,6 +15801,9 @@ export namespace Prisma {
     senderName: string
     senderRole?: string | null
     text: string
+    orderId?: string | null
+    customerPhone?: string | null
+    isStaff?: boolean
     createdAt?: Date | string
   }
 
@@ -13035,6 +15813,9 @@ export namespace Prisma {
     senderName?: StringFieldUpdateOperationsInput | string
     senderRole?: NullableStringFieldUpdateOperationsInput | string | null
     text?: StringFieldUpdateOperationsInput | string
+    orderId?: NullableStringFieldUpdateOperationsInput | string | null
+    customerPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    isStaff?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -13044,6 +15825,9 @@ export namespace Prisma {
     senderName?: StringFieldUpdateOperationsInput | string
     senderRole?: NullableStringFieldUpdateOperationsInput | string | null
     text?: StringFieldUpdateOperationsInput | string
+    orderId?: NullableStringFieldUpdateOperationsInput | string | null
+    customerPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    isStaff?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -13616,6 +16400,10 @@ export namespace Prisma {
     paymentMethod?: SortOrder
     notes?: SortOrder
     assignedChef?: SortOrder
+    captainName?: SortOrder
+    captainPhone?: SortOrder
+    customerEmail?: SortOrder
+    customerId?: SortOrder
     timeline?: SortOrder
     saro5RefId?: SortOrder
     createdAt?: SortOrder
@@ -13647,6 +16435,10 @@ export namespace Prisma {
     paymentMethod?: SortOrder
     notes?: SortOrder
     assignedChef?: SortOrder
+    captainName?: SortOrder
+    captainPhone?: SortOrder
+    customerEmail?: SortOrder
+    customerId?: SortOrder
     timeline?: SortOrder
     saro5RefId?: SortOrder
     createdAt?: SortOrder
@@ -13670,6 +16462,10 @@ export namespace Prisma {
     paymentMethod?: SortOrder
     notes?: SortOrder
     assignedChef?: SortOrder
+    captainName?: SortOrder
+    captainPhone?: SortOrder
+    customerEmail?: SortOrder
+    customerId?: SortOrder
     timeline?: SortOrder
     saro5RefId?: SortOrder
     createdAt?: SortOrder
@@ -13682,6 +16478,100 @@ export namespace Prisma {
     total?: SortOrder
     deposit?: SortOrder
     remaining?: SortOrder
+  }
+
+  export type DateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
+  export type CustomerCountOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    phone?: SortOrder
+    email?: SortOrder
+    address?: SortOrder
+    zone?: SortOrder
+    otpCode?: SortOrder
+    otpExpires?: SortOrder
+    isVerified?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CustomerMaxOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    phone?: SortOrder
+    email?: SortOrder
+    address?: SortOrder
+    zone?: SortOrder
+    otpCode?: SortOrder
+    otpExpires?: SortOrder
+    isVerified?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CustomerMinOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    phone?: SortOrder
+    email?: SortOrder
+    address?: SortOrder
+    zone?: SortOrder
+    otpCode?: SortOrder
+    otpExpires?: SortOrder
+    isVerified?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
+  export type CaptainCountOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    phone?: SortOrder
+    vehicle?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type CaptainMaxOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    phone?: SortOrder
+    vehicle?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type CaptainMinOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    phone?: SortOrder
+    vehicle?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
   }
 
   export type IngredientCountOrderByAggregateInput = {
@@ -13770,6 +16660,9 @@ export namespace Prisma {
     senderName?: SortOrder
     senderRole?: SortOrder
     text?: SortOrder
+    orderId?: SortOrder
+    customerPhone?: SortOrder
+    isStaff?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -13779,6 +16672,9 @@ export namespace Prisma {
     senderName?: SortOrder
     senderRole?: SortOrder
     text?: SortOrder
+    orderId?: SortOrder
+    customerPhone?: SortOrder
+    isStaff?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -13788,6 +16684,9 @@ export namespace Prisma {
     senderName?: SortOrder
     senderRole?: SortOrder
     text?: SortOrder
+    orderId?: SortOrder
+    customerPhone?: SortOrder
+    isStaff?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -13982,6 +16881,10 @@ export namespace Prisma {
     divide?: number
   }
 
+  export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null
+  }
+
   export type NestedStringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -14145,6 +17048,31 @@ export namespace Prisma {
     _sum?: NestedIntFilter<$PrismaModel>
     _min?: NestedIntFilter<$PrismaModel>
     _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
+  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
 

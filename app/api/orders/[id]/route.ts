@@ -27,13 +27,21 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       timeline.push({ stage: body.status, at: new Date().toISOString(), by: body._updatedBy || "system" });
     }
 
+    const { status, captainName, captainPhone, notes, assignedChef, customerEmail, customerId } = body;
+    const updateData: Record<string, any> = {
+      timeline: JSON.stringify(timeline),
+    };
+    if (status !== undefined) updateData.status = status;
+    if (captainName !== undefined) updateData.captainName = captainName;
+    if (captainPhone !== undefined) updateData.captainPhone = captainPhone;
+    if (notes !== undefined) updateData.notes = notes;
+    if (assignedChef !== undefined) updateData.assignedChef = assignedChef;
+    if (customerEmail !== undefined) updateData.customerEmail = customerEmail;
+    if (customerId !== undefined) updateData.customerId = customerId;
+
     const updated = await prisma.order.update({
       where: { id },
-      data: {
-        ...body,
-        timeline: JSON.stringify(timeline),
-        _updatedBy: undefined,
-      },
+      data: updateData,
     });
     return NextResponse.json(updated);
   } catch (err: unknown) {
