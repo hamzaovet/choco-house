@@ -46,13 +46,22 @@ jobs:
           ANDROID_HOME: /usr/local/lib/android/sdk
         run: |
           cd android
-          ./gradlew :app:assembleDebug --stacktrace
-          echo "=== Content of app/build/outputs ==="
-          ls -laR app/build/outputs/ || true
+          ./gradlew :app:assembleDebug --stacktrace 2>&1 | tee ../gradle-build.log
           mkdir -p ../dist-apk
           find . -name "*.apk" -exec cp {} ../dist-apk/choco-house.apk \;
           cd ..
           ls -lh dist-apk/choco-house.apk
+
+      - name: Push Error Log on Failure
+        if: failure()
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git checkout -B build-log
+          tail -n 300 gradle-build.log > gradle-error.txt || true
+          git add gradle-error.txt
+          git commit -m "chore: upload gradle error log" || true
+          git push origin build-log -f || true
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
