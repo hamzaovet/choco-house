@@ -407,7 +407,7 @@ export default function CustomersPage() {
               background: "#160d05",
               border: "1px solid rgba(204, 160, 67, 0.2)",
               borderRadius: "20px",
-              overflow: "hidden",
+              overflowX: "auto",
             }}
           >
             <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "right", fontSize: "13px" }}>

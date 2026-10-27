@@ -888,7 +888,7 @@ export default function InventoryPage() {
               </div>
 
               {/* Items Inventory Table */}
-              <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
+              <div style={{ flex: 1, overflowY: "auto", overflowX: "auto", padding: "16px 24px" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
                   <thead>
                     <tr style={{ borderBottom: "1px solid rgba(204, 160, 67, 0.2)", color: "#b0957e", textAlign: dir === "rtl" ? "right" : "left" }}>
@@ -1477,7 +1477,7 @@ export default function InventoryPage() {
 
                         {/* Expanded Item Breakdown */}
                         {isExpanded && (
-                          <div style={{ padding: "16px 20px", borderTop: "1px solid rgba(204, 160, 67, 0.15)", background: "#120a04" }}>
+                          <div style={{ padding: "16px 20px", borderTop: "1px solid rgba(204, 160, 67, 0.15)", background: "#120a04", overflowX: "auto" }}>
                             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12.5px" }}>
                               <thead>
                                 <tr style={{ color: "#8a7565", textAlign: dir === "rtl" ? "right" : "left", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>

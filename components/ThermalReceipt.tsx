@@ -20,6 +20,7 @@ export interface PrintableOrder {
   notes?: string | null;
   captainName?: string | null;
   captainPhone?: string | null;
+  timeline?: string | null;
   createdAt: string;
 }
 
@@ -46,6 +47,8 @@ export function printThermalReceipt(order: PrintableOrder) {
     order.paymentMethod === "cash" ? "كاش عند الاستلام 💵" :
     order.paymentMethod === "instapay" ? "إنستاباي (تم الدفع) ⚡" :
     order.paymentMethod === "wallet" ? "محفظة كاش 📱" : "فيزا / كارت 💳";
+
+  const isOrderEdited = Boolean(order.timeline && order.timeline.includes("edited"));
 
   const printWindow = window.open("", "_blank", "width=400,height=600");
   if (!printWindow) {
@@ -132,6 +135,12 @@ export function printThermalReceipt(order: PrintableOrder) {
       </div>
 
       <div class="divider"></div>
+
+      ${isOrderEdited ? `
+        <div style="background: #000000; color: #ffffff; text-align: center; font-weight: 900; font-size: 13px; padding: 3px 0; margin-bottom: 6px; letter-spacing: 1px;">
+          *** فاتورة معدّلة (MODIFIED) ***
+        </div>
+      ` : ""}
 
       <div class="flex-between font-bold">
         <span>رقم الأوردر:</span>
@@ -342,6 +351,23 @@ export default function ThermalReceiptModal({ order, onClose }: ThermalReceiptMo
             </div>
 
             <div style={{ borderTop: "1px dashed #666", margin: "10px 0" }} />
+
+            {Boolean(order.timeline && order.timeline.includes("edited")) && (
+              <div
+                style={{
+                  background: "#180e06",
+                  color: "#cca043",
+                  textAlign: "center",
+                  fontWeight: 900,
+                  fontSize: "12px",
+                  padding: "4px 8px",
+                  borderRadius: "6px",
+                  marginBottom: "8px",
+                }}
+              >
+                ⚠️ فاتورة معدّلة (MODIFIED RECEIPT)
+              </div>
+            )}
 
             {/* Order & Date */}
             <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 900 }}>

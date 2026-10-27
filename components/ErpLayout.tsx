@@ -8,7 +8,8 @@ import { useLanguage } from "@/context/LanguageContext";
 import { playSound } from "@/lib/sounds";
 import {
   ChefHat, UtensilsCrossed, Package, CircleDollarSign,
-  Users, Store, LogOut, Shield, Settings, Bell, Globe, UserCheck
+  Users, Store, LogOut, Shield, Settings, Bell, Globe, UserCheck,
+  Menu, X
 } from "lucide-react";
 import SettingsModal from "@/components/SettingsModal";
 
@@ -24,9 +25,17 @@ export default function ErpLayout({ children, activeItem }: ErpLayoutProps) {
   const { lang, toggleLang, dir, t } = useLanguage();
   const [mounted, setMounted] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    function handleResize() {
+      setIsMobile(window.innerWidth <= 1024);
+    }
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   // Determine current active item from path if not explicitly provided
@@ -65,11 +74,28 @@ export default function ErpLayout({ children, activeItem }: ErpLayoutProps) {
       {/* ══════════════════════════════════════════════════════════
           SIDEBAR — Whacka 1:1 Operations Hub
       ══════════════════════════════════════════════════════════ */}
+      {/* Mobile Backdrop Overlay */}
+      {isMobile && mobileMenuOpen && (
+        <div
+          onClick={() => setMobileMenuOpen(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.75)",
+            backdropFilter: "blur(4px)",
+            zIndex: 998,
+          }}
+        />
+      )}
+
       <aside style={{
-        width: "250px",
+        width: isMobile ? "270px" : "250px",
+        maxWidth: "85vw",
         height: "100vh",
-        position: "sticky",
+        position: isMobile ? "fixed" : "sticky",
         top: 0,
+        bottom: 0,
+        ...(isMobile ? (dir === "rtl" ? { right: 0 } : { left: 0 }) : {}),
         flexShrink: 0,
         backgroundColor: "#160d05",
         borderLeft: dir === "rtl" ? "1px solid rgba(204, 160, 67, 0.16)" : "none",
@@ -79,59 +105,97 @@ export default function ErpLayout({ children, activeItem }: ErpLayoutProps) {
         flexDirection: "column",
         justifyContent: "space-between",
         boxSizing: "border-box",
-        zIndex: 40,
+        zIndex: isMobile ? 999 : 40,
+        transform: isMobile
+          ? mobileMenuOpen
+            ? "translateX(0)"
+            : dir === "rtl"
+            ? "translateX(100%)"
+            : "translateX(-100%)"
+          : "none",
+        transition: "transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
+        boxShadow: isMobile && mobileMenuOpen ? "0 0 40px rgba(0,0,0,0.9)" : "none",
       }}>
         {/* Top: Brand Header & Nav Links */}
         <div>
-          {/* Logo & Brand */}
-          <Link href="/" style={{
+          {/* Logo & Brand + Mobile Close */}
+          <div style={{
             display: "flex",
             alignItems: "center",
-            gap: "10px",
-            textDecoration: "none",
+            justifyContent: "space-between",
             marginBottom: "28px",
             padding: "0 6px",
           }}>
-            <div style={{
-              width: "42px",
-              height: "42px",
-              borderRadius: "50%",
-              background: "#cca043",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}>
-              <span style={{
-                fontSize: "16px",
-                fontWeight: 700,
-                color: "#180e06",
-                fontFamily: "var(--font-playfair), Georgia, serif",
-              }}>
-                CH
-              </span>
-            </div>
-            <div>
+            <Link
+              href="/"
+              onClick={() => { if (isMobile) setMobileMenuOpen(false); }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                textDecoration: "none",
+              }}
+            >
               <div style={{
-                fontSize: "17px",
-                fontWeight: 700,
-                color: "#f5ede4",
-                fontFamily: "var(--font-playfair), Georgia, serif",
-                lineHeight: 1.15,
+                width: "42px",
+                height: "42px",
+                borderRadius: "50%",
+                background: "#cca043",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
               }}>
-                Choco House
+                <span style={{
+                  fontSize: "16px",
+                  fontWeight: 700,
+                  color: "#180e06",
+                  fontFamily: "var(--font-playfair), Georgia, serif",
+                }}>
+                  CH
+                </span>
               </div>
-              <div style={{
-                fontSize: "11px",
-                fontWeight: 700,
-                color: "#cca043",
-                marginTop: "2px",
-                letterSpacing: "1px",
-              }}>
-                {t("لوحة التشغيل", "Operations Hub")}
+              <div>
+                <div style={{
+                  fontSize: "17px",
+                  fontWeight: 700,
+                  color: "#f5ede4",
+                  fontFamily: "var(--font-playfair), Georgia, serif",
+                  lineHeight: 1.15,
+                }}>
+                  Choco House
+                </div>
+                <div style={{
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  color: "#cca043",
+                  marginTop: "2px",
+                  letterSpacing: "1px",
+                }}>
+                  {t("لوحة التشغيل", "Operations Hub")}
+                </div>
               </div>
-            </div>
-          </Link>
+            </Link>
+
+            {isMobile && (
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                style={{
+                  background: "rgba(255, 255, 255, 0.08)",
+                  border: "none",
+                  color: "#cca043",
+                  borderRadius: "8px",
+                  padding: "6px",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <X size={20} />
+              </button>
+            )}
+          </div>
 
           {/* Navigation Links */}
           <nav style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
@@ -173,7 +237,10 @@ export default function ErpLayout({ children, activeItem }: ErpLayoutProps) {
                 <Link
                   key={item.id}
                   href={item.href}
-                  onClick={() => playSound("click")}
+                  onClick={() => {
+                    playSound("click");
+                    if (isMobile) setMobileMenuOpen(false);
+                  }}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -213,7 +280,10 @@ export default function ErpLayout({ children, activeItem }: ErpLayoutProps) {
           {/* Staff Management Button (Whacka Replica) */}
           <Link
             href="/users"
-            onClick={() => playSound("click")}
+            onClick={() => {
+              playSound("click");
+              if (isMobile) setMobileMenuOpen(false);
+            }}
             style={{
               display: "flex",
               alignItems: "center",
@@ -249,7 +319,10 @@ export default function ErpLayout({ children, activeItem }: ErpLayoutProps) {
           {/* Storefront Link */}
           <Link
             href="/"
-            onClick={() => playSound("click")}
+            onClick={() => {
+              playSound("click");
+              if (isMobile) setMobileMenuOpen(false);
+            }}
             style={{
               display: "flex",
               alignItems: "center",
@@ -296,20 +369,49 @@ export default function ErpLayout({ children, activeItem }: ErpLayoutProps) {
       {/* ══════════════════════════════════════════════════════════
           MAIN AREA (Top Bar + Page Content + Bottom Note)
       ══════════════════════════════════════════════════════════ */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, width: "100%" }}>
 
         {/* ── Top Bar — Whacka 1:1 ── */}
         <header style={{
-          height: "64px",
-          padding: "0 28px",
+          minHeight: "64px",
+          padding: isMobile ? "10px 14px" : "0 28px",
           borderBottom: "1px solid rgba(204, 160, 67, 0.12)",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           backgroundColor: "#100904",
+          gap: "10px",
+          flexWrap: "wrap",
         }}>
-          {/* Right: User Role & Name Badge */}
+          {/* Right: Hamburger button (on mobile) + User Role & Name Badge */}
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            {isMobile && (
+              <button
+                onClick={() => {
+                  playSound("click");
+                  setMobileMenuOpen(!mobileMenuOpen);
+                }}
+                style={{
+                  background: "rgba(204, 160, 67, 0.15)",
+                  border: "1px solid rgba(204, 160, 67, 0.35)",
+                  color: "#cca043",
+                  borderRadius: "10px",
+                  padding: "7px 10px",
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px",
+                  fontSize: "12px",
+                  fontWeight: 800,
+                }}
+                aria-label="القائمة"
+              >
+                <Menu size={18} />
+                <span>{t("القائمة", "Menu")}</span>
+              </button>
+            )}
+
             <div suppressHydrationWarning style={{
               width: "34px",
               height: "34px",
@@ -320,6 +422,7 @@ export default function ErpLayout({ children, activeItem }: ErpLayoutProps) {
               justifyContent: "center",
               color: "#ffffff",
               boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+              flexShrink: 0,
             }}>
               <Shield size={16} strokeWidth={2.3} />
             </div>
@@ -345,21 +448,21 @@ export default function ErpLayout({ children, activeItem }: ErpLayoutProps) {
           </div>
 
           {/* Left: Action controls (Sound test, Settings, Lang) */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             {/* Test Sound Button */}
             <button
               onClick={handleTestSound}
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "6px",
+                gap: "5px",
                 background: "rgba(204, 160, 67, 0.1)",
                 border: "1px solid rgba(204, 160, 67, 0.35)",
                 borderRadius: "100px",
                 height: "36px",
-                padding: "0 14px",
+                padding: isMobile ? "0 10px" : "0 14px",
                 color: "#cca043",
-                fontSize: "12.5px",
+                fontSize: "12px",
                 fontWeight: 800,
                 cursor: "pointer",
                 transition: "all 0.15s ease",
@@ -368,7 +471,7 @@ export default function ErpLayout({ children, activeItem }: ErpLayoutProps) {
               onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(204, 160, 67, 0.1)"; }}
             >
               <Bell size={14} color="#cca043" />
-              <span>{t("تجربة الصوت 🔔", "Test Audio 🔔")}</span>
+              <span>{isMobile ? "صوت 🔔" : t("تجربة الصوت 🔔", "Test Audio 🔔")}</span>
             </button>
 
             {/* Settings button */}
@@ -402,7 +505,7 @@ export default function ErpLayout({ children, activeItem }: ErpLayoutProps) {
                 alignItems: "center",
                 gap: "5px",
                 height: "36px",
-                padding: "0 12px",
+                padding: "0 10px",
                 borderRadius: "10px",
                 background: "transparent",
                 border: "1px solid rgba(204, 160, 67, 0.35)",
@@ -419,7 +522,14 @@ export default function ErpLayout({ children, activeItem }: ErpLayoutProps) {
         </header>
 
         {/* ── Main Page Content ── */}
-        <main style={{ flex: 1, padding: "28px", boxSizing: "border-box" }}>
+        <main style={{
+          flex: 1,
+          padding: isMobile ? "14px 10px" : "28px",
+          boxSizing: "border-box",
+          minWidth: 0,
+          width: "100%",
+          overflowX: "hidden",
+        }}>
           {children}
         </main>
 

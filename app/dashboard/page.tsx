@@ -7,11 +7,13 @@ import { useLanguage } from "@/context/LanguageContext";
 import { playSound } from "@/lib/sounds";
 import ErpLayout from "@/components/ErpLayout";
 import ThermalReceiptModal, { printThermalReceipt } from "@/components/ThermalReceipt";
+import OrderEditModal from "@/components/OrderEditModal";
 import {
   ClipboardList, CheckCircle2, Clock, Phone, MapPin,
   RefreshCw, ChefHat, Bike, XCircle, AlertCircle, Printer,
   Volume2, VolumeX, MessageSquare, Send, UserCheck, Eye,
-  ExternalLink, User, MessageCircle, DollarSign, QrCode, Copy, Check
+  ExternalLink, User, MessageCircle, DollarSign, QrCode, Copy, Check,
+  Edit3, ArrowRight, ArrowLeft
 } from "lucide-react";
 
 interface OrderItem {
@@ -39,6 +41,9 @@ interface Order {
   captainName?: string | null;
   captainPhone?: string | null;
   customerEmail?: string | null;
+  deposit?: number;
+  remaining?: number;
+  timeline?: string;
   createdAt: string;
 }
 
@@ -63,7 +68,7 @@ interface ChatMsg {
 export default function DashboardOrdersPage() {
   const router = useRouter();
   const { isAuthenticated, currentUser, loading: authLoading } = useStaff();
-  const { lang, t } = useLanguage();
+  const { lang, dir, t } = useLanguage();
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -95,9 +100,11 @@ export default function DashboardOrdersPage() {
   const [chatRecipientPhone, setChatRecipientPhone] = useState("");
   const [selectedChatPhone, setSelectedChatPhone] = useState("");
   const [sendingReply, setSendingReply] = useState(false);
+  const [chatView, setChatView] = useState<"list" | "thread">("list");
+  const [orderToEdit, setOrderToEdit] = useState<Order | null>(null);
 
   const chatCustomers = React.useMemo(() => {
-    const map = new Map<string, { id: string; name: string; phone: string; token?: string; count: number }>();
+    const map = new Map<string, { id: string; name: string; phone: string; token?: string; count: number; lastMessage: string; lastTime: string }>();
     chatMessages.forEach((m) => {
       const key = m.customerPhone || m.senderId;
       if (key) {
@@ -108,6 +115,8 @@ export default function DashboardOrdersPage() {
           phone: m.customerPhone || "",
           token: m.senderId || undefined,
           count: (existing?.count || 0) + 1,
+          lastMessage: m.text,
+          lastTime: m.createdAt,
         });
       }
     });
@@ -762,6 +771,33 @@ export default function DashboardOrdersPage() {
                           <span>QR 📱</span>
                         </button>
 
+                        {/* Edit Order Button */}
+                        {order.status !== "delivered" && order.status !== "cancelled" && (
+                          <button
+                            onClick={() => {
+                              setOrderToEdit(order);
+                              playSound("click");
+                            }}
+                            title={t("تعديل أصناف وتفاصيل الأوردر ✏️", "Edit Order Items & Details ✏️")}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              background: "rgba(59, 130, 246, 0.15)",
+                              border: "1px solid rgba(59, 130, 246, 0.35)",
+                              color: "#60a5fa",
+                              borderRadius: "8px",
+                              padding: "3px 8px",
+                              fontSize: "11px",
+                              fontWeight: 800,
+                              cursor: "pointer",
+                            }}
+                          >
+                            <Edit3 size={13} />
+                            <span>{t("تعديل ✏️", "Edit ✏️")}</span>
+                          </button>
+                        )}
+
                         <button
                           onClick={() => setPreviewOrder(order)}
                           title={t("معاينة الفاتورة", "Preview Receipt")}
@@ -777,9 +813,26 @@ export default function DashboardOrdersPage() {
                         </button>
                       </div>
 
-                      {/* Status Badge */}
-                      <span
-                        style={{
+                      {/* Status Badge + Edited Flag */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        {order.timeline?.includes("edited") && (
+                          <span
+                            style={{
+                              fontSize: "10.5px",
+                              fontWeight: 900,
+                              padding: "3px 8px",
+                              borderRadius: "6px",
+                              background: "rgba(249, 115, 22, 0.2)",
+                              border: "1px solid rgba(249, 115, 22, 0.4)",
+                              color: "#fb923c",
+                            }}
+                            title={t("تم تعديل أصناف هذا الطلب", "Order has been edited")}
+                          >
+                            معدّل ✏️
+                          </span>
+                        )}
+                        <span
+                          style={{
                           fontSize: "11.5px",
                           fontWeight: 800,
                           padding: "4px 10px",
@@ -823,6 +876,7 @@ export default function DashboardOrdersPage() {
                           : t("ملغي ❌", "Cancelled ❌")}
                       </span>
                     </div>
+                  </div>
 
                     {/* Customer Info Card */}
                     <div
@@ -1471,28 +1525,33 @@ export default function DashboardOrdersPage() {
             style={{
               position: "fixed",
               inset: 0,
-              zIndex: 100,
+              zIndex: 1000,
               display: "flex",
-              justifyContent: "flex-end",
+              justifyContent: dir === "rtl" ? "flex-start" : "flex-end",
               background: "rgba(0,0,0,0.75)",
+              backdropFilter: "blur(4px)",
+            }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setChatDrawerOpen(false);
             }}
           >
             <div
               style={{
                 width: "100%",
-                maxWidth: "480px",
+                maxWidth: "460px",
                 height: "100%",
                 background: "#160d05",
-                borderLeft: "1px solid rgba(204, 160, 67, 0.3)",
+                borderRight: dir === "rtl" ? "1px solid rgba(204, 160, 67, 0.3)" : "none",
+                borderLeft: dir === "ltr" ? "1px solid rgba(204, 160, 67, 0.3)" : "none",
                 display: "flex",
                 flexDirection: "column",
-                boxShadow: "-8px 0 32px rgba(0,0,0,0.6)",
+                boxShadow: dir === "rtl" ? "10px 0 35px rgba(0,0,0,0.8)" : "-10px 0 35px rgba(0,0,0,0.8)",
               }}
             >
               {/* Drawer Header */}
               <div
                 style={{
-                  padding: "18px 20px",
+                  padding: "16px 20px",
                   borderBottom: "1px solid rgba(255,255,255,0.08)",
                   display: "flex",
                   alignItems: "center",
@@ -1501,181 +1560,50 @@ export default function DashboardOrdersPage() {
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <MessageSquare size={20} color="#cca043" />
-                  <div>
-                    <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 900, color: "#ffffff" }}>
-                      {t("شات واستفسارات العملاء", "Customer Inquiries Chat")}
-                    </h3>
-                    <p style={{ margin: 0, fontSize: "11.5px", color: "#8a7565" }}>
-                      تواصل لحظي مباشر مع عملاء المتجر
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setChatDrawerOpen(false)}
-                  style={{ background: "transparent", border: "none", color: "#8a7565", cursor: "pointer" }}
-                >
-                  <XCircle size={22} />
-                </button>
-              </div>
-
-              {/* Customer Conversation Tabs */}
-              {chatCustomers.length > 0 && (
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "6px",
-                    overflowX: "auto",
-                    padding: "10px 16px",
-                    background: "rgba(0,0,0,0.35)",
-                    borderBottom: "1px solid rgba(255,255,255,0.06)",
-                  }}
-                >
-                  <button
-                    onClick={() => {
-                      setSelectedChatPhone("");
-                      setChatRecipientPhone("");
-                    }}
-                    style={{
-                      padding: "5px 12px",
-                      borderRadius: "100px",
-                      border: "none",
-                      background: selectedChatPhone === "" ? "#cca043" : "rgba(255,255,255,0.06)",
-                      color: selectedChatPhone === "" ? "#180e06" : "#b0957e",
-                      fontWeight: 800,
-                      fontSize: "11px",
-                      cursor: "pointer",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    الكل ({chatMessages.length})
-                  </button>
-
-                  {chatCustomers.map((cust) => (
+                  {chatView === "thread" && (
                     <button
-                      key={cust.id}
                       onClick={() => {
-                        setSelectedChatPhone(cust.id);
-                        setChatRecipientPhone(cust.phone);
+                        setChatView("list");
+                        playSound("click");
                       }}
                       style={{
-                        padding: "5px 12px",
-                        borderRadius: "100px",
-                        border: "none",
-                        background: selectedChatPhone === cust.id ? "#cca043" : "rgba(255,255,255,0.06)",
-                        color: selectedChatPhone === cust.id ? "#180e06" : "#b0957e",
-                        fontWeight: 800,
-                        fontSize: "11px",
+                        background: "rgba(204, 160, 67, 0.15)",
+                        border: "1px solid rgba(204, 160, 67, 0.3)",
+                        color: "#cca043",
+                        borderRadius: "8px",
+                        padding: "6px 10px",
                         cursor: "pointer",
-                        whiteSpace: "nowrap",
                         display: "flex",
                         alignItems: "center",
                         gap: "4px",
+                        fontSize: "11.5px",
+                        fontWeight: 800,
                       }}
                     >
-                      <span>{cust.name}</span>
-                      {cust.phone && <span style={{ fontSize: "10px", opacity: 0.8 }} dir="ltr">({cust.phone})</span>}
+                      {dir === "rtl" ? <ArrowRight size={14} /> : <ArrowLeft size={14} />}
+                      <span>{t("المحادثات", "Chats")}</span>
                     </button>
-                  ))}
-                </div>
-              )}
+                  )}
 
-              {/* Messages Body */}
-              <div
-                style={{
-                  flex: 1,
-                  padding: "16px 20px",
-                  overflowY: "auto",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "12px",
-                }}
-              >
-                {chatMessages.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "40px 0", color: "#8a7565", fontSize: "13px" }}>
-                    لا توجد رسائل شات حتى الآن
-                  </div>
-                ) : (
-                  (selectedChatPhone
-                    ? chatMessages.filter(
-                        (m) =>
-                          (m.customerPhone && m.customerPhone === selectedChatPhone) ||
-                          (m.senderId && m.senderId === selectedChatPhone) ||
-                          (!m.customerPhone && !m.senderId && m.isStaff)
-                      )
-                    : chatMessages
-                  ).map((msg) => (
-                    <div
-                      key={msg.id}
-                      style={{
-                        alignSelf: msg.isStaff ? "flex-start" : "flex-end",
-                        maxWidth: "85%",
-                        background: msg.isStaff ? "rgba(204, 160, 67, 0.15)" : "rgba(255, 255, 255, 0.08)",
-                        border: msg.isStaff ? "1px solid rgba(204, 160, 67, 0.3)" : "1px solid rgba(255,255,255,0.1)",
-                        borderRadius: "14px",
-                        padding: "10px 14px",
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: "11px",
-                          fontWeight: 800,
-                          color: msg.isStaff ? "#cca043" : "#60a5fa",
-                          marginBottom: "3px",
-                          display: "flex",
-                          justifyContent: "space-between",
-                          gap: "8px",
-                        }}
-                      >
-                        <span>{msg.senderName}</span>
-                        {msg.customerPhone && (
-                          <span
-                            onClick={() => {
-                              setSelectedChatPhone(msg.customerPhone || "");
-                              setChatRecipientPhone(msg.customerPhone || "");
-                            }}
-                            style={{ cursor: "pointer", textDecoration: "underline" }}
-                            dir="ltr"
-                          >
-                            {msg.customerPhone}
-                          </span>
-                        )}
-                      </div>
-                      <div style={{ fontSize: "13.5px", color: "#f5ede4", lineHeight: 1.4 }}>
-                        {msg.text}
-                      </div>
-                      <div style={{ fontSize: "10px", color: "#8a7565", marginTop: "4px", textAlign: "left" }}>
-                        {new Date(msg.createdAt).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" })}
-                      </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <MessageSquare size={18} color="#cca043" />
+                    <div>
+                      <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 900, color: "#ffffff" }}>
+                        {chatView === "thread" && selectedChatPhone
+                          ? chatCustomers.find((c) => c.id === selectedChatPhone)?.name || "محادثة عميل"
+                          : t("شات واستفسارات العملاء", "Customer Inquiries Chat")}
+                      </h3>
+                      <p style={{ margin: 0, fontSize: "11px", color: "#8a7565" }}>
+                        {chatView === "thread" && selectedChatPhone
+                          ? (chatCustomers.find((c) => c.id === selectedChatPhone)?.phone || "عميل عبر المتجر")
+                          : `${chatCustomers.length} ${t("محادثة نشطة", "active chats")}`}
+                      </p>
                     </div>
-                  ))
-                )}
-              </div>
+                  </div>
+                </div>
 
-              {/* Chat Reply Input */}
-              <div
-                style={{
-                  padding: "14px 18px",
-                  borderTop: "1px solid rgba(255,255,255,0.08)",
-                  background: "#1a0f07",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "8px",
-                }}
-              >
-                {/* Active Recipient Label */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "11.5px" }}>
-                  <span style={{ color: "#cca043", fontWeight: 700 }}>
-                    الرد موجه إلى:{" "}
-                    <strong>
-                      {selectedChatPhone
-                        ? chatCustomers.find((c) => c.phone === selectedChatPhone)?.name || selectedChatPhone
-                        : "جميع العملاء (بث عام)"}
-                    </strong>
-                  </span>
-
-                  {selectedChatPhone && (
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  {chatView === "thread" && selectedChatPhone && (
                     <a
                       href={`https://wa.me/${
                         selectedChatPhone.replace(/[^0-9]/g, "").startsWith("0")
@@ -1684,54 +1612,312 @@ export default function DashboardOrdersPage() {
                       }?text=${encodeURIComponent("مرحباً من فريق Choco House 🍫")}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ color: "#4ade80", textDecoration: "none", fontWeight: 700, fontSize: "11px" }}
+                      title="مراسلة العميل عبر واتساب مباشرة"
+                      style={{
+                        background: "rgba(34, 197, 94, 0.15)",
+                        border: "1px solid rgba(34, 197, 94, 0.35)",
+                        color: "#4ade80",
+                        padding: "6px 10px",
+                        borderRadius: "8px",
+                        textDecoration: "none",
+                        fontWeight: 800,
+                        fontSize: "11px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                      }}
                     >
-                      واتساب العميل 💬
+                      <MessageCircle size={13} />
+                      <span>واتساب</span>
                     </a>
                   )}
-                </div>
 
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <input
-                    type="text"
-                    placeholder="اكتب ردك للعميل..."
-                    value={chatReplyText}
-                    onChange={(e) => setChatReplyText(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleSendReply();
-                    }}
-                    style={{
-                      flex: 1,
-                      height: "42px",
-                      background: "#0d0805",
-                      border: "1px solid rgba(204, 160, 67, 0.3)",
-                      borderRadius: "12px",
-                      padding: "0 14px",
-                      color: "#ffffff",
-                      fontSize: "13px",
-                      outline: "none",
-                    }}
-                  />
                   <button
-                    onClick={handleSendReply}
-                    disabled={sendingReply || !chatReplyText.trim()}
-                    style={{
-                      width: "44px",
-                      height: "42px",
-                      borderRadius: "12px",
-                      background: "#cca043",
-                      border: "none",
-                      color: "#180e06",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      cursor: "pointer",
-                    }}
+                    onClick={() => setChatDrawerOpen(false)}
+                    style={{ background: "transparent", border: "none", color: "#8a7565", cursor: "pointer", padding: "4px" }}
                   >
-                    <Send size={18} />
+                    <XCircle size={22} />
                   </button>
                 </div>
               </div>
+
+              {/* View 1: CONVERSATIONS LIST (WhatsApp style vertical list) */}
+              {chatView === "list" ? (
+                <div style={{ flex: 1, overflowY: "auto", padding: "12px 14px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                  {/* Broadcast Option */}
+                  <div
+                    onClick={() => {
+                      setSelectedChatPhone("");
+                      setChatRecipientPhone("");
+                      setChatView("thread");
+                      playSound("click");
+                    }}
+                    style={{
+                      background: "rgba(204, 160, 67, 0.08)",
+                      border: "1px dashed rgba(204, 160, 67, 0.35)",
+                      borderRadius: "14px",
+                      padding: "12px 14px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <div style={{
+                        width: "38px",
+                        height: "38px",
+                        borderRadius: "50%",
+                        background: "#cca043",
+                        color: "#180e06",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontWeight: 900,
+                        fontSize: "14px",
+                      }}>
+                        📢
+                      </div>
+                      <div>
+                        <div style={{ fontSize: "13px", fontWeight: 800, color: "#f5ede4" }}>
+                          {t("بث رسالة عامة للجميع", "Broadcast Message to All")}
+                        </div>
+                        <div style={{ fontSize: "11px", color: "#8a7565" }}>
+                          إرسال تنبيه أو إشعار لجميع زوار المتجر
+                        </div>
+                      </div>
+                    </div>
+                    <span style={{ fontSize: "11px", color: "#cca043", fontWeight: 700 }}>
+                      {chatMessages.length} رسالة
+                    </span>
+                  </div>
+
+                  {chatCustomers.length === 0 ? (
+                    <div style={{ textAlign: "center", padding: "60px 20px", color: "#8a7565" }}>
+                      <MessageSquare size={36} color="#7a5c3e" style={{ margin: "0 auto 12px", opacity: 0.5 }} />
+                      <div style={{ fontSize: "14px", fontWeight: 700, color: "#f5ede4", marginBottom: "4px" }}>
+                        لا توجد محادثات عملاء حتى الآن
+                      </div>
+                      <div style={{ fontSize: "12px" }}>
+                        أي استفسار يكتبه عميل في المتجر سيظهر هنا فوراً للتواصل معه
+                      </div>
+                    </div>
+                  ) : (
+                    chatCustomers.map((cust) => {
+                      const isSelected = selectedChatPhone === cust.id;
+                      return (
+                        <div
+                          key={cust.id}
+                          onClick={() => {
+                            setSelectedChatPhone(cust.id);
+                            setChatRecipientPhone(cust.phone);
+                            setChatView("thread");
+                            playSound("click");
+                          }}
+                          style={{
+                            background: isSelected ? "rgba(204, 160, 67, 0.15)" : "rgba(255, 255, 255, 0.03)",
+                            border: isSelected ? "1px solid rgba(204, 160, 67, 0.4)" : "1px solid rgba(255, 255, 255, 0.06)",
+                            borderRadius: "14px",
+                            padding: "12px 14px",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "12px",
+                            transition: "all 0.15s ease",
+                          }}
+                        >
+                          {/* Avatar */}
+                          <div style={{
+                            width: "42px",
+                            height: "42px",
+                            borderRadius: "50%",
+                            background: "rgba(204, 160, 67, 0.2)",
+                            border: "1px solid rgba(204, 160, 67, 0.4)",
+                            color: "#cca043",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontWeight: 900,
+                            fontSize: "15px",
+                            flexShrink: 0,
+                          }}>
+                            {cust.name.slice(0, 1) || "ع"}
+                          </div>
+
+                          {/* Info & Last Message */}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "3px" }}>
+                              <h4 style={{ margin: 0, fontSize: "13.5px", fontWeight: 800, color: "#ffffff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                {cust.name}
+                              </h4>
+                              {cust.lastTime && (
+                                <span style={{ fontSize: "10.5px", color: "#8a7565" }}>
+                                  {new Date(cust.lastTime).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" })}
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+                              <p style={{
+                                margin: 0,
+                                fontSize: "12px",
+                                color: "#b0957e",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}>
+                                {cust.lastMessage || (cust.phone ? `هاتف: ${cust.phone}` : "محادثة نشطة")}
+                              </p>
+                              <span style={{
+                                background: "#cca043",
+                                color: "#180e06",
+                                fontSize: "10px",
+                                fontWeight: 900,
+                                padding: "1px 7px",
+                                borderRadius: "100px",
+                                flexShrink: 0,
+                              }}>
+                                {cust.count}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              ) : (
+                /* View 2: ACTIVE CONVERSATION THREAD */
+                <>
+                  <div
+                    style={{
+                      flex: 1,
+                      padding: "16px 18px",
+                      overflowY: "auto",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "12px",
+                    }}
+                  >
+                    {chatMessages.length === 0 ? (
+                      <div style={{ textAlign: "center", padding: "40px 0", color: "#8a7565", fontSize: "13px" }}>
+                        لا توجد رسائل في هذه المحادثة حتى الآن
+                      </div>
+                    ) : (
+                      (selectedChatPhone
+                        ? chatMessages.filter(
+                            (m) =>
+                              (m.customerPhone && m.customerPhone === selectedChatPhone) ||
+                              (m.senderId && m.senderId === selectedChatPhone) ||
+                              (!m.customerPhone && !m.senderId && m.isStaff)
+                          )
+                        : chatMessages
+                      ).map((msg) => (
+                        <div
+                          key={msg.id}
+                          style={{
+                            alignSelf: msg.isStaff ? "flex-start" : "flex-end",
+                            maxWidth: "85%",
+                            background: msg.isStaff ? "rgba(204, 160, 67, 0.15)" : "rgba(255, 255, 255, 0.08)",
+                            border: msg.isStaff ? "1px solid rgba(204, 160, 67, 0.3)" : "1px solid rgba(255,255,255,0.1)",
+                            borderRadius: "14px",
+                            padding: "10px 14px",
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: "11px",
+                              fontWeight: 800,
+                              color: msg.isStaff ? "#cca043" : "#60a5fa",
+                              marginBottom: "3px",
+                              display: "flex",
+                              justifyContent: "space-between",
+                              gap: "8px",
+                            }}
+                          >
+                            <span>{msg.senderName}</span>
+                            {msg.customerPhone && (
+                              <span dir="ltr" style={{ color: "#8a7565" }}>
+                                {msg.customerPhone}
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: "13.5px", color: "#f5ede4", lineHeight: 1.4, wordBreak: "break-word" }}>
+                            {msg.text}
+                          </div>
+                          <div style={{ fontSize: "10px", color: "#8a7565", marginTop: "4px", textAlign: "left" }}>
+                            {new Date(msg.createdAt).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" })}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Chat Reply Input */}
+                  <div
+                    style={{
+                      padding: "14px 18px",
+                      borderTop: "1px solid rgba(255,255,255,0.08)",
+                      background: "#1a0f07",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "8px",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "11.5px" }}>
+                      <span style={{ color: "#cca043", fontWeight: 700 }}>
+                        الرد موجه إلى:{" "}
+                        <strong>
+                          {selectedChatPhone
+                            ? chatCustomers.find((c) => c.id === selectedChatPhone)?.name || selectedChatPhone
+                            : "جميع العملاء (بث عام)"}
+                        </strong>
+                      </span>
+                    </div>
+
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <input
+                        type="text"
+                        placeholder="اكتب ردك للعميل..."
+                        value={chatReplyText}
+                        onChange={(e) => setChatReplyText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleSendReply();
+                        }}
+                        style={{
+                          flex: 1,
+                          height: "42px",
+                          background: "#0d0805",
+                          border: "1px solid rgba(204, 160, 67, 0.3)",
+                          borderRadius: "12px",
+                          padding: "0 14px",
+                          color: "#ffffff",
+                          fontSize: "13px",
+                          outline: "none",
+                        }}
+                      />
+                      <button
+                        onClick={handleSendReply}
+                        disabled={sendingReply || !chatReplyText.trim()}
+                        style={{
+                          width: "44px",
+                          height: "42px",
+                          borderRadius: "12px",
+                          background: "#cca043",
+                          border: "none",
+                          color: "#180e06",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <Send size={18} />
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -1889,6 +2075,25 @@ export default function DashboardOrdersPage() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════
+            MODAL 5: ORDER EDIT MODAL
+        ══════════════════════════════════════════════════════════ */}
+        {orderToEdit && (
+          <OrderEditModal
+            order={orderToEdit}
+            isOpen={Boolean(orderToEdit)}
+            onClose={() => setOrderToEdit(null)}
+            onOrderUpdated={(updated) => {
+              setOrders((prev) =>
+                prev.map((o) => (o.id === updated.id ? { ...o, ...updated } : o))
+              );
+              setOrderToEdit(null);
+            }}
+            onPrintReceipt={(ord) => printThermalReceipt(ord as any)}
+            lang={lang}
+          />
         )}
       </div>
     </ErpLayout>

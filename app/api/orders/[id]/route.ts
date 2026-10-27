@@ -24,13 +24,26 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (!existing) return NextResponse.json({ error: "الطلب غير موجود" }, { status: 404 });
 
     // Append to timeline
-    let timeline = [];
+    let timeline: any[] = [];
     try { timeline = JSON.parse(existing.timeline || "[]"); } catch {}
     if (body.status && body.status !== existing.status) {
       timeline.push({ stage: body.status, at: new Date().toISOString(), by: body._updatedBy || "system" });
     }
 
-    const { status, captainName, captainPhone, notes, assignedChef, customerEmail, customerId } = body;
+    if (body.items !== undefined || body.total !== undefined || body.isEdited) {
+      timeline.push({ 
+        stage: "edited", 
+        at: new Date().toISOString(), 
+        by: body._updatedBy || "staff",
+        note: body.editNote || "تم تعديل أصناف أو حسابات الأوردر"
+      });
+    }
+
+    const { 
+      status, captainName, captainPhone, notes, assignedChef, customerEmail, customerId,
+      items, subtotal, deliveryFee, total, deposit, remaining, address, phone, customerName, zone
+    } = body;
+
     const updateData: Record<string, any> = {
       timeline: JSON.stringify(timeline),
     };
@@ -41,6 +54,20 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (assignedChef !== undefined) updateData.assignedChef = assignedChef;
     if (customerEmail !== undefined) updateData.customerEmail = customerEmail;
     if (customerId !== undefined) updateData.customerId = customerId;
+
+    // Full order items & financials editing
+    if (items !== undefined) {
+      updateData.items = typeof items === "string" ? items : JSON.stringify(items);
+    }
+    if (subtotal !== undefined) updateData.subtotal = Number(subtotal);
+    if (deliveryFee !== undefined) updateData.deliveryFee = Number(deliveryFee);
+    if (total !== undefined) updateData.total = Number(total);
+    if (deposit !== undefined) updateData.deposit = Number(deposit);
+    if (remaining !== undefined) updateData.remaining = Number(remaining);
+    if (address !== undefined) updateData.address = address;
+    if (phone !== undefined) updateData.phone = phone;
+    if (customerName !== undefined) updateData.customerName = customerName;
+    if (zone !== undefined) updateData.zone = zone;
 
     const updated = await prisma.order.update({
       where: { id },
