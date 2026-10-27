@@ -1,0 +1,87 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build & Release APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Node Dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Sync Capacitor Android
+        run: npx cap sync android
+
+      - name: Make Gradlew Executable
+        run: chmod +x ./android/gradlew
+
+      - name: Build Debug APK
+        run: |
+          cd android
+          ./gradlew assembleDebug --stacktrace
+
+      - name: Prepare APK Asset
+        run: |
+          mkdir -p dist-apk
+          cp android/app/build/outputs/apk/debug/app-debug.apk dist-apk/choco-house.apk
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: choco-house-apk
+          path: dist-apk/choco-house.apk
+          if-no-files-found: error
+
+      - name: Create / Update GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          tag_name: v1.0.0
+          name: "Choco House Android App v1.0.0"
+          draft: false
+          prerelease: false
+          body: |
+            ## 🍫 تطبيق Choco House Desserts للأندرويد - النسخة الرسمية v1.0.0
+            
+            أهلاً بكم في تطبيق Choco House للأندرويد!
+            
+            ### 📱 مميزات التطبيق:
+            - تجربة استخدام سريعة ومباشرة كأبليكيشن أصيل دون الحاجة للمتصفح
+            - متابعة لحظية لكافة الطلبات وتنبيهات صوتية فورية
+            - نظام شات مباشر ومعزول تماماً ومحمي بين العميل وإدارة المطعم
+            - عرض المنيو والعروض الخاصة والكوبونات بدقة عالية
+            
+            ### 📥 طريقة التثبيت:
+            1. حمل ملف `choco-house.apk` المرفق بالأسفل على هاتفك الأندرويد.
+            2. افتح الملف واضغط **تثبيت (Install)**.
+            3. إذا ظهرت رسالة الأمان في هاتفك، اختر **السماح بالتثبيت من هذا المصدر**.
+            4. افتح التطبيق واستمتع بأشهى وافل وحلويات!
+          files: dist-apk/choco-house.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

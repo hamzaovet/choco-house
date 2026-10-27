@@ -7,7 +7,8 @@ import { useLanguage } from "@/context/LanguageContext";
 import { playSound } from "@/lib/sounds";
 import {
   Settings, X, ShieldAlert, Store, Phone, MapPin,
-  Bell, Volume2, Save, Loader2, Check, ExternalLink, Sparkles
+  Bell, Volume2, Save, Loader2, Check, ExternalLink, Sparkles,
+  Smartphone, QrCode
 } from "lucide-react";
 
 interface SettingsModalProps {
@@ -343,6 +344,50 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     style={{ width: "18px", height: "18px", accentColor: "#cca043", cursor: "pointer" }}
                   />
                 </div>
+              </div>
+
+              {/* Section: Mobile App & APK Download */}
+              <div style={{
+                padding: "14px",
+                borderRadius: "14px",
+                background: "rgba(204, 160, 67, 0.08)",
+                border: "1px solid rgba(204, 160, 67, 0.25)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <Smartphone size={20} color="#cca043" />
+                  <div>
+                    <div style={{ fontSize: "13px", fontWeight: 800, color: "#ffffff" }}>
+                      {t("تطبيق الأندرويد وQR التحميل (APK)", "Android App & Download QR")}
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#b0957e" }}>
+                      {t("تحميل ملف APK مباشرة، ومسح كود QR لتثبيت التطبيق", "Direct APK download & QR code for customers & couriers")}
+                    </div>
+                  </div>
+                </div>
+
+                <a
+                  href="/download"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    background: "#cca043",
+                    borderRadius: "10px",
+                    color: "#180e06",
+                    padding: "7px 14px",
+                    fontSize: "12px",
+                    fontWeight: 900,
+                    textDecoration: "none",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "5px",
+                  }}
+                >
+                  <QrCode size={14} />
+                  <span>{t("فتح صفحة التحميل", "Open Download")}</span>
+                </a>
               </div>
 
               {/* Section 4: Shortcut to Offers Admin */}

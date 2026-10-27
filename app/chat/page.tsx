@@ -33,7 +33,7 @@ export default function ChatPage() {
   }, [authLoading, isAuthenticated, permissions, router]);
 
   async function loadMessages() {
-    const res = await fetch("/api/chat");
+    const res = await fetch("/api/chat?isStaffView=1");
     const data = await res.json();
     if (Array.isArray(data)) {
       setMessages(data);

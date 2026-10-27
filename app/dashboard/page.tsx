@@ -52,6 +52,7 @@ interface Captain {
 interface ChatMsg {
   id: string;
   senderName: string;
+  senderId?: string | null;
   text: string;
   isStaff: boolean;
   customerPhone?: string | null;
@@ -96,13 +97,16 @@ export default function DashboardOrdersPage() {
   const [sendingReply, setSendingReply] = useState(false);
 
   const chatCustomers = React.useMemo(() => {
-    const map = new Map<string, { name: string; phone: string; count: number }>();
+    const map = new Map<string, { id: string; name: string; phone: string; token?: string; count: number }>();
     chatMessages.forEach((m) => {
-      if (m.customerPhone) {
-        const existing = map.get(m.customerPhone);
-        map.set(m.customerPhone, {
-          name: (!m.isStaff && m.senderName) ? m.senderName : (existing?.name || "عميل"),
-          phone: m.customerPhone,
+      const key = m.customerPhone || m.senderId;
+      if (key) {
+        const existing = map.get(key);
+        map.set(key, {
+          id: key,
+          name: (!m.isStaff && m.senderName) ? m.senderName : (existing?.name || (m.customerPhone ? "عميل" : "زائر ضيف")),
+          phone: m.customerPhone || "",
+          token: m.senderId || undefined,
           count: (existing?.count || 0) + 1,
         });
       }
@@ -112,7 +116,7 @@ export default function DashboardOrdersPage() {
 
   useEffect(() => {
     if (!selectedChatPhone && chatCustomers.length > 0) {
-      setSelectedChatPhone(chatCustomers[0].phone);
+      setSelectedChatPhone(chatCustomers[0].id);
       setChatRecipientPhone(chatCustomers[0].phone);
     }
   }, [chatCustomers, selectedChatPhone]);
@@ -154,7 +158,7 @@ export default function DashboardOrdersPage() {
 
   const fetchChatMessages = useCallback(async () => {
     try {
-      const res = await fetch("/api/chat");
+      const res = await fetch("/api/chat?isStaffView=1");
       if (res.ok) {
         const data = await res.json();
         setChatMessages(Array.isArray(data) ? data : []);
@@ -275,7 +279,9 @@ export default function DashboardOrdersPage() {
   // Send Staff Reply in Customer Chat
   async function handleSendReply() {
     if (!chatReplyText.trim()) return;
-    const targetPhone = selectedChatPhone || chatRecipientPhone || null;
+    const activeTarget = chatCustomers.find((c) => c.id === selectedChatPhone);
+    const targetPhone = activeTarget?.phone || chatRecipientPhone || null;
+    const targetToken = activeTarget?.token || null;
     setSendingReply(true);
     try {
       const res = await fetch("/api/chat", {
@@ -287,6 +293,7 @@ export default function DashboardOrdersPage() {
           text: chatReplyText.trim(),
           isStaff: true,
           customerPhone: targetPhone,
+          token: targetToken,
         }),
       });
       if (res.ok) {
@@ -1547,17 +1554,17 @@ export default function DashboardOrdersPage() {
 
                   {chatCustomers.map((cust) => (
                     <button
-                      key={cust.phone}
+                      key={cust.id}
                       onClick={() => {
-                        setSelectedChatPhone(cust.phone);
+                        setSelectedChatPhone(cust.id);
                         setChatRecipientPhone(cust.phone);
                       }}
                       style={{
                         padding: "5px 12px",
                         borderRadius: "100px",
                         border: "none",
-                        background: selectedChatPhone === cust.phone ? "#cca043" : "rgba(255,255,255,0.06)",
-                        color: selectedChatPhone === cust.phone ? "#180e06" : "#b0957e",
+                        background: selectedChatPhone === cust.id ? "#cca043" : "rgba(255,255,255,0.06)",
+                        color: selectedChatPhone === cust.id ? "#180e06" : "#b0957e",
                         fontWeight: 800,
                         fontSize: "11px",
                         cursor: "pointer",
@@ -1568,7 +1575,7 @@ export default function DashboardOrdersPage() {
                       }}
                     >
                       <span>{cust.name}</span>
-                      <span style={{ fontSize: "10px", opacity: 0.8 }} dir="ltr">({cust.phone})</span>
+                      {cust.phone && <span style={{ fontSize: "10px", opacity: 0.8 }} dir="ltr">({cust.phone})</span>}
                     </button>
                   ))}
                 </div>
@@ -1593,8 +1600,9 @@ export default function DashboardOrdersPage() {
                   (selectedChatPhone
                     ? chatMessages.filter(
                         (m) =>
-                          m.customerPhone === selectedChatPhone ||
-                          (!m.customerPhone && m.isStaff)
+                          (m.customerPhone && m.customerPhone === selectedChatPhone) ||
+                          (m.senderId && m.senderId === selectedChatPhone) ||
+                          (!m.customerPhone && !m.senderId && m.isStaff)
                       )
                     : chatMessages
                   ).map((msg) => (

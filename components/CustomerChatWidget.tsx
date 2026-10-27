@@ -23,10 +23,23 @@ export default function CustomerChatWidget({ lang = "ar" }: CustomerChatWidgetPr
   const [inputText, setInputText] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
-  const [sending, setSending] = useState(false);
-  const [hasNewReply, setHasNewReply] = useState(false);
+  const [chatToken, setChatToken]         = useState("");
+  const [sending, setSending]             = useState(false);
+  const [hasNewReply, setHasNewReply]     = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Initialize persistent device token for chat privacy
+  useEffect(() => {
+    try {
+      let t = localStorage.getItem("choco_chat_token");
+      if (!t) {
+        t = "tok_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
+        localStorage.setItem("choco_chat_token", t);
+      }
+      setChatToken(t);
+    } catch {}
+  }, []);
 
   // Sync customer info from localStorage
   const syncCustomer = useCallback(() => {
@@ -48,8 +61,13 @@ export default function CustomerChatWidget({ lang = "ar" }: CustomerChatWidgetPr
 
   const fetchMessages = useCallback(async () => {
     try {
+      const activeToken = chatToken || (typeof window !== "undefined" ? localStorage.getItem("choco_chat_token") : null);
+      if (!activeToken && !customerPhone) return;
+
       const params = new URLSearchParams();
+      if (activeToken) params.set("token", activeToken);
       if (customerPhone) params.set("customerPhone", customerPhone.trim());
+
       const res = await fetch(`/api/chat?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
@@ -62,7 +80,7 @@ export default function CustomerChatWidget({ lang = "ar" }: CustomerChatWidgetPr
         }
       }
     } catch {}
-  }, [customerPhone, isOpen]);
+  }, [customerPhone, chatToken, isOpen]);
 
   useEffect(() => {
     fetchMessages();
@@ -82,6 +100,7 @@ export default function CustomerChatWidget({ lang = "ar" }: CustomerChatWidgetPr
     if (!textToSend.trim()) return;
 
     const sender = customerName.trim() || (lang === "en" ? "Guest Customer" : "عميل Choco House");
+    const activeToken = chatToken || (typeof window !== "undefined" ? localStorage.getItem("choco_chat_token") : null);
     setSending(true);
     playSound("click");
     try {
@@ -93,6 +112,7 @@ export default function CustomerChatWidget({ lang = "ar" }: CustomerChatWidgetPr
           senderRole: "customer",
           text: textToSend.trim(),
           isStaff: false,
+          token: activeToken || null,
           customerPhone: customerPhone.trim() || null,
         }),
       });

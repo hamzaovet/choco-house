@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Choco House Desserts</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0d0805;
+      color: #cca043;
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+    }
+    .logo {
+      width: 140px;
+      height: auto;
+      margin-bottom: 20px;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.04); opacity: 0.85; }
+    }
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(204, 160, 67, 0.2);
+      border-top-color: #cca043;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-top: 20px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <img src="choco-logo.png" alt="Choco House" class="logo">
+  <h2 style="font-size: 20px; font-weight: 900; color: #ffffff;">Choco House Desserts</h2>
+  <p style="font-size: 13px; color: #8a7565; margin-top: 4px;">جاري تشغيل التطبيق...</p>
+  <div class="spinner"></div>
+
+  <script>
+    window.location.replace("https://choco-house.vercel.app/");
+  </script>
+</body>
+</html>

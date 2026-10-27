@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import { playSound } from "@/lib/sounds";
 import CustomerAccountModal from "@/components/CustomerAccountModal";
 import CustomerChatWidget from "@/components/CustomerChatWidget";
@@ -1487,6 +1488,30 @@ export default function HomePage() {
               Choco House <span style={{ color: "#cca043", fontSize: "11px", letterSpacing: "2px" }}>{lang === "en" ? "DESSERTS" : "ديسرتس"}</span>
             </span>
           </div>
+
+          {/* Android App Download Banner */}
+          <Link
+            href="/download"
+            onClick={() => playSound("click")}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              background: "rgba(204, 160, 67, 0.1)",
+              border: "1px solid rgba(204, 160, 67, 0.3)",
+              padding: "7px 18px",
+              borderRadius: "100px",
+              color: "#e6c37a",
+              textDecoration: "none",
+              fontSize: "12.5px",
+              fontWeight: 800,
+              transition: "all 0.2s ease",
+            }}
+          >
+            <span>📱 {lang === "en" ? "Download Android App (APK)" : "تحميل تطبيق الأندرويد الرسمي (APK) والـ QR"}</span>
+            <span style={{ color: "#4ade80", fontSize: "11px" }}>● v1.0.0</span>
+          </Link>
+
           <p style={{ fontSize: "13px", color: C.muted, margin: 0 }}>
             {lang === "en"
               ? "© 2026 Choco House Desserts. Luxury desserts made to order in 6th of October."

@@ -239,17 +239,19 @@ export default function Navbar() {
               margin: "0 24px",
             }}>
               {(lang === "en" ? [
-                { href: "/",       label: "Home" },
-                { href: "#menu",   label: "Menu" },
-                { href: "#offers", label: "Offers" },
-                { href: "#about",  label: "About" },
-                { href: "#track",  label: "Track order" },
+                { href: "/",          label: "Home" },
+                { href: "#menu",      label: "Menu" },
+                { href: "#offers",    label: "Offers" },
+                { href: "#about",     label: "About" },
+                { href: "#track",     label: "Track order" },
+                { href: "/download",  label: "📱 App" },
               ] : [
-                { href: "/",       label: "الرئيسية" },
-                { href: "#menu",   label: "المنيو" },
-                { href: "#offers", label: "العروض" },
-                { href: "#about",  label: "عن المطعم" },
-                { href: "#track",  label: "تتبع الطلب" },
+                { href: "/",          label: "الرئيسية" },
+                { href: "#menu",      label: "المنيو" },
+                { href: "#offers",    label: "العروض" },
+                { href: "#about",     label: "عن المطعم" },
+                { href: "#track",     label: "تتبع الطلب" },
+                { href: "/download",  label: "📱 التطبيق" },
               ]).map((l) => (
                 <a
                   key={l.label}
@@ -450,17 +452,19 @@ export default function Navbar() {
               direction: lang === "ar" ? "rtl" : "ltr",
             }}>
               {(lang === "en" ? [
-                { href: "/",       label: "🏠 Home" },
-                { href: "#menu",   label: "🍽️ Menu" },
-                { href: "#offers", label: "🏷️ Offers" },
-                { href: "#about",  label: "🏪 About" },
-                { href: "#track",  label: "📦 Track order" },
+                { href: "/",          label: "🏠 Home" },
+                { href: "#menu",      label: "🍽️ Menu" },
+                { href: "#offers",    label: "🏷️ Offers" },
+                { href: "#about",     label: "🏪 About" },
+                { href: "#track",     label: "📦 Track order" },
+                { href: "/download",  label: "📱 Download App" },
               ] : [
-                { href: "/",       label: "🏠 الرئيسية" },
-                { href: "#menu",   label: "🍽️ المنيو" },
-                { href: "#offers", label: "🏷️ العروض" },
-                { href: "#about",  label: "🏪 عن المطعم" },
-                { href: "#track",  label: "📦 تتبع الطلب" },
+                { href: "/",          label: "🏠 الرئيسية" },
+                { href: "#menu",      label: "🍽️ المنيو" },
+                { href: "#offers",    label: "🏷️ العروض" },
+                { href: "#about",     label: "🏪 عن المطعم" },
+                { href: "#track",     label: "📦 تتبع الطلب" },
+                { href: "/download",  label: "📱 تحميل التطبيق (APK)" },
               ]).map((l) => (
                 <a
                   key={l.label}
