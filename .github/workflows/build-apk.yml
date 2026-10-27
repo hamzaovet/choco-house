@@ -41,29 +41,17 @@ jobs:
       - name: Make Gradlew Executable
         run: chmod +x ./android/gradlew
 
-      - name: Build Debug APK with Gradle
+      - name: Build Debug APK & Prepare Asset
         env:
           ANDROID_HOME: /usr/local/lib/android/sdk
         run: |
           cd android
-          ./gradlew :app:assembleDebug --stacktrace 2>&1 | tee ../build.log || {
-            echo "Gradle failed, saving log..."
-            cd ..
-            git config user.name "github-actions"
-            git config user.email "github-actions@github.com"
-            git checkout -B build-log
-            tail -n 250 build.log > build-error.txt
-            git add build-error.txt
-            git commit -m "chore: record build error"
-            git push origin build-log -f
-            exit 1
-          }
-
-      - name: Prepare APK Asset
-        run: |
-          mkdir -p dist-apk
-          find android/ -name "*.apk" -ls
-          find android/ -name "*.apk" -exec cp {} dist-apk/choco-house.apk \;
+          ./gradlew :app:assembleDebug --stacktrace
+          echo "=== Content of app/build/outputs ==="
+          ls -laR app/build/outputs/ || true
+          mkdir -p ../dist-apk
+          find . -name "*.apk" -exec cp {} ../dist-apk/choco-house.apk \;
+          cd ..
           ls -lh dist-apk/choco-house.apk
 
       - name: Upload APK Artifact
