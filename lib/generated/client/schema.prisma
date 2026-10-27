@@ -1,0 +1,129 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/client"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  username     String?  @unique
+  passwordHash String?
+  phone        String   @unique
+  pin          String   @default("123456")
+  role         String   @default("cashier") // owner, cashier, chef, accountant
+  avatar       String?
+  department   String?
+  createdAt    DateTime @default(now())
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  nameAr      String
+  nameEn      String
+  category    String
+  basePrice   Float
+  image       String?
+  description String?
+  isAvailable Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+}
+
+model Order {
+  id            String   @id @default(cuid())
+  orderNumber   String   @unique
+  customerName  String
+  phone         String
+  address       String?
+  zone          String   @default("الحي الثاني")
+  status        String   @default("new") // new, preparing, ready, delivered, cancelled
+  items         String // JSON: [{productId, nameAr, nameEn, qty, unitPrice, extras:[]}]
+  subtotal      Float
+  deliveryFee   Float    @default(15)
+  total         Float
+  deposit       Float    @default(0)
+  remaining     Float
+  paymentMethod String   @default("cash") // cash, instapay, wallet, card
+  notes         String?
+  assignedChef  String?
+  timeline      String   @default("[]") // JSON: [{stage, at, by}]
+  saro5RefId    String? // رابط مع صاروخ لاحقاً
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Ingredient {
+  id          String   @id @default(cuid())
+  name        String
+  unit        String   @default("كيلو")
+  quantity    Float    @default(0)
+  minStock    Float    @default(1)
+  costPerUnit Float    @default(0)
+  createdAt   DateTime @default(now())
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  description String
+  amount      Float
+  expenseDate String // YYYY-MM-DD
+  category    String   @default("تشغيل")
+  recordedBy  String?
+  createdAt   DateTime @default(now())
+}
+
+model ChatMessage {
+  id         String   @id @default(cuid())
+  senderId   String?
+  senderName String
+  senderRole String?
+  text       String
+  createdAt  DateTime @default(now())
+}
+
+model SystemSettings {
+  id             String   @id @default("default")
+  restaurantName String   @default("Choco House Desserts")
+  phone          String   @default("01091413470")
+  address        String   @default("الحي الثاني، قطعة 3، مبنى 3، السادس من أكتوبر")
+  deliveryZones  String   @default("[]") // JSON: [{name, fee}]
+  soundsEnabled  Boolean  @default(true)
+  specialOffers  String?
+  updatedAt      DateTime @updatedAt
+}
+
+model InventoryAudit {
+  id          String   @id @default(cuid())
+  title       String // مثلاً: جرد أسبوعي أو جرد شهر أكتوبر
+  periodStart String? // YYYY-MM-DD
+  periodEnd   String? // YYYY-MM-DD
+  totalCost   Float // إجمالي تكلفة الخامات المستهلكة
+  itemsCount  Int      @default(0)
+  items       String // JSON: [{ingredientId, name, unit, prevQty, actualQty, consumedQty, costPerUnit, totalCost}]
+  recordedBy  String?
+  expenseId   String? // معرّف المصروف المترحل تلقائياً
+  createdAt   DateTime @default(now())
+}
+
+model Purchase {
+  id             String   @id @default(cuid())
+  ingredientId   String
+  ingredientName String
+  quantity       Float
+  unitPrice      Float
+  totalCost      Float
+  prevQty        Float
+  newQty         Float
+  prevCost       Float
+  newAvgCost     Float
+  invoiceNumber  String?
+  supplier       String?
+  notes          String?
+  recordedBy     String?
+  expenseId      String?
+  createdAt      DateTime @default(now())
+}

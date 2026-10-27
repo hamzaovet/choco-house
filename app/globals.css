@@ -1,26 +1,87 @@
 @import "tailwindcss";
 
+/* Playfair Display available via CSS variable --font-playfair (loaded in layout.tsx via next/font/google) */
+.font-playfair,
+.ch-serif {
+  font-family: var(--font-playfair), Georgia, "Palatino Linotype", "Book Antiqua", Palatino, serif;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --choco-dark: #0d0805;
+  --choco-card: #1a0f07;
+  --choco-border: #3d1f0a;
+  --choco-gold: #c8860a;
+  --choco-gold-light: #e8a020;
+  --choco-cream: #f5ede4;
+  --choco-text-muted: #9c7a5e;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+html {
+  scroll-behavior: smooth;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* RTL scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--choco-border) transparent;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+*::-webkit-scrollbar { width: 5px; height: 5px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: var(--choco-border); border-radius: 8px; }
+
+/* Keyframe animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(200, 134, 10, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(200, 134, 10, 0); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes heroFadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.animate-fadeIn { animation: fadeIn 0.4s ease forwards; }
+.animate-slideInRight { animation: slideInRight 0.35s ease forwards; }
+.animate-pulse-glow { animation: pulse-glow 2s infinite; }
+
+/* Card hover */
+.choco-card {
+  background: var(--choco-card);
+  border: 1px solid var(--choco-border);
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.choco-card:hover {
+  border-color: var(--choco-gold);
+  box-shadow: 0 4px 24px rgba(200, 134, 10, 0.15);
+}
+
+/* Gold button */
+.btn-gold {
+  background: linear-gradient(135deg, #c8860a, #e8a020);
+  color: #0d0805;
+  font-weight: 900;
+  transition: all 0.2s;
+}
+.btn-gold:hover { filter: brightness(1.1); transform: scale(1.01); }
+.btn-gold:active { transform: scale(0.99); }

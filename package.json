@@ -3,12 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
+    "dev": "next dev --port 3080",
+    "build": "next build --webpack",
+    "start": "next start --port 3080",
+    "postinstall": "prisma generate",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:seed": "node prisma/seed.mjs"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.10.1",
+    "@prisma/client": "^7.10.1",
+    "lucide-react": "^1.61.0",
     "next": "16.4.3",
+    "prisma": "^7.10.1",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
