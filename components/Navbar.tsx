@@ -102,6 +102,7 @@ export default function Navbar() {
     { href: "/inventory",  label: "المخزون",      icon: Package,          show: permissions.canViewInventory },
     { href: "/expenses",   label: "المصروفات",    icon: CircleDollarSign, show: permissions.canViewExpenses },
     { href: "/reports",    label: "التقارير",     icon: BarChart3,        show: permissions.canViewReports },
+    { href: "/customers",  label: "العملاء",      icon: Users,            show: currentUser?.role === "owner" || currentUser?.role === "manager" },
     { href: "/chat",       label: "الشات",        icon: MessageCircle,    show: permissions.canViewChat },
     { href: "/users",      label: "الموظفون",     icon: Users,            show: currentUser?.role === "owner" || currentUser?.role === "manager" },
   ];

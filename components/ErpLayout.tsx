@@ -8,13 +8,13 @@ import { useLanguage } from "@/context/LanguageContext";
 import { playSound } from "@/lib/sounds";
 import {
   ChefHat, UtensilsCrossed, Package, CircleDollarSign,
-  Users, Store, LogOut, Shield, Settings, Bell, Globe
+  Users, Store, LogOut, Shield, Settings, Bell, Globe, UserCheck
 } from "lucide-react";
 import SettingsModal from "@/components/SettingsModal";
 
 interface ErpLayoutProps {
   children: React.ReactNode;
-  activeItem?: "orders" | "menu" | "inventory" | "reports" | "users";
+  activeItem?: "orders" | "menu" | "inventory" | "reports" | "users" | "customers";
 }
 
 export default function ErpLayout({ children, activeItem }: ErpLayoutProps) {
@@ -35,6 +35,7 @@ export default function ErpLayout({ children, activeItem }: ErpLayoutProps) {
     : pathname === "/menu-admin" || pathname === "/offers-admin" ? "menu"
     : pathname === "/inventory" ? "inventory"
     : pathname === "/reports" || pathname === "/expenses" ? "reports"
+    : pathname === "/customers" ? "customers"
     : pathname === "/users" ? "users"
     : "orders"
   );
@@ -158,6 +159,12 @@ export default function ErpLayout({ children, activeItem }: ErpLayoutProps) {
                 href: "/reports",
                 label: t("الحسابات والأرباح", "Finances & Profits"),
                 icon: CircleDollarSign,
+              },
+              {
+                id: "customers",
+                href: "/customers",
+                label: t("قاعدة بيانات العملاء", "Customers CRM"),
+                icon: UserCheck,
               },
             ].map((item) => {
               const Icon = item.icon;

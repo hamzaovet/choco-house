@@ -126,10 +126,9 @@ export function printThermalReceipt(order: PrintableOrder) {
     </head>
     <body onload="window.print(); setTimeout(() => window.close(), 500);">
       <div class="text-center">
-        <div class="font-bold text-xl">CHOCO HOUSE DESSERTS</div>
-        <div class="font-bold">بيت الشوكولاتة والحلويات الفاخرة</div>
-        <div style="font-size: 11px;">مدينة 6 أكتوبر — الحي الثاني / المحور المركزي</div>
-        <div style="font-size: 12px;">هاتف: 01091413470</div>
+        <img src="${typeof window !== 'undefined' ? window.location.origin : ''}/choco-logo.png" alt="Choco House" style="width: 52mm; max-width: 200px; height: auto; margin: 0 auto 6px; display: block;" />
+        <div style="font-size: 11px; font-weight: bold;">مدينة 6 أكتوبر — الحي الثاني / المحور المركزي</div>
+        <div style="font-size: 12px; font-weight: bold;">هاتف: 01091413470</div>
       </div>
 
       <div class="divider"></div>
@@ -215,6 +214,11 @@ export function printThermalReceipt(order: PrintableOrder) {
       </div>
 
       <div class="divider"></div>
+
+      <div class="text-center" style="margin-top: 8px;">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=${encodeURIComponent((typeof window !== 'undefined' ? window.location.origin : 'https://choco-house.vercel.app') + '/receipt/' + order.id)}" style="width: 28mm; height: 28mm; margin: 0 auto 4px; display: block;" alt="Receipt QR" />
+        <div style="font-size: 10px; font-weight: bold;">📱 امسح الكود لتتبع الفاتورة والأوردر لايف</div>
+      </div>
 
       <div class="footer-note">
         شكراً لطلبكم من بيت الشوكولاتة 🍫<br/>
@@ -332,9 +336,8 @@ export default function ThermalReceiptModal({ order, onClose }: ThermalReceiptMo
           >
             {/* Store Banner */}
             <div style={{ textAlign: "center", marginBottom: "12px" }}>
-              <div style={{ fontSize: "18px", fontWeight: 900, letterSpacing: "0.5px" }}>CHOCO HOUSE DESSERTS</div>
-              <div style={{ fontSize: "13px", fontWeight: 700 }}>بيت الشوكولاتة والحلويات الفاخرة</div>
-              <div style={{ fontSize: "11px", color: "#444" }}>6 أكتوبر — الحي الثاني / المحور المركزي</div>
+              <img src="/choco-logo.png" alt="Choco House" style={{ width: "160px", height: "auto", margin: "0 auto 6px", display: "block" }} />
+              <div style={{ fontSize: "11px", color: "#444", fontWeight: 700 }}>6 أكتوبر — الحي الثاني / المحور المركزي</div>
               <div style={{ fontSize: "12px", fontWeight: 700, marginTop: "2px" }}>هاتف: 01091413470</div>
             </div>
 
@@ -428,6 +431,22 @@ export default function ThermalReceiptModal({ order, onClose }: ThermalReceiptMo
             </div>
 
             <div style={{ borderTop: "1px dashed #666", margin: "12px 0 8px" }} />
+
+            {/* Live Digital Receipt QR Code */}
+            <div style={{ textAlign: "center", margin: "10px 0" }}>
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=${encodeURIComponent(
+                  (typeof window !== "undefined" ? window.location.origin : "https://choco-house.vercel.app") + "/receipt/" + order.id
+                )}`}
+                alt="QR Code"
+                style={{ width: "95px", height: "95px", margin: "0 auto 4px", display: "block" }}
+              />
+              <div style={{ fontSize: "10px", fontWeight: 700, color: "#444" }}>
+                📱 امسح الكود لتتبع الفاتورة والأوردر رقمياً
+              </div>
+            </div>
+
+            <div style={{ borderTop: "1px dashed #666", margin: "8px 0" }} />
 
             <div style={{ textAlign: "center", fontSize: "11px", color: "#555" }}>
               شكراً لطلبكم من بيت الشوكولاتة 🍫<br/>

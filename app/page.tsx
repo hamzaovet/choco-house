@@ -643,7 +643,7 @@ export default function HomePage() {
               letterSpacing: lang === "en" ? "-0.2px" : "-0.5px",
               textShadow: "0 2px 14px rgba(0,0,0,0.6)",
             }}>
-              {lang === "en" ? "The richest Nutella waffle" : "أشهى وافل بنوتيلا أصلية"}
+              {lang === "en" ? "The richest Nutella & Lotus waffle" : "أشهى وافل بنوتيلا ولوتس"}
             </span>
             <span style={{
               color: "#cca043",
@@ -655,7 +655,7 @@ export default function HomePage() {
               textShadow: "0 2px 14px rgba(204, 160, 67, 0.3)",
               fontFamily: lang === "en" ? "var(--font-playfair), Georgia, 'Times New Roman', serif" : "var(--font-cairo), system-ui, sans-serif",
             }}>
-              {lang === "en" ? "& Lotus in 6th of October" : "ولوتس فى 6 اكتوبر"}
+              {lang === "en" ? "in 6th of October" : "في 6 أكتوبر"}
             </span>
           </h1>
 

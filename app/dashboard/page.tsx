@@ -11,7 +11,7 @@ import {
   ClipboardList, CheckCircle2, Clock, Phone, MapPin,
   RefreshCw, ChefHat, Bike, XCircle, AlertCircle, Printer,
   Volume2, VolumeX, MessageSquare, Send, UserCheck, Eye,
-  ExternalLink, User, MessageCircle, DollarSign
+  ExternalLink, User, MessageCircle, DollarSign, QrCode, Copy, Check
 } from "lucide-react";
 
 interface OrderItem {
@@ -75,6 +75,10 @@ export default function DashboardOrdersPage() {
   // Thermal Receipt Preview
   const [previewOrder, setPreviewOrder] = useState<Order | null>(null);
 
+  // Digital QR Code Modal
+  const [qrModalOrder, setQrModalOrder] = useState<Order | null>(null);
+  const [copiedQrLink, setCopiedQrLink] = useState(false);
+
   // Captain Assignment Modal
   const [captainModalOrder, setCaptainModalOrder] = useState<Order | null>(null);
   const [captains, setCaptains] = useState<Captain[]>([]);
@@ -88,7 +92,30 @@ export default function DashboardOrdersPage() {
   const [chatMessages, setChatMessages] = useState<ChatMsg[]>([]);
   const [chatReplyText, setChatReplyText] = useState("");
   const [chatRecipientPhone, setChatRecipientPhone] = useState("");
+  const [selectedChatPhone, setSelectedChatPhone] = useState("");
   const [sendingReply, setSendingReply] = useState(false);
+
+  const chatCustomers = React.useMemo(() => {
+    const map = new Map<string, { name: string; phone: string; count: number }>();
+    chatMessages.forEach((m) => {
+      if (m.customerPhone) {
+        const existing = map.get(m.customerPhone);
+        map.set(m.customerPhone, {
+          name: (!m.isStaff && m.senderName) ? m.senderName : (existing?.name || "عميل"),
+          phone: m.customerPhone,
+          count: (existing?.count || 0) + 1,
+        });
+      }
+    });
+    return Array.from(map.values());
+  }, [chatMessages]);
+
+  useEffect(() => {
+    if (!selectedChatPhone && chatCustomers.length > 0) {
+      setSelectedChatPhone(chatCustomers[0].phone);
+      setChatRecipientPhone(chatCustomers[0].phone);
+    }
+  }, [chatCustomers, selectedChatPhone]);
 
   const STATUS_TABS = [
     { id: "active",     label: t("النشطة", "Active") },
@@ -248,6 +275,7 @@ export default function DashboardOrdersPage() {
   // Send Staff Reply in Customer Chat
   async function handleSendReply() {
     if (!chatReplyText.trim()) return;
+    const targetPhone = selectedChatPhone || chatRecipientPhone || null;
     setSendingReply(true);
     try {
       const res = await fetch("/api/chat", {
@@ -258,7 +286,7 @@ export default function DashboardOrdersPage() {
           senderRole: currentUser?.role || "staff",
           text: chatReplyText.trim(),
           isStaff: true,
-          customerPhone: chatRecipientPhone || null,
+          customerPhone: targetPhone,
         }),
       });
       if (res.ok) {
@@ -700,6 +728,31 @@ export default function DashboardOrdersPage() {
                         >
                           <Printer size={13} />
                           <span>80mm</span>
+                        </button>
+
+                        {/* Digital QR Receipt Button */}
+                        <button
+                          onClick={() => {
+                            setQrModalOrder(order);
+                            playSound("click");
+                          }}
+                          title={t("كيو ار الفاتورة الذكية للموبايل 📱", "Digital QR Receipt 📱")}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                            background: "rgba(168, 85, 247, 0.15)",
+                            border: "1px solid rgba(168, 85, 247, 0.35)",
+                            color: "#c084fc",
+                            borderRadius: "8px",
+                            padding: "3px 8px",
+                            fontSize: "11px",
+                            fontWeight: 800,
+                            cursor: "pointer",
+                          }}
+                        >
+                          <QrCode size={13} />
+                          <span>QR 📱</span>
                         </button>
 
                         <button
@@ -1460,6 +1513,67 @@ export default function DashboardOrdersPage() {
                 </button>
               </div>
 
+              {/* Customer Conversation Tabs */}
+              {chatCustomers.length > 0 && (
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "6px",
+                    overflowX: "auto",
+                    padding: "10px 16px",
+                    background: "rgba(0,0,0,0.35)",
+                    borderBottom: "1px solid rgba(255,255,255,0.06)",
+                  }}
+                >
+                  <button
+                    onClick={() => {
+                      setSelectedChatPhone("");
+                      setChatRecipientPhone("");
+                    }}
+                    style={{
+                      padding: "5px 12px",
+                      borderRadius: "100px",
+                      border: "none",
+                      background: selectedChatPhone === "" ? "#cca043" : "rgba(255,255,255,0.06)",
+                      color: selectedChatPhone === "" ? "#180e06" : "#b0957e",
+                      fontWeight: 800,
+                      fontSize: "11px",
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    الكل ({chatMessages.length})
+                  </button>
+
+                  {chatCustomers.map((cust) => (
+                    <button
+                      key={cust.phone}
+                      onClick={() => {
+                        setSelectedChatPhone(cust.phone);
+                        setChatRecipientPhone(cust.phone);
+                      }}
+                      style={{
+                        padding: "5px 12px",
+                        borderRadius: "100px",
+                        border: "none",
+                        background: selectedChatPhone === cust.phone ? "#cca043" : "rgba(255,255,255,0.06)",
+                        color: selectedChatPhone === cust.phone ? "#180e06" : "#b0957e",
+                        fontWeight: 800,
+                        fontSize: "11px",
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                      }}
+                    >
+                      <span>{cust.name}</span>
+                      <span style={{ fontSize: "10px", opacity: 0.8 }} dir="ltr">({cust.phone})</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
               {/* Messages Body */}
               <div
                 style={{
@@ -1476,7 +1590,14 @@ export default function DashboardOrdersPage() {
                     لا توجد رسائل شات حتى الآن
                   </div>
                 ) : (
-                  chatMessages.map((msg) => (
+                  (selectedChatPhone
+                    ? chatMessages.filter(
+                        (m) =>
+                          m.customerPhone === selectedChatPhone ||
+                          (!m.customerPhone && m.isStaff)
+                      )
+                    : chatMessages
+                  ).map((msg) => (
                     <div
                       key={msg.id}
                       style={{
@@ -1502,7 +1623,10 @@ export default function DashboardOrdersPage() {
                         <span>{msg.senderName}</span>
                         {msg.customerPhone && (
                           <span
-                            onClick={() => setChatRecipientPhone(msg.customerPhone || "")}
+                            onClick={() => {
+                              setSelectedChatPhone(msg.customerPhone || "");
+                              setChatRecipientPhone(msg.customerPhone || "");
+                            }}
                             style={{ cursor: "pointer", textDecoration: "underline" }}
                             dir="ltr"
                           >
@@ -1524,7 +1648,7 @@ export default function DashboardOrdersPage() {
               {/* Chat Reply Input */}
               <div
                 style={{
-                  padding: "16px 20px",
+                  padding: "14px 18px",
                   borderTop: "1px solid rgba(255,255,255,0.08)",
                   background: "#1a0f07",
                   display: "flex",
@@ -1532,6 +1656,33 @@ export default function DashboardOrdersPage() {
                   gap: "8px",
                 }}
               >
+                {/* Active Recipient Label */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "11.5px" }}>
+                  <span style={{ color: "#cca043", fontWeight: 700 }}>
+                    الرد موجه إلى:{" "}
+                    <strong>
+                      {selectedChatPhone
+                        ? chatCustomers.find((c) => c.phone === selectedChatPhone)?.name || selectedChatPhone
+                        : "جميع العملاء (بث عام)"}
+                    </strong>
+                  </span>
+
+                  {selectedChatPhone && (
+                    <a
+                      href={`https://wa.me/${
+                        selectedChatPhone.replace(/[^0-9]/g, "").startsWith("0")
+                          ? "2" + selectedChatPhone.replace(/[^0-9]/g, "")
+                          : selectedChatPhone.replace(/[^0-9]/g, "")
+                      }?text=${encodeURIComponent("مرحباً من فريق Choco House 🍫")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: "#4ade80", textDecoration: "none", fontWeight: 700, fontSize: "11px" }}
+                    >
+                      واتساب العميل 💬
+                    </a>
+                  )}
+                </div>
+
                 <div style={{ display: "flex", gap: "8px" }}>
                   <input
                     type="text"
@@ -1585,6 +1736,151 @@ export default function DashboardOrdersPage() {
             order={previewOrder as any}
             onClose={() => setPreviewOrder(null)}
           />
+        )}
+
+        {/* ═══════════════════════════════════════════════════════
+            MODAL 4: DIGITAL QR RECEIPT MODAL
+        ══════════════════════════════════════════════════════════ */}
+        {qrModalOrder && (
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 100,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "20px",
+              background: "rgba(0,0,0,0.85)",
+            }}
+          >
+            <div
+              style={{
+                background: "#160d05",
+                border: "1px solid rgba(204, 160, 67, 0.4)",
+                borderRadius: "24px",
+                padding: "26px",
+                maxWidth: "400px",
+                width: "100%",
+                textAlign: "center",
+                boxShadow: "0 20px 60px rgba(0,0,0,0.8)",
+                color: "#f5ede4",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <QrCode size={22} color="#cca043" />
+                  <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 900, color: "#ffffff" }}>
+                    الفاتورة الذكية والتتبع (QR) 📱
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setQrModalOrder(null)}
+                  style={{ background: "transparent", border: "none", color: "#8a7565", cursor: "pointer" }}
+                >
+                  <XCircle size={22} />
+                </button>
+              </div>
+
+              <p style={{ margin: "0 0 16px 0", fontSize: "12.5px", color: "#8a7565" }}>
+                امسح الرمز بكاميرا الموبايل لفتح الفاتورة الذكية والتتبع للطيار أو العميل بدون طابعة
+              </p>
+
+              <div
+                style={{
+                  background: "#ffffff",
+                  padding: "16px",
+                  borderRadius: "16px",
+                  display: "inline-block",
+                  marginBottom: "16px",
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
+                }}
+              >
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(
+                    (typeof window !== "undefined" ? window.location.origin : "https://choco-house.vercel.app") +
+                      "/receipt/" +
+                      qrModalOrder.id
+                  )}`}
+                  alt="Order QR Code"
+                  style={{ width: "190px", height: "190px", display: "block" }}
+                />
+              </div>
+
+              <div style={{ marginBottom: "18px", fontSize: "13px" }}>
+                <div style={{ fontFamily: "monospace", fontWeight: 900, color: "#cca043", fontSize: "16px" }}>
+                  {qrModalOrder.orderNumber}
+                </div>
+                <div style={{ color: "#ffffff", fontWeight: 700, marginTop: "2px" }}>
+                  العميل: {qrModalOrder.customerName} ({qrModalOrder.phone})
+                </div>
+                <div style={{ color: "#4ade80", fontWeight: 800, marginTop: "2px" }}>
+                  المطلوب تحصيله: {qrModalOrder.total} ج.م
+                </div>
+                {qrModalOrder.captainName && (
+                  <div style={{ color: "#c084fc", fontSize: "12px", marginTop: "4px" }}>
+                    🛵 الكابتن: {qrModalOrder.captainName}
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display: "flex", gap: "10px" }}>
+                <button
+                  onClick={() => {
+                    const url =
+                      (typeof window !== "undefined" ? window.location.origin : "https://choco-house.vercel.app") +
+                      "/receipt/" +
+                      qrModalOrder.id;
+                    navigator.clipboard.writeText(url);
+                    setCopiedQrLink(true);
+                    playSound("click");
+                    setTimeout(() => setCopiedQrLink(false), 2500);
+                  }}
+                  style={{
+                    flex: 1,
+                    height: "42px",
+                    background: copiedQrLink ? "#22c55e" : "rgba(204, 160, 67, 0.2)",
+                    border: "1px solid rgba(204, 160, 67, 0.4)",
+                    color: copiedQrLink ? "#ffffff" : "#cca043",
+                    borderRadius: "12px",
+                    fontWeight: 800,
+                    fontSize: "12.5px",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px",
+                  }}
+                >
+                  {copiedQrLink ? <Check size={16} /> : <Copy size={16} />}
+                  <span>{copiedQrLink ? "تم النسخ!" : "نسخ الرابط 📋"}</span>
+                </button>
+
+                <a
+                  href={`/receipt/${qrModalOrder.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    flex: 1,
+                    height: "42px",
+                    background: "#cca043",
+                    color: "#180e06",
+                    borderRadius: "12px",
+                    fontWeight: 900,
+                    fontSize: "12.5px",
+                    textDecoration: "none",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px",
+                  }}
+                >
+                  <ExternalLink size={16} />
+                  <span>فتح الفاتورة 🔗</span>
+                </a>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </ErpLayout>

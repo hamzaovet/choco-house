@@ -4,7 +4,10 @@ import { prisma } from "@/lib/prisma";
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const order = await prisma.order.findUnique({ where: { id } });
+    let order = await prisma.order.findUnique({ where: { id } });
+    if (!order) {
+      order = await prisma.order.findUnique({ where: { orderNumber: id } });
+    }
     if (!order) return NextResponse.json({ error: "الطلب غير موجود" }, { status: 404 });
     return NextResponse.json(order);
   } catch (err: unknown) {

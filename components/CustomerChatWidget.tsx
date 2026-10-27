@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { playSound } from "@/lib/sounds";
-import { MessageCircle, X, Send, User, Phone, CheckCheck, Sparkles } from "lucide-react";
+import { MessageCircle, X, Send, User, Phone, CheckCheck, Sparkles, ChefHat } from "lucide-react";
 
 interface ChatMessage {
   id: string;
@@ -29,7 +29,7 @@ export default function CustomerChatWidget({ lang = "ar" }: CustomerChatWidgetPr
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Sync customer info from localStorage
-  useEffect(() => {
+  const syncCustomer = useCallback(() => {
     try {
       const raw = localStorage.getItem("choco_customer");
       if (raw) {
@@ -38,18 +38,24 @@ export default function CustomerChatWidget({ lang = "ar" }: CustomerChatWidgetPr
         if (cust.phone) setCustomerPhone(cust.phone);
       }
     } catch {}
-  }, [isOpen]);
+  }, []);
+
+  useEffect(() => {
+    syncCustomer();
+    window.addEventListener("choco_customer_updated", syncCustomer);
+    return () => window.removeEventListener("choco_customer_updated", syncCustomer);
+  }, [syncCustomer]);
 
   const fetchMessages = useCallback(async () => {
     try {
       const params = new URLSearchParams();
-      if (customerPhone) params.set("customerPhone", customerPhone);
+      if (customerPhone) params.set("customerPhone", customerPhone.trim());
       const res = await fetch(`/api/chat?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) {
           setMessages(data);
-          // Check if latest message is from staff and widget is closed
+          // Alert if latest message is from staff and widget is closed
           if (data.length > 0 && data[data.length - 1].isStaff && !isOpen) {
             setHasNewReply(true);
           }
@@ -60,7 +66,7 @@ export default function CustomerChatWidget({ lang = "ar" }: CustomerChatWidgetPr
 
   useEffect(() => {
     fetchMessages();
-    const iv = setInterval(fetchMessages, 6000);
+    const iv = setInterval(fetchMessages, 4000);
     return () => clearInterval(iv);
   }, [fetchMessages]);
 
@@ -75,7 +81,7 @@ export default function CustomerChatWidget({ lang = "ar" }: CustomerChatWidgetPr
     const textToSend = customText || inputText;
     if (!textToSend.trim()) return;
 
-    const sender = customerName.trim() || (lang === "en" ? "Guest Customer" : "عميل ضيف");
+    const sender = customerName.trim() || (lang === "en" ? "Guest Customer" : "عميل Choco House");
     setSending(true);
     playSound("click");
     try {
@@ -112,9 +118,9 @@ export default function CustomerChatWidget({ lang = "ar" }: CustomerChatWidgetPr
       <div
         style={{
           position: "fixed",
-          bottom: "24px",
-          [lang === "en" ? "right" : "left"]: "24px",
-          zIndex: 90,
+          bottom: "20px",
+          left: "20px",
+          zIndex: 80,
         }}
       >
         <button
@@ -131,17 +137,17 @@ export default function CustomerChatWidget({ lang = "ar" }: CustomerChatWidgetPr
             color: "#180e06",
             border: "none",
             borderRadius: "100px",
-            padding: "12px 20px",
+            padding: "11px 18px",
             fontWeight: 900,
-            fontSize: "14px",
+            fontSize: "13.5px",
             cursor: "pointer",
             boxShadow: "0 8px 24px rgba(204, 160, 67, 0.4)",
             transition: "all 0.2s ease",
             transform: isOpen ? "scale(0.95)" : "scale(1)",
           }}
         >
-          {isOpen ? <X size={20} /> : <MessageCircle size={20} />}
-          <span>{isOpen ? (lang === "en" ? "Close" : "إغلاق") : (lang === "en" ? "Live Chat" : "شات المطعم 💬")}</span>
+          {isOpen ? <X size={19} /> : <MessageCircle size={19} />}
+          <span>{isOpen ? (lang === "en" ? "Close" : "إغلاق الشات") : (lang === "en" ? "Live Chat" : "شات المطعم 💬")}</span>
 
           {hasNewReply && !isOpen && (
             <span
@@ -154,6 +160,7 @@ export default function CustomerChatWidget({ lang = "ar" }: CustomerChatWidgetPr
                 borderRadius: "50%",
                 background: "#ef4444",
                 border: "2px solid #ffffff",
+                animation: "pulse 1.5s infinite",
               }}
             />
           )}
@@ -165,19 +172,19 @@ export default function CustomerChatWidget({ lang = "ar" }: CustomerChatWidgetPr
         <div
           style={{
             position: "fixed",
-            bottom: "84px",
-            [lang === "en" ? "right" : "left"]: "24px",
+            bottom: "74px",
+            left: "20px",
             width: "360px",
-            maxWidth: "calc(100vw - 36px)",
-            height: "500px",
-            maxHeight: "calc(100vh - 120px)",
+            maxWidth: "calc(100vw - 40px)",
+            height: "460px",
+            maxHeight: "calc(100vh - 140px)",
             background: "#160d05",
             border: "1px solid rgba(204, 160, 67, 0.4)",
             borderRadius: "20px",
             display: "flex",
             flexDirection: "column",
-            zIndex: 95,
-            boxShadow: "0 16px 48px rgba(0,0,0,0.75)",
+            zIndex: 85,
+            boxShadow: "0 16px 48px rgba(0,0,0,0.8)",
             direction: lang === "ar" ? "rtl" : "ltr",
             overflow: "hidden",
           }}
@@ -185,7 +192,7 @@ export default function CustomerChatWidget({ lang = "ar" }: CustomerChatWidgetPr
           {/* Header */}
           <div
             style={{
-              padding: "14px 16px",
+              padding: "12px 16px",
               background: "#1e1107",
               borderBottom: "1px solid rgba(255,255,255,0.08)",
               display: "flex",
@@ -196,8 +203,8 @@ export default function CustomerChatWidget({ lang = "ar" }: CustomerChatWidgetPr
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <div
                 style={{
-                  width: "36px",
-                  height: "36px",
+                  width: "34px",
+                  height: "34px",
                   borderRadius: "50%",
                   background: "#cca043",
                   display: "flex",
@@ -205,26 +212,26 @@ export default function CustomerChatWidget({ lang = "ar" }: CustomerChatWidgetPr
                   justifyContent: "center",
                   fontWeight: 900,
                   color: "#180e06",
-                  fontSize: "14px",
+                  fontSize: "13px",
                 }}
               >
                 CH
               </div>
               <div>
-                <h4 style={{ margin: 0, fontSize: "14px", fontWeight: 800, color: "#ffffff" }}>
+                <h4 style={{ margin: 0, fontSize: "13.5px", fontWeight: 800, color: "#ffffff" }}>
                   Choco House Live Support
                 </h4>
                 <div style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "11px", color: "#34d399" }}>
                   <span
                     style={{
-                      width: "7px",
-                      height: "7px",
+                      width: "6px",
+                      height: "6px",
                       borderRadius: "50%",
                       background: "#34d399",
                       display: "inline-block",
                     }}
                   />
-                  <span>{lang === "en" ? "Online to help you" : "متواجدون لخدمتك فوراً"}</span>
+                  <span>{lang === "en" ? "Online now" : "متواجدون لخدمتك فوراً"}</span>
                 </div>
               </div>
             </div>
@@ -236,6 +243,7 @@ export default function CustomerChatWidget({ lang = "ar" }: CustomerChatWidgetPr
                 border: "none",
                 color: "#8a7565",
                 cursor: "pointer",
+                padding: "4px",
               }}
             >
               <X size={18} />
@@ -255,12 +263,12 @@ export default function CustomerChatWidget({ lang = "ar" }: CustomerChatWidgetPr
             >
               <input
                 type="text"
-                placeholder={lang === "en" ? "Your name" : "اسمك"}
+                placeholder={lang === "en" ? "Your name" : "اسمك الكريم"}
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 style={{
                   flex: 1,
-                  height: "30px",
+                  height: "28px",
                   background: "#0d0805",
                   border: "1px solid rgba(255,255,255,0.1)",
                   borderRadius: "6px",
@@ -271,12 +279,12 @@ export default function CustomerChatWidget({ lang = "ar" }: CustomerChatWidgetPr
               />
               <input
                 type="tel"
-                placeholder={lang === "en" ? "Phone" : "الموبايل"}
+                placeholder={lang === "en" ? "Phone" : "الموبايل (010...)"}
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
                 style={{
                   flex: 1,
-                  height: "30px",
+                  height: "28px",
                   background: "#0d0805",
                   border: "1px solid rgba(255,255,255,0.1)",
                   borderRadius: "6px",
@@ -293,7 +301,7 @@ export default function CustomerChatWidget({ lang = "ar" }: CustomerChatWidgetPr
           <div
             style={{
               flex: 1,
-              padding: "14px",
+              padding: "12px 14px",
               overflowY: "auto",
               display: "flex",
               flexDirection: "column",
@@ -304,9 +312,9 @@ export default function CustomerChatWidget({ lang = "ar" }: CustomerChatWidgetPr
             <div
               style={{
                 alignSelf: "flex-start",
-                maxWidth: "85%",
+                maxWidth: "88%",
                 background: "rgba(204, 160, 67, 0.15)",
-                border: "1px solid rgba(204, 160, 67, 0.3)",
+                border: "1px solid rgba(204, 160, 67, 0.35)",
                 borderRadius: "14px",
                 padding: "10px 12px",
                 fontSize: "12.5px",
@@ -315,10 +323,10 @@ export default function CustomerChatWidget({ lang = "ar" }: CustomerChatWidgetPr
               }}
             >
               <div style={{ fontWeight: 800, color: "#cca043", fontSize: "11px", marginBottom: "3px" }}>
-                Choco House 🍫
+                فريق Choco House 🍫
               </div>
               {lang === "en"
-                ? "Hello! Welcome to Choco House Desserts. How can we delight you today?"
+                ? "Hello! Welcome to Choco House Desserts. How can we help you today?"
                 : "أهلاً بك في بيت الشوكولاتة والحلويات الفاخرة! نقدر نساعد حضرتك بإيه النهاردة؟ 🍫"}
             </div>
 
@@ -328,27 +336,32 @@ export default function CustomerChatWidget({ lang = "ar" }: CustomerChatWidgetPr
                 key={m.id}
                 style={{
                   alignSelf: m.isStaff ? "flex-start" : "flex-end",
-                  maxWidth: "85%",
-                  background: m.isStaff ? "rgba(204, 160, 67, 0.15)" : "#2a160a",
-                  border: m.isStaff ? "1px solid rgba(204, 160, 67, 0.3)" : "1px solid rgba(255,255,255,0.1)",
+                  maxWidth: "88%",
+                  background: m.isStaff ? "linear-gradient(135deg, rgba(204, 160, 67, 0.2), rgba(204, 160, 67, 0.1))" : "#2a160a",
+                  border: m.isStaff ? "1px solid #cca043" : "1px solid rgba(255,255,255,0.1)",
                   borderRadius: "14px",
                   padding: "10px 12px",
                   fontSize: "12.5px",
                   color: "#ffffff",
+                  boxShadow: m.isStaff ? "0 2px 10px rgba(204, 160, 67, 0.2)" : "none",
                 }}
               >
                 <div
                   style={{
-                    fontSize: "10px",
+                    fontSize: "10.5px",
                     color: m.isStaff ? "#cca043" : "#8a7565",
-                    fontWeight: 700,
-                    marginBottom: "2px",
+                    fontWeight: 800,
+                    marginBottom: "3px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
                   }}
                 >
-                  {m.isStaff ? "خدمة العملاء (Choco House)" : m.senderName}
+                  {m.isStaff && <ChefHat size={12} />}
+                  <span>{m.isStaff ? "خدمة العملاء (Choco House)" : m.senderName}</span>
                 </div>
-                <div style={{ lineHeight: 1.4 }}>{m.text}</div>
-                <div style={{ fontSize: "9px", color: "#8a7565", marginTop: "4px", textAlign: "left" }}>
+                <div style={{ lineHeight: 1.45 }}>{m.text}</div>
+                <div style={{ fontSize: "9.5px", color: "#8a7565", marginTop: "4px", textAlign: "left" }}>
                   {new Date(m.createdAt).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" })}
                 </div>
               </div>
