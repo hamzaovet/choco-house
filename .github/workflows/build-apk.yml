@@ -74,15 +74,15 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.0.0
-          name: "Choco House Android App v1.0.0"
+          tag_name: v1.0.1
+          name: "Choco House Android App v1.0.1"
           draft: false
           prerelease: false
           make_latest: true
           body: |
-            ## 🍫 تطبيق Choco House Desserts للأندرويد - النسخة الرسمية v1.0.0
+            ## 🍫 تطبيق Choco House Desserts للأندرويد - النسخة الرسمية v1.0.1
             
-            أهلاً بكم في تطبيق Choco House للأندرويد!
+            أهلاً بكم في تطبيق Choco House للأندرويد مع تصميم المنيو الأفقي الجديد وإدارة الأقسام والتحكم الفوري بالعروض!
             
             ### 📱 مميزات التطبيق:
             - تجربة استخدام سريعة ومباشرة كأبليكيشن أصيل دون الحاجة للمتصفح

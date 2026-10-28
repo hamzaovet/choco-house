@@ -23,21 +23,48 @@ interface Product {
   sortOrder: number;
 }
 
-const CATEGORIES = ["وافل", "تشيز كيك", "بان كيك", "ميلك شيك", "سموزي", "بوبا"];
+interface CategoryItem {
+  id: string;
+  nameAr: string;
+  nameEn?: string | null;
+  image?: string | null;
+  sortOrder: number;
+}
+
+const DEFAULT_CATEGORIES = ["وافل", "بان كيك", "تشيز كيك", "ميلك شيك", "سموزي", "بوبا"];
 
 export default function MenuAdminPage() {
   const router = useRouter();
   const { isAuthenticated, currentUser, permissions, loading: authLoading } = useStaff();
   const { lang, t, dir } = useLanguage();
 
-  const [products, setProducts]       = useState<Product[]>([]);
-  const [loading, setLoading]         = useState(true);
-  const [filterCat, setFilterCat]     = useState("الكل");
-  const [editProduct, setEditProduct] = useState<Partial<Product> | null>(null);
-  const [saving, setSaving]           = useState(false);
+  const [products, setProducts]             = useState<Product[]>([]);
+  const [categories, setCategories]         = useState<CategoryItem[]>([]);
+  const [loading, setLoading]               = useState(true);
+  const [filterCat, setFilterCat]           = useState("الكل");
+  const [editProduct, setEditProduct]       = useState<Partial<Product> | null>(null);
+  const [saving, setSaving]                 = useState(false);
+
+  // Category Modal state
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [newCatNameAr, setNewCatNameAr]           = useState("");
+  const [newCatNameEn, setNewCatNameEn]           = useState("");
+  const [newCatImage, setNewCatImage]             = useState("");
+  const [creatingCat, setCreatingCat]             = useState(false);
+  const [catError, setCatError]                   = useState("");
+
+  // Inline quick-add in product modal
+  const [showQuickAddCat, setShowQuickAddCat]     = useState(false);
+  const [quickCatName, setQuickCatName]           = useState("");
+
+  const activeCategoryList = categories.length > 0 
+    ? categories.map(c => c.nameAr) 
+    : Array.from(new Set([...DEFAULT_CATEGORIES, ...products.map(p => p.category).filter(Boolean)]));
 
   const translateCategory = (cat: string) => {
     if (lang !== "en") return cat;
+    const found = categories.find(c => c.nameAr === cat);
+    if (found?.nameEn) return found.nameEn;
     const map: Record<string, string> = {
       "الكل": "All",
       "وافل": "Waffles",
@@ -56,21 +83,98 @@ export default function MenuAdminPage() {
         router.push("/login");
         return;
       }
-      loadProducts();
+      loadData();
     }
   }, [authLoading, currentUser, router]);
 
-  async function loadProducts() {
+  async function loadData() {
     setLoading(true);
+    await Promise.all([loadProducts(), loadCategories()]);
+    setLoading(false);
+  }
+
+  async function loadProducts() {
     try {
       const res = await fetch("/api/products");
       const data = await res.json();
       setProducts(Array.isArray(data) ? data : []);
     } catch {
       setProducts([]);
-    } finally {
-      setLoading(false);
     }
+  }
+
+  async function loadCategories() {
+    try {
+      const res = await fetch("/api/categories");
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setCategories(data);
+      }
+    } catch {}
+  }
+
+  async function handleCreateCategory(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newCatNameAr.trim()) return;
+    setCreatingCat(true);
+    setCatError("");
+    try {
+      const res = await fetch("/api/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nameAr: newCatNameAr.trim(),
+          nameEn: newCatNameEn.trim(),
+          image: newCatImage.trim() || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setCatError(data.error || "تعذر إضافة القسم");
+        return;
+      }
+      playSound("success");
+      setNewCatNameAr("");
+      setNewCatNameEn("");
+      setNewCatImage("");
+      await loadCategories();
+    } catch (err: any) {
+      setCatError(err.message || "حدث خطأ أثناء الإضافة");
+    } finally {
+      setCreatingCat(false);
+    }
+  }
+
+  async function handleQuickAddCategory() {
+    if (!quickCatName.trim()) return;
+    try {
+      const res = await fetch("/api/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nameAr: quickCatName.trim() }),
+      });
+      if (res.ok) {
+        playSound("success");
+        const created = await res.json();
+        await loadCategories();
+        if (editProduct) {
+          setEditProduct({ ...editProduct, category: created.nameAr });
+        }
+        setQuickCatName("");
+        setShowQuickAddCat(false);
+      }
+    } catch {}
+  }
+
+  async function handleDeleteCategory(id: string, name: string) {
+    if (!confirm(`هل أنت متأكد من حذف قسم "${name}"؟ الأصناف المرتبطة به لن تُحذف.`)) return;
+    try {
+      const res = await fetch(`/api/categories?id=${id}`, { method: "DELETE" });
+      if (res.ok) {
+        playSound("alert");
+        await loadCategories();
+      }
+    } catch {}
   }
 
   async function toggleAvailability(p: Product) {
@@ -140,14 +244,14 @@ export default function MenuAdminPage() {
             <h1 style={{
               fontSize: "26px",
               fontWeight: 900,
-              color: "#ffffff",
+              color: "#2B170E",
               margin: "0 0 6px 0",
             }}>
-              {t("المنيو والأسعار 🍫", "Menu & Prices 🍫")}
+              {t("المنيو والأسعار 🧇🍰", "Menu & Prices 🧇🍰")}
             </h1>
             <p style={{
               fontSize: "13.5px",
-              color: "#8a7565",
+              color: "#7E5E49",
               margin: 0,
               fontWeight: 600,
             }}>
@@ -163,18 +267,50 @@ export default function MenuAdminPage() {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "7px",
-                background: "rgba(204, 160, 67, 0.12)",
-                border: "1px solid rgba(204, 160, 67, 0.35)",
-                color: "#cca043",
+                background: "#FFFFFF",
+                border: "1px solid #E8DAC8",
+                color: "#C6873E",
                 padding: "9px 16px",
                 borderRadius: "12px",
                 fontSize: "13px",
                 fontWeight: 800,
                 cursor: "pointer",
+                boxShadow: "0 2px 6px rgba(43,23,14,0.03)",
               }}
             >
-              <Gift size={15} color="#cca043" />
+              <Gift size={15} color="#C6873E" />
               <span>{t("إدارة العروض الخاصة", "Special Offers")}</span>
+            </button>
+
+            <button
+              onClick={() => { playSound("click"); setShowCategoryModal(true); }}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "7px",
+                background: "#FAF6EE",
+                border: "1.5px solid #DEC9B5",
+                color: "#2B170E",
+                padding: "9px 16px",
+                borderRadius: "12px",
+                fontSize: "13px",
+                fontWeight: 800,
+                cursor: "pointer",
+                boxShadow: "0 2px 6px rgba(43,23,14,0.03)",
+              }}
+            >
+              <span style={{ fontSize: "16px" }}>🏷️</span>
+              <span>{t("إدارة الأقسام", "Manage Categories")}</span>
+              <span style={{
+                background: "#C6873E",
+                color: "#FFFFFF",
+                fontSize: "11px",
+                fontWeight: 900,
+                padding: "1px 7px",
+                borderRadius: "100px",
+              }}>
+                {activeCategoryList.length}
+              </span>
             </button>
 
             <button
@@ -182,7 +318,7 @@ export default function MenuAdminPage() {
                 setEditProduct({
                   nameAr: "",
                   nameEn: "",
-                  category: CATEGORIES[0],
+                  category: activeCategoryList[0] || "وافل",
                   basePrice: 160,
                   isAvailable: true,
                   sortOrder: 0,
@@ -193,15 +329,15 @@ export default function MenuAdminPage() {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "7px",
-                background: "#cca043",
-                color: "#180e06",
+                background: "linear-gradient(135deg, #D4954E, #C6873E)",
+                color: "#FFFFFF",
                 padding: "9px 18px",
                 borderRadius: "12px",
                 border: "none",
                 fontSize: "13.5px",
                 fontWeight: 900,
                 cursor: "pointer",
-                boxShadow: "0 2px 10px rgba(204, 160, 67, 0.3)",
+                boxShadow: "0 4px 14px rgba(198, 135, 62, 0.3)",
               }}
             >
               <Plus size={16} strokeWidth={2.5} />
@@ -216,10 +352,14 @@ export default function MenuAdminPage() {
           alignItems: "center",
           gap: "8px",
           overflowX: "auto",
-          paddingBottom: "10px",
+          padding: "6px",
+          background: "#FFFFFF",
+          border: "1px solid #E8DAC8",
+          borderRadius: "16px",
           marginBottom: "24px",
+          boxShadow: "0 2px 6px rgba(43,23,14,0.03)",
         }}>
-          {["الكل", ...CATEGORIES].map((c) => {
+          {["الكل", ...activeCategoryList].map((c) => {
             const isSelected = filterCat === c;
             return (
               <button
@@ -228,9 +368,9 @@ export default function MenuAdminPage() {
                 style={{
                   padding: "8px 18px",
                   borderRadius: "100px",
-                  border: isSelected ? "none" : "1px solid rgba(255, 255, 255, 0.08)",
-                  background: isSelected ? "#cca043" : "rgba(255, 255, 255, 0.04)",
-                  color: isSelected ? "#180e06" : "#b0957e",
+                  border: isSelected ? "none" : "1px solid transparent",
+                  background: isSelected ? "linear-gradient(135deg, #D4954E, #C6873E)" : "transparent",
+                  color: isSelected ? "#FFFFFF" : "#7E5E49",
                   fontSize: "13px",
                   fontWeight: isSelected ? 900 : 700,
                   cursor: "pointer",
@@ -246,7 +386,7 @@ export default function MenuAdminPage() {
 
         {/* ── Products Grid ── */}
         {loading ? (
-          <div style={{ textAlign: "center", padding: "60px", color: "#8a7565" }}>
+          <div style={{ textAlign: "center", padding: "60px", color: "#7E5E49" }}>
             <p>{t("جاري تحميل المنيو...", "Loading menu...")}</p>
           </div>
         ) : (
@@ -259,28 +399,29 @@ export default function MenuAdminPage() {
               <div
                 key={p.id}
                 style={{
-                  background: "rgba(24, 13, 7, 0.85)",
-                  border: "1px solid rgba(204, 160, 67, 0.18)",
+                  background: "#FFFFFF",
+                  border: "1px solid #E8DAC8",
                   borderRadius: "18px",
                   overflow: "hidden",
                   display: "flex",
                   flexDirection: "column",
                   opacity: p.isAvailable ? 1 : 0.6,
                   transition: "all 0.2s ease",
+                  boxShadow: "0 2px 8px rgba(43,23,14,0.04)",
                 }}
               >
                 {/* Product Image */}
                 <div style={{
                   width: "100%",
                   height: "150px",
-                  background: "#180d06",
+                  background: "#FAF6EE",
                   position: "relative",
                   overflow: "hidden",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                 }}>
-                  <div style={{ position: "absolute", fontSize: "40px", opacity: 0.35 }}>🍫</div>
+                  <div style={{ position: "absolute", fontSize: "40px", opacity: 0.35 }}>🧇</div>
                   {p.image ? (
                     <img
                       src={p.image}
@@ -297,13 +438,14 @@ export default function MenuAdminPage() {
                     position: "absolute",
                     top: "10px",
                     [dir === "rtl" ? "right" : "left"]: "10px",
-                    background: "rgba(18, 10, 5, 0.85)",
-                    border: "1px solid rgba(204, 160, 67, 0.3)",
+                    background: "rgba(255, 255, 255, 0.9)",
+                    border: "1px solid #E8DAC8",
                     padding: "3px 10px",
                     borderRadius: "100px",
-                    color: "#cca043",
+                    color: "#C6873E",
                     fontSize: "11px",
                     fontWeight: 800,
+                    backdropFilter: "blur(4px)",
                   }}>
                     {translateCategory(p.category)}
                   </span>
@@ -321,7 +463,7 @@ export default function MenuAdminPage() {
                     <h3 style={{
                       fontSize: "15px",
                       fontWeight: 800,
-                      color: "#ffffff",
+                      color: "#2B170E",
                       margin: "0 0 4px 0",
                       lineHeight: 1.3,
                     }}>
@@ -329,13 +471,13 @@ export default function MenuAdminPage() {
                     </h3>
                     <p style={{
                       fontSize: "12px",
-                      color: "#8a7565",
+                      color: "#7E5E49",
                       margin: "0 0 10px 0",
                       fontFamily: "monospace",
                     }}>
                       {lang === "en" ? p.nameAr : (p.nameEn || p.category)}
                     </p>
-                    <div style={{ fontSize: "18px", color: "#cca043", fontWeight: 900 }}>
+                    <div style={{ fontSize: "18px", color: "#C6873E", fontWeight: 900 }}>
                       {p.basePrice} <span style={{ fontSize: "13px" }}>{t("ج", "EGP")}</span>
                     </div>
                   </div>
@@ -347,7 +489,7 @@ export default function MenuAdminPage() {
                     gap: "8px",
                     marginTop: "14px",
                     paddingTop: "12px",
-                    borderTop: "1px solid rgba(255, 255, 255, 0.06)",
+                    borderTop: "1px solid #E8DAC8",
                   }}>
                     {/* Availability toggle */}
                     <button
@@ -364,8 +506,8 @@ export default function MenuAdminPage() {
                         gap: "6px",
                         fontSize: "12px",
                         fontWeight: 800,
-                        background: p.isAvailable ? "rgba(34, 197, 94, 0.15)" : "rgba(239, 68, 68, 0.15)",
-                        color: p.isAvailable ? "#4ade80" : "#f87171",
+                        background: p.isAvailable ? "rgba(34, 197, 94, 0.12)" : "rgba(239, 68, 68, 0.12)",
+                        color: p.isAvailable ? "#16a34a" : "#dc2626",
                       }}
                     >
                       {p.isAvailable ? <><Eye size={13} /> {t("متاح", "Available")}</> : <><EyeOff size={13} /> {t("مخفي", "Hidden")}</>}
@@ -378,9 +520,9 @@ export default function MenuAdminPage() {
                         width: "36px",
                         height: "36px",
                         borderRadius: "10px",
-                        background: "rgba(255, 255, 255, 0.06)",
-                        border: "1px solid rgba(255, 255, 255, 0.1)",
-                        color: "#f5ede4",
+                        background: "#FAF6EE",
+                        border: "1px solid #E8DAC8",
+                        color: "#7E5E49",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -398,9 +540,9 @@ export default function MenuAdminPage() {
                         width: "36px",
                         height: "36px",
                         borderRadius: "10px",
-                        background: "rgba(239, 68, 68, 0.1)",
+                        background: "rgba(239, 68, 68, 0.08)",
                         border: "1px solid rgba(239, 68, 68, 0.2)",
-                        color: "#f87171",
+                        color: "#dc2626",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -423,7 +565,8 @@ export default function MenuAdminPage() {
             position: "fixed",
             inset: 0,
             zIndex: 60,
-            background: "rgba(0,0,0,0.8)",
+            background: "rgba(43, 23, 14, 0.55)",
+            backdropFilter: "blur(5px)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -432,31 +575,32 @@ export default function MenuAdminPage() {
             <div style={{
               width: "100%",
               maxWidth: "440px",
-              background: "#1a0f07",
-              border: "1px solid rgba(204, 160, 67, 0.3)",
+              background: "#FFFFFF",
+              border: "1px solid #E8DAC8",
               borderRadius: "24px",
               padding: "26px",
-              boxShadow: "0 24px 64px rgba(0,0,0,0.6)",
+              boxShadow: "0 24px 64px rgba(43,23,14,0.2)",
               position: "relative",
+              color: "#2B170E",
             }}>
               <button
                 onClick={() => setEditProduct(null)}
                 style={{
                   position: "absolute", top: "18px", [dir === "rtl" ? "left" : "right"]: "18px",
-                  background: "rgba(255,255,255,0.06)", border: "none",
-                  borderRadius: "10px", padding: "6px", cursor: "pointer", color: "#8a7565",
+                  background: "#FAF6EE", border: "1px solid #E8DAC8",
+                  borderRadius: "10px", padding: "6px", cursor: "pointer", color: "#7E5E49",
                 }}
               >
                 <X size={18} />
               </button>
 
-              <h3 style={{ fontSize: "18px", fontWeight: 900, color: "#ffffff", margin: "0 0 18px 0" }}>
+              <h3 style={{ fontSize: "18px", fontWeight: 900, color: "#2B170E", margin: "0 0 18px 0" }}>
                 {editProduct.id ? t("✏️ تعديل صنف", "✏️ Edit Item") : t("➕ إضافة صنف جديد", "➕ Add New Item")}
               </h3>
 
               <form onSubmit={saveProduct} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
                 <div>
-                  <label style={{ display: "block", fontSize: "12px", fontWeight: 800, color: "#b0957e", marginBottom: "5px" }}>
+                  <label style={{ display: "block", fontSize: "12px", fontWeight: 800, color: "#7E5E49", marginBottom: "5px" }}>
                     {t("اسم الصنف بالعربي *", "Arabic Name *")}
                   </label>
                   <input
@@ -465,15 +609,15 @@ export default function MenuAdminPage() {
                     onChange={(e) => setEditProduct({ ...editProduct, nameAr: e.target.value })}
                     required
                     style={{
-                      width: "100%", height: "42px", background: "#0d0805",
-                      border: "1px solid rgba(204, 160, 67, 0.25)", borderRadius: "10px",
-                      padding: "0 14px", color: "#fff", fontSize: "13.5px", outline: "none", boxSizing: "border-box",
+                      width: "100%", height: "42px", background: "#FAF6EE",
+                      border: "1px solid #E8DAC8", borderRadius: "10px",
+                      padding: "0 14px", color: "#2B170E", fontSize: "13.5px", outline: "none", boxSizing: "border-box",
                     }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: "block", fontSize: "12px", fontWeight: 800, color: "#b0957e", marginBottom: "5px" }}>
+                  <label style={{ display: "block", fontSize: "12px", fontWeight: 800, color: "#7E5E49", marginBottom: "5px" }}>
                     {t("اسم الصنف بالإنجليزي", "English Name")}
                   </label>
                   <input
@@ -482,34 +626,98 @@ export default function MenuAdminPage() {
                     value={editProduct.nameEn || ""}
                     onChange={(e) => setEditProduct({ ...editProduct, nameEn: e.target.value })}
                     style={{
-                      width: "100%", height: "42px", background: "#0d0805",
-                      border: "1px solid rgba(204, 160, 67, 0.25)", borderRadius: "10px",
-                      padding: "0 14px", color: "#fff", fontSize: "13.5px", outline: "none", boxSizing: "border-box",
+                      width: "100%", height: "42px", background: "#FAF6EE",
+                      border: "1px solid #E8DAC8", borderRadius: "10px",
+                      padding: "0 14px", color: "#2B170E", fontSize: "13.5px", outline: "none", boxSizing: "border-box",
                     }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: "block", fontSize: "12px", fontWeight: 800, color: "#b0957e", marginBottom: "5px" }}>
-                    {t("التصنيف *", "Category *")}
-                  </label>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "5px" }}>
+                    <label style={{ fontSize: "12px", fontWeight: 800, color: "#7E5E49" }}>
+                      {t("القسم / التصنيف *", "Category *")}
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowQuickAddCat(!showQuickAddCat)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#C6873E",
+                        fontSize: "12px",
+                        fontWeight: 800,
+                        cursor: "pointer",
+                        textDecoration: "underline",
+                      }}
+                    >
+                      {showQuickAddCat ? t("إغلاق", "Close") : t("+ إضافة قسم جديد", "+ New Category")}
+                    </button>
+                  </div>
+
+                  {showQuickAddCat && (
+                    <div style={{
+                      display: "flex",
+                      gap: "8px",
+                      marginBottom: "8px",
+                      padding: "8px",
+                      backgroundColor: "#FFF8F0",
+                      borderRadius: "10px",
+                      border: "1px dashed #C6873E",
+                    }}>
+                      <input
+                        type="text"
+                        placeholder={t("اسم القسم الجديد...", "New category name...")}
+                        value={quickCatName}
+                        onChange={(e) => setQuickCatName(e.target.value)}
+                        style={{
+                          flex: 1,
+                          height: "36px",
+                          backgroundColor: "#FFFFFF",
+                          border: "1px solid #E8DAC8",
+                          borderRadius: "8px",
+                          padding: "0 10px",
+                          fontSize: "13px",
+                          outline: "none",
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleQuickAddCategory}
+                        style={{
+                          padding: "0 14px",
+                          height: "36px",
+                          backgroundColor: "#C6873E",
+                          color: "#FFFFFF",
+                          border: "none",
+                          borderRadius: "8px",
+                          fontWeight: 800,
+                          fontSize: "12px",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {t("إضافة", "Add")}
+                      </button>
+                    </div>
+                  )}
+
                   <select
-                    value={editProduct.category || CATEGORIES[0]}
+                    value={editProduct.category || activeCategoryList[0]}
                     onChange={(e) => setEditProduct({ ...editProduct, category: e.target.value })}
                     style={{
-                      width: "100%", height: "42px", background: "#0d0805",
-                      border: "1px solid rgba(204, 160, 67, 0.25)", borderRadius: "10px",
-                      padding: "0 14px", color: "#fff", fontSize: "13.5px", outline: "none", boxSizing: "border-box",
+                      width: "100%", height: "42px", background: "#FAF6EE",
+                      border: "1px solid #E8DAC8", borderRadius: "10px",
+                      padding: "0 14px", color: "#2B170E", fontSize: "13.5px", outline: "none", boxSizing: "border-box",
                     }}
                   >
-                    {CATEGORIES.map((cat) => (
+                    {activeCategoryList.map((cat) => (
                       <option key={cat} value={cat}>{translateCategory(cat)}</option>
                     ))}
                   </select>
                 </div>
 
                 <div>
-                  <label style={{ display: "block", fontSize: "12px", fontWeight: 800, color: "#b0957e", marginBottom: "5px" }}>
+                  <label style={{ display: "block", fontSize: "12px", fontWeight: 800, color: "#7E5E49", marginBottom: "5px" }}>
                     {t("السعر (جنيه) *", "Price (EGP) *")}
                   </label>
                   <input
@@ -519,9 +727,9 @@ export default function MenuAdminPage() {
                     onChange={(e) => setEditProduct({ ...editProduct, basePrice: +e.target.value })}
                     required
                     style={{
-                      width: "100%", height: "42px", background: "#0d0805",
-                      border: "1px solid rgba(204, 160, 67, 0.25)", borderRadius: "10px",
-                      padding: "0 14px", color: "#fff", fontSize: "13.5px", outline: "none", boxSizing: "border-box",
+                      width: "100%", height: "42px", background: "#FAF6EE",
+                      border: "1px solid #E8DAC8", borderRadius: "10px",
+                      padding: "0 14px", color: "#2B170E", fontSize: "13.5px", outline: "none", boxSizing: "border-box",
                     }}
                   />
                 </div>
@@ -538,27 +746,251 @@ export default function MenuAdminPage() {
                     disabled={saving}
                     style={{
                       flex: 1, height: "44px",
-                      background: "#cca043", color: "#180e06",
+                      background: "linear-gradient(135deg, #D4954E, #C6873E)", color: "#FFFFFF",
                       fontWeight: 900, fontSize: "14px",
                       borderRadius: "12px", border: "none", cursor: "pointer",
+                      boxShadow: "0 2px 8px rgba(198,135,62,0.25)",
                     }}
                   >
-                    {saving ? t("جاري الحفظ...", "Saving...") : t("حفظ الصنف 🍫", "Save Item 🍫")}
+                    {saving ? t("جاري الحفظ...", "Saving...") : t("حفظ الصنف 🧇🍰", "Save Item 🧇🍰")}
                   </button>
                   <button
                     type="button"
                     onClick={() => setEditProduct(null)}
                     style={{
                       padding: "0 18px", height: "44px",
-                      background: "rgba(255,255,255,0.06)", color: "#b0957e",
+                      background: "#FAF6EE", color: "#7E5E49",
                       fontWeight: 700, fontSize: "13px",
-                      borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)", cursor: "pointer",
+                      borderRadius: "12px", border: "1px solid #E8DAC8", cursor: "pointer",
                     }}
                   >
                     {t("إلغاء", "Cancel")}
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* ── Category Management Modal ── */}
+        {showCategoryModal && (
+          <div style={{
+            position: "fixed", inset: 0,
+            backgroundColor: "rgba(43,23,14,0.65)",
+            backdropFilter: "blur(4px)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: "20px", zIndex: 9999,
+          }}>
+            <div style={{
+              background: "#FFFFFF",
+              border: "1px solid #E8DAC8",
+              borderRadius: "20px",
+              padding: "26px",
+              width: "100%", maxWidth: "560px",
+              maxHeight: "90vh", overflowY: "auto",
+              boxShadow: "0 20px 40px rgba(43,23,14,0.18)",
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: "20px", fontWeight: 900, color: "#2B170E" }}>
+                    {t("إدارة أقسام المنيو 🏷️", "Manage Menu Categories 🏷️")}
+                  </h3>
+                  <p style={{ margin: "4px 0 0", fontSize: "12.5px", color: "#7E5E49" }}>
+                    {t("إضافة أقسام جديدة وتخصيصها لتظهر في الموقع والأبليكيشن فوراً", "Add new categories and customize them for web and mobile")}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowCategoryModal(false)}
+                  style={{
+                    background: "#FAF6EE", border: "1px solid #E8DAC8",
+                    borderRadius: "10px", width: "36px", height: "36px",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    cursor: "pointer", color: "#7E5E49",
+                  }}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Add New Category Box */}
+              <form onSubmit={handleCreateCategory} style={{
+                backgroundColor: "#FAF6EE",
+                border: "1.5px solid #DEC9B5",
+                borderRadius: "14px",
+                padding: "16px",
+                marginBottom: "22px",
+              }}>
+                <div style={{ fontSize: "13.5px", fontWeight: 900, color: "#2B170E", marginBottom: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span>➕</span>
+                  <span>{t("إضافة قسم جديد للمنيو", "Add New Menu Category")}</span>
+                </div>
+
+                {catError && (
+                  <div style={{
+                    padding: "8px 12px",
+                    backgroundColor: "#FEF2F2",
+                    border: "1px solid #FECACA",
+                    borderRadius: "8px",
+                    color: "#DC2626",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    marginBottom: "10px",
+                  }}>
+                    ⚠️ {catError}
+                  </div>
+                )}
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "11.5px", fontWeight: 800, color: "#7E5E49", marginBottom: "4px" }}>
+                      {t("اسم القسم بالعربي *", "Arabic Name *")}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="مثال: ميني بان كيك"
+                      value={newCatNameAr}
+                      onChange={(e) => setNewCatNameAr(e.target.value)}
+                      required
+                      style={{
+                        width: "100%", height: "38px", backgroundColor: "#FFFFFF",
+                        border: "1px solid #DEC9B5", borderRadius: "8px",
+                        padding: "0 10px", fontSize: "13px", outline: "none", boxSizing: "border-box",
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: "11.5px", fontWeight: 800, color: "#7E5E49", marginBottom: "4px" }}>
+                      {t("الاسم بالإنجليزي (اختياري)", "English Name")}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Mini Pancakes"
+                      dir="ltr"
+                      value={newCatNameEn}
+                      onChange={(e) => setNewCatNameEn(e.target.value)}
+                      style={{
+                        width: "100%", height: "38px", backgroundColor: "#FFFFFF",
+                        border: "1px solid #DEC9B5", borderRadius: "8px",
+                        padding: "0 10px", fontSize: "13px", outline: "none", boxSizing: "border-box",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: "12px" }}>
+                  <label style={{ display: "block", fontSize: "11.5px", fontWeight: 800, color: "#7E5E49", marginBottom: "4px" }}>
+                    {t("رابط صورة أو أيقونة القسم (اختياري)", "Category Image URL")}
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="https://..."
+                    dir="ltr"
+                    value={newCatImage}
+                    onChange={(e) => setNewCatImage(e.target.value)}
+                    style={{
+                      width: "100%", height: "38px", backgroundColor: "#FFFFFF",
+                      border: "1px solid #DEC9B5", borderRadius: "8px",
+                      padding: "0 10px", fontSize: "12.5px", outline: "none", boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={creatingCat}
+                  style={{
+                    width: "100%",
+                    height: "40px",
+                    background: "linear-gradient(135deg, #D4954E, #C6873E)",
+                    color: "#FFFFFF",
+                    fontWeight: 900,
+                    fontSize: "13px",
+                    border: "none",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    boxShadow: "0 2px 6px rgba(198,135,62,0.25)",
+                  }}
+                >
+                  {creatingCat ? t("جاري الإضافة...", "Adding...") : t("إضافة القسم وحفظه فوراً ✨", "Add Category ✨")}
+                </button>
+              </form>
+
+              {/* Current Categories List */}
+              <div style={{ fontSize: "13px", fontWeight: 800, color: "#2B170E", marginBottom: "10px" }}>
+                {t("الأقسام الحالية المعتمدة في السيستم:", "Active Menu Categories:")}
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {activeCategoryList.map((catName) => {
+                  const catItem = categories.find(c => c.nameAr === catName);
+                  const itemCount = products.filter(p => p.category === catName).length;
+                  return (
+                    <div
+                      key={catItem?.id || catName}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "10px 14px",
+                        backgroundColor: "#FFFFFF",
+                        border: "1px solid #E8DAC8",
+                        borderRadius: "12px",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <span style={{ fontSize: "16px" }}>🧇</span>
+                        <div>
+                          <div style={{ fontSize: "14px", fontWeight: 800, color: "#2B170E" }}>
+                            {catName}
+                            {catItem?.nameEn && <span style={{ fontSize: "12px", color: "#8C6546", marginRight: "8px" }}>({catItem.nameEn})</span>}
+                          </div>
+                          <div style={{ fontSize: "11.5px", color: "#7E5E49" }}>
+                            {itemCount} {t("صنف مسجل تحت هذا القسم", "items in this category")}
+                          </div>
+                        </div>
+                      </div>
+
+                      {catItem?.id && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCategory(catItem.id, catName)}
+                          style={{
+                            padding: "6px 12px",
+                            backgroundColor: "#FEF2F2",
+                            border: "1px solid #FCA5A5",
+                            color: "#DC2626",
+                            borderRadius: "8px",
+                            fontSize: "12px",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                          }}
+                        >
+                          {t("حذف", "Delete")}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div style={{ marginTop: "20px", textAlign: "center" }}>
+                <button
+                  type="button"
+                  onClick={() => setShowCategoryModal(false)}
+                  style={{
+                    padding: "9px 24px",
+                    backgroundColor: "#FAF6EE",
+                    border: "1px solid #E8DAC8",
+                    borderRadius: "10px",
+                    fontWeight: 800,
+                    fontSize: "13px",
+                    color: "#2B170E",
+                    cursor: "pointer",
+                  }}
+                >
+                  {t("إغلاق والعودة للمنيو", "Close & Back to Menu")}
+                </button>
+              </div>
             </div>
           </div>
         )}

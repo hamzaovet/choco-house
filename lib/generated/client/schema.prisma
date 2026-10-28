@@ -123,7 +123,17 @@ model SystemSettings {
   deliveryZones  String   @default("[]") // JSON: [{name, fee}]
   soundsEnabled  Boolean  @default(true)
   specialOffers  String?
+  offersEnabled  Boolean  @default(true)
   updatedAt      DateTime @updatedAt
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  nameAr    String   @unique
+  nameEn    String?
+  image     String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
 }
 
 model InventoryAudit {

@@ -44,21 +44,6 @@ export default function LoginPage() {
     }
   }
 
-  async function handleOwnerQuickLogin() {
-    setLoading(true);
-    setError("");
-    const res = await login("maestro", "Tha012157230@#$", "username");
-    setLoading(false);
-
-    if (res.success && res.user) {
-      playSound("success");
-      router.push("/dashboard");
-    } else {
-      playSound("alert");
-      setError(res.error || t("تعذر تسجيل الدخول كمالك", "Could not log in as owner"));
-    }
-  }
-
   function onFocus(e: React.FocusEvent<HTMLInputElement>) {
     e.target.style.borderColor = "#cca043";
     e.target.style.boxShadow   = "0 0 0 3px rgba(204,160,67,0.18)";
@@ -107,13 +92,28 @@ export default function LoginPage() {
         <span>{lang === "ar" ? "EN 🌐" : "ع 🌐"}</span>
       </button>
 
-      {/* ── Brand — exact Whacka 1:1 replica ── */}
-      <div style={{ textAlign: "center", marginBottom: "28px" }}>
+      {/* ── Brand ── */}
+      <div style={{ textAlign: "center", marginBottom: "24px" }}>
+        <div style={{
+          width: "76px",
+          height: "76px",
+          margin: "0 auto 12px",
+          borderRadius: "22px",
+          overflow: "hidden",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+          border: "2px solid #cca043",
+          background: "#180e06",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}>
+          <img src="/app-icon.png" alt="Choco House Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        </div>
         <h1 style={{
           fontSize: "28px",
           fontWeight: 700,
           color: "#cca043",
-          margin: "0 0 8px 0",
+          margin: "0 0 6px 0",
           fontFamily: "var(--font-playfair), Georgia, 'Times New Roman', serif",
           fontStyle: "normal",
           letterSpacing: "0.2px",
@@ -275,63 +275,34 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Divider */}
+        {/* Security Notice */}
         <div style={{
-          display: "flex", alignItems: "center", gap: "12px",
-          margin: "24px 0 18px",
-        }}>
-          <div style={{ flex: 1, height: "1px", background: "#e8ded2" }} />
-          <span style={{ fontSize: "12px", color: "#a58d79", fontWeight: 700 }}>
-            {t("المالك", "Owner")}
-          </span>
-          <div style={{ flex: 1, height: "1px", background: "#e8ded2" }} />
-        </div>
-
-        {/* Owner quick-login button */}
-        <button
-          onClick={handleOwnerQuickLogin}
-          disabled={loading}
-          style={{
-            width: "100%", height: "46px",
-            background: "#ffffff",
-            border: "1.5px solid #d4c4b0",
-            borderRadius: "100px",
-            color: "#180e06", fontWeight: 800, fontSize: "14.5px",
-            cursor: loading ? "not-allowed" : "pointer",
-            transition: "all 0.2s ease",
-            fontFamily: "var(--font-cairo), system-ui, sans-serif",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "#cca043";
-            e.currentTarget.style.color = "#cca043";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "#d4c4b0";
-            e.currentTarget.style.color = "#180e06";
-          }}
-        >
-          {t("تسجيل الدخول كمالك", "Log in as Owner")}
-        </button>
-
-        {/* Owner note */}
-        <p style={{
-          fontSize: "11px",
-          color: "#9c8573",
+          marginTop: "20px",
+          padding: "12px 14px",
+          borderRadius: "14px",
+          backgroundColor: "#fdf8ee",
+          border: "1px solid #ebd7b2",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "8px",
+          fontSize: "12px",
+          fontWeight: 700,
+          color: "#8c6546",
           textAlign: "center",
-          margin: "12px 0 0 0",
-          lineHeight: 1.6,
         }}>
-          {t("بحساب Whacka الذي تُبني به هذا التطبيق — لا توجد كلمة مرور منفصلة للمالك.", "Authorized via system administrator credentials — no separate password needed.")}
-        </p>
+          <span>🔒</span>
+          <span>{t("بوابة دخول آمنة ومشفرة لطاقم العمل والإدارة فقط", "Encrypted & secure access for authorized staff and management only")}</span>
+        </div>
 
         {/* Footer */}
         <p style={{
-          marginTop: "22px",
+          marginTop: "20px",
           fontSize: "11.5px", color: "#a58d79",
-          textAlign: "center", margin: "22px 0 0 0",
+          textAlign: "center",
           display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
         }}>
-          {t("مُقدّم من Whacka", "Powered by Whacka")} <span style={{ color: "#cca043" }}>✻</span>
+          <span>تم التطوير بواسطة شركة أوركا للحلول البرمجية والخدمات السحابية 🐋</span>
         </p>
       </div>
     </div>

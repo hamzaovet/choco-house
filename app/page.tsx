@@ -5,6 +5,7 @@ import Link from "next/link";
 import { playSound } from "@/lib/sounds";
 import CustomerAccountModal from "@/components/CustomerAccountModal";
 import CustomerChatWidget from "@/components/CustomerChatWidget";
+import { ALL_DELIVERY_ZONES, DEFAULT_ZONE, findZone, ZoneItem } from "@/lib/zones";
 import {
   ShoppingCart, X, Plus, Minus, Search,
   MapPin, Phone, Clock, CheckCircle2, Loader2,
@@ -21,6 +22,7 @@ interface OfferCard {
 }
 
 interface OfferData {
+  enabled?: boolean;
   badge: string;
   title: string;
   subtitle: string;
@@ -70,15 +72,15 @@ const DEFAULT_OFFERS: OfferData = {
 function renderOfferIcon(icon: string) {
   switch (icon) {
     case "party":
-      return <PartyPopper size={24} color="#cca043" strokeWidth={1.8} />;
+      return <PartyPopper size={24} color="#d99b56" strokeWidth={1.8} />;
     case "delivery":
-      return <Bike size={24} color="#cca043" strokeWidth={1.8} />;
+      return <Bike size={24} color="#d99b56" strokeWidth={1.8} />;
     case "student":
-      return <GraduationCap size={24} color="#cca043" strokeWidth={1.8} />;
+      return <GraduationCap size={24} color="#d99b56" strokeWidth={1.8} />;
     case "fire":
-      return <Flame size={24} color="#cca043" strokeWidth={1.8} />;
+      return <Flame size={24} color="#d99b56" strokeWidth={1.8} />;
     default:
-      return <Gift size={24} color="#cca043" strokeWidth={1.8} />;
+      return <Gift size={24} color="#d99b56" strokeWidth={1.8} />;
   }
 }
 
@@ -91,6 +93,7 @@ interface Product {
   image?: string | null;
   description?: string | null;
   isAvailable: boolean;
+  sortOrder?: number;
 }
 
 interface CartItem {
@@ -102,53 +105,83 @@ interface CartItem {
 
 /* ─── constants ───────────────────────────────────────────── */
 const C = {
-  dark:    "#0d0805",
-  card:    "#1a0f07",
-  card2:   "#221108",
-  border:  "#3d1f0a",
-  gold:    "#c8860a",
-  goldL:   "#e8a020",
-  cream:   "#f5ede4",
-  muted:   "#9c7a5e",
-  muted2:  "#7a5c3e",
+  dark:    "#FAF6EE",
+  card:    "#FFFFFF",
+  card2:   "#F5EDE1",
+  border:  "#E8DAC8",
+  gold:    "#C6873E",
+  goldL:   "#D4954E",
+  cream:   "#2B170E",
+  muted:   "#6B4F3B",
+  muted2:  "#967B66",
 };
 
 const CATEGORY_EMOJI: Record<string, string> = {
-  "الكل": "🍫",
+  "الكل": "🧇",
   "وافل": "🧇",
-  "تشيز كيك": "🍰",
   "بان كيك": "🥞",
+  "تشيز كيك": "🍰",
+  "مولتن كيك": "🌋",
+  "كيك وحلويات": "🎂",
   "ميلك شيك": "🥤",
   "سموزي": "🍹",
-  "بوبا": "🧋",
-  "All": "🍫",
+  "مشروبات": "☕",
+  "All": "🧇",
   "Waffles": "🧇",
-  "Cheesecakes": "🍰",
   "Mini Pancakes": "🥞",
+  "Cheesecakes": "🍰",
+  "Molten Cakes": "🌋",
+  "Cakes & Desserts": "🎂",
   "Milkshakes": "🥤",
   "Smoothies": "🍹",
-  "Boba Drinks": "🧋",
+  "Drinks": "☕",
 };
 
-const ORDERED_CATEGORIES = ["الكل", "وافل", "تشيز كيك", "بان كيك", "ميلك شيك", "سموزي", "بوبا"];
+const CATEGORY_SUBTITLES: Record<string, string> = {
+  "وافل": "مقرمش من بره .. ناعم ولذيذ من جوا",
+  "بان كيك": "صغير الحجم .. كبير وفخم في الطعم",
+  "تشيز كيك": "نعومة الكريمة مع لمسة صوص غنية",
+  "مولتن كيك": "انفجار شوكولاتة ساخنة لا يُقاوم",
+  "كيك وحلويات": "تشكيلة حلويات تُعد طازجة يومياً",
+  "ميلك شيك": "انتعاش كريمي غني بنكهاتك المفضلة",
+  "سموزي": "فواكه طبيعية 100% تروي عطشك",
+  "بوبا": "حبيبات البوبا المنعشة في مشروبات فاخرة",
+  "مشروبات": "مشروبات ساخنة ومثلجة بمذاق مميز",
+};
+
+const ORDERED_CATEGORIES = [
+  "الكل",
+  "وافل",
+  "بان كيك",
+  "تشيز كيك",
+  "مولتن كيك",
+  "كيك وحلويات",
+  "ميلك شيك",
+  "سموزي",
+  "مشروبات",
+];
 
 const CATEGORY_PRIORITY: Record<string, number> = {
   "وافل": 1,
-  "تشيز كيك": 2,
-  "بان كيك": 3,
-  "ميلك شيك": 4,
-  "سموزي": 5,
-  "بوبا": 6,
+  "بان كيك": 2,
+  "تشيز كيك": 3,
+  "مولتن كيك": 4,
+  "كيك وحلويات": 5,
+  "ميلك شيك": 6,
+  "سموزي": 7,
+  "مشروبات": 8,
 };
 
 const CATEGORY_NAMES_EN: Record<string, string> = {
   "الكل": "All",
   "وافل": "Waffles",
-  "تشيز كيك": "Cheesecakes",
   "بان كيك": "Mini Pancakes",
+  "تشيز كيك": "Cheesecakes",
+  "مولتن كيك": "Molten Cakes",
+  "كيك وحلويات": "Cakes & Desserts",
   "ميلك شيك": "Milkshakes",
   "سموزي": "Smoothies",
-  "بوبا": "Boba Drinks",
+  "مشروبات": "Drinks",
 };
 
 /* ─── 1:1 Product Names in English (Whacka Replica) ─── */
@@ -197,7 +230,7 @@ const PRODUCT_NAMES_EN: Record<string, string> = {
 /* ─── Gourmet Arabic Descriptions ─── */
 const PRODUCT_DESCRIPTIONS_AR: Record<string, string> = {
   "وافل نوتيلا بيضاء مشكل": "وافل مقرمش من الخارج وطري من الداخل مع نوتيلا بيضاء وشوكولاتة مشكلة.",
-  "وافل نوتيلا": "كلاسيك شوكو هاوس: نوتيلا أصلية غزيرة على وافل سخن وطازة.",
+  "وافل نوتيلا": "كلاسيك شوكو هاوس: نوتيلا أصلية غزيرة على وافل سخن وطازة ومقرمش.",
   "وافل لوتس": "صوص لوتس أصلي مع قطع بسكويت لوتس مقرمشة وطعم لا يقاوم.",
   "وافل نوتيلا بالاوريو": "مزيج النوتيلا الغنية مع قطع بسكويت الأوريو المقرمش.",
   "وافل كراميل": "وافل ذهبي مغطى بصوص الكراميل الغني والحلو الفاخر.",
@@ -230,7 +263,7 @@ const PRODUCT_DESCRIPTIONS_AR: Record<string, string> = {
 const PRODUCT_DESCRIPTIONS_EN: Record<string, string> = {
   // Waffles (Exact Whacka descriptions from reference)
   "وافل نوتيلا بيضاء مشكل": "Crisp outside, fluffy inside waffle with white Nutella and mixed chocolate.",
-  "وافل نوتيلا": "The Choco House classic: generous original Nutella over a hot waffle.",
+  "وافل نوتيلا": "The Choco House classic: generous original Nutella over a hot crispy waffle.",
   "وافل لوتس": "Authentic Lotus spread topped with crunchy Lotus biscuit pieces.",
   "وافل نوتيلا بالاوريو": "Nutella plus crunchy Oreo chunks and a cream layer.",
   "وافل كراميل": "Balanced salted caramel sauce with a hint of sea salt.",
@@ -269,14 +302,18 @@ const PRODUCT_DESCRIPTIONS_EN: Record<string, string> = {
   "ميلك شيك خوخ بوبا": "Cold peach-infused milkshake complete with delicious signature boba pearls.",
 };
 
-/* Fallback images per category when product has no image */
+/* Fallback images per category when product has no image (100% verified local assets) */
 const CATEGORY_FALLBACK: Record<string, string> = {
-  "وافل":      "https://images.unsplash.com/photo-1562376552-0d160a2f238d?w=400&q=80&fit=crop",
-  "تشيز كيك": "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=400&q=80&fit=crop",
-  "بان كيك":  "https://images.unsplash.com/photo-1528207776546-365bb710ee93?w=400&q=80&fit=crop",
-  "ميلك شيك": "https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=400&q=80&fit=crop",
-  "سموزي":    "https://images.unsplash.com/photo-1553530666-ba11a90c3aee?w=400&q=80&fit=crop",
-  "بوبا":     "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80&fit=crop",
+  "وافل": "/categories/waffle.jpg",
+  "بان كيك": "/categories/pancake.jpg",
+  "تشيز كيك": "/categories/cheesecake.jpg",
+  "ميلك شيك": "/categories/milkshake.jpg",
+  "سموزي": "/categories/smoothie.jpg",
+  "بوبا": "/categories/boba.jpg",
+  "كيك وحلويات": "/categories/cake.jpg",
+  "مشروبات": "/categories/drinks.jpg",
+  "مولتن كيك": "/categories/molten.jpg",
+  "عروض خاصة": "/categories/offers.jpg",
 };
 
 const EXTRAS_AR = [
@@ -297,23 +334,19 @@ const EXTRAS_EN = [
   { label: "Nuts",          price: 20 },
 ];
 
-const ZONES_AR = [
-  { name: "الحي الثاني",      fee: 10 },
-  { name: "الحي الأول",       fee: 10 },
-  { name: "الحي الثالث",      fee: 12 },
-  { name: "الحي السادس",      fee: 12 },
-  { name: "الحي السابع",      fee: 15 },
-  { name: "المحور المركزي",   fee: 15 },
-];
+const ZONES_AR = ALL_DELIVERY_ZONES.map((z) => ({
+  name: z.nameAr,
+  fee: z.fee,
+  timeMinutes: z.timeMinutes,
+  code: z.code,
+}));
 
-const ZONES_EN = [
-  { name: "District 2",       fee: 10 },
-  { name: "District 1",       fee: 10 },
-  { name: "District 3",       fee: 12 },
-  { name: "District 6",       fee: 12 },
-  { name: "District 7",       fee: 15 },
-  { name: "Central Axis",     fee: 15 },
-];
+const ZONES_EN = ALL_DELIVERY_ZONES.map((z) => ({
+  name: z.nameEn,
+  fee: z.fee,
+  timeMinutes: z.timeMinutes,
+  code: z.code,
+}));
 
 const ORDER_STATUSES_AR: Record<string, { label: string; color: string }> = {
   new:       { label: "قيد الاستلام 📋",          color: "#3b82f6" },
@@ -344,6 +377,8 @@ const HERO_IMAGES = [
 /* ─── main component ──────────────────────────────────────── */
 export default function HomePage() {
   const [products, setProducts]     = useState<Product[]>([]);
+  const [dynamicCategories, setDynamicCategories] = useState<string[]>([]);
+  const [categoryObjects, setCategoryObjects]     = useState<{ id: string; nameAr: string; image?: string }[]>([]);
   const [loading, setLoading]       = useState(true);
   const [offers, setOffers]         = useState<OfferData>(DEFAULT_OFFERS);
   const [activeCategory, setActiveCategory] = useState("الكل");
@@ -381,14 +416,8 @@ export default function HomePage() {
     document.documentElement.lang = lang;
     document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
     setOrderForm((prev) => {
-      if (lang === "en") {
-        const idxAr = ZONES_AR.findIndex((z) => z.name === prev.zone);
-        if (idxAr !== -1) return { ...prev, zone: ZONES_EN[idxAr].name };
-      } else {
-        const idxEn = ZONES_EN.findIndex((z) => z.name === prev.zone);
-        if (idxEn !== -1) return { ...prev, zone: ZONES_AR[idxEn].name };
-      }
-      return prev;
+      const z = findZone(prev.zone);
+      return { ...prev, zone: lang === "en" ? z.nameEn : z.nameAr };
     });
   }, [lang]);
 
@@ -399,11 +428,23 @@ export default function HomePage() {
   const [customerModalOpen, setCustomerModalOpen] = useState(false);
   const [customerProfile, setCustomerProfile]     = useState<any>(null);
 
+  // Store dynamic settings (phone, name, address)
+  const [storeSettings, setStoreSettings] = useState<{
+    restaurantName: string;
+    phone: string;
+    address: string;
+  }>({
+    restaurantName: "Choco House",
+    phone: "01091413470",
+    address: "السادس من أكتوبر — الحي الأول",
+  });
+
   // Checkout
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [zoneFilter, setZoneFilter]     = useState("");
   const [orderForm, setOrderForm] = useState({
     customerName: "", phone: "", address: "",
-    zone: ZONES_AR[0].name, paymentMethod: "cash", notes: "",
+    zone: DEFAULT_ZONE.nameAr, paymentMethod: "cash", notes: "",
   });
   const [placing, setPlacing]     = useState(false);
   const [orderResult, setOrderResult] = useState<{ orderNumber: string } | null>(null);
@@ -415,6 +456,20 @@ export default function HomePage() {
   const [trackError, setTrackError]   = useState("");
 
   useEffect(() => {
+    // Fetch live system settings for dynamic phone & address
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d && !d.error) {
+          setStoreSettings({
+            restaurantName: d.restaurantName || "Choco House",
+            phone: d.phone || "01091413470",
+            address: d.address || "السادس من أكتوبر — الحي الأول",
+          });
+        }
+      })
+      .catch(() => {});
+
     // Load customer profile from storage if available
     try {
       const rawCust = localStorage.getItem("choco_customer");
@@ -436,9 +491,25 @@ export default function HomePage() {
       .then((d) => { setProducts(Array.isArray(d) ? d : []); setLoading(false); })
       .catch(() => setLoading(false));
 
-    fetch("/api/public/offers")
+    fetch("/api/public/offers", { cache: "no-store" })
       .then((r) => r.json())
-      .then((d) => { if (d && d.cards) setOffers(d); })
+      .then((d) => {
+        if (d && typeof d.enabled === "boolean") {
+          setOffers((prev) => ({ ...prev, ...d, enabled: d.enabled }));
+        } else if (d && d.cards) {
+          setOffers(d);
+        }
+      })
+      .catch(() => {});
+
+    fetch("/api/categories", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setCategoryObjects(data);
+          setDynamicCategories(data.map((c: any) => c.nameAr));
+        }
+      })
       .catch(() => {});
     // rotate hero image every 5s
     const iv = setInterval(() => setHeroImg((n) => (n + 1) % HERO_IMAGES.length), 5000);
@@ -458,9 +529,19 @@ export default function HomePage() {
     };
   }, []);
 
-  const categories = products.length > 0
-    ? ORDERED_CATEGORIES.filter((cat) => cat === "الكل" || products.some((p) => p.category === cat))
-    : ORDERED_CATEGORIES;
+  function getCategoryIcon(cat: string): string | null {
+    if (cat === "الكل") return "/app-icon.png";
+    const fromObj = categoryObjects.find((c) => c.nameAr === cat)?.image;
+    if (fromObj) return fromObj;
+    if (CATEGORY_FALLBACK[cat]) return CATEGORY_FALLBACK[cat];
+    const prodWithImg = products.find((p) => p.category === cat && p.image);
+    if (prodWithImg?.image) return prodWithImg.image;
+    return null;
+  }
+
+  const categoriesFromProducts = Array.from(new Set(products.map((p) => p.category).filter(Boolean)));
+  const allUniqueCats = Array.from(new Set([...dynamicCategories, ...categoriesFromProducts]));
+  const categories = ["الكل", ...(allUniqueCats.length > 0 ? allUniqueCats : ORDERED_CATEGORIES.slice(1))];
   const filtered = activeCategory === "الكل"
     ? [...products].sort((a, b) => (CATEGORY_PRIORITY[a.category] || 99) - (CATEGORY_PRIORITY[b.category] || 99))
     : products.filter((p) => p.category === activeCategory);
@@ -468,8 +549,13 @@ export default function HomePage() {
   const cartCount  = cart.reduce((s, i) => s + i.qty, 0);
 
   // Delivery zone fee lookup
-  const zoneIndex  = Math.max(0, currentZones.findIndex((z) => z.name === orderForm.zone));
-  const currentZone = currentZones[zoneIndex] || currentZones[0];
+  const matchedZone = findZone(orderForm.zone);
+  const currentZone = {
+    name: lang === "en" ? matchedZone.nameEn : matchedZone.nameAr,
+    fee: matchedZone.fee,
+    timeMinutes: matchedZone.timeMinutes,
+    code: matchedZone.code,
+  };
   const grandTotal = cartTotal + currentZone.fee;
 
   // Sync cart count to localStorage so Navbar can read it
@@ -558,9 +644,9 @@ export default function HomePage() {
 
   /* ─── INPUT STYLE ─── */
   const inputStyle: React.CSSProperties = {
-    width: "100%", height: "44px", background: "#0d0805",
-    border: "1px solid #3d1f0a", borderRadius: "12px",
-    padding: "0 14px", color: "#ffffff", fontSize: "14px",
+    width: "100%", height: "44px", background: "#FAF6EE",
+    border: "1px solid #D9C5B2", borderRadius: "12px",
+    padding: "0 14px", color: "#2B170E", fontSize: "14px",
     outline: "none", boxSizing: "border-box",
   };
 
@@ -571,15 +657,15 @@ export default function HomePage() {
     <div dir={lang === "ar" ? "rtl" : "ltr"} style={{ minHeight: "100vh", backgroundColor: C.dark, color: C.cream, fontFamily: "var(--font-cairo), system-ui, -apple-system, Arial, sans-serif" }}>
 
       {/* ═══════════════════════════════════════════════════════
-          HERO — Exact Whacka 1:1 Pixel-Perfect Replica
+          HERO — Light Warm Ivory Luxury Canvas
       ══════════════════════════════════════════════════════════ */}
       <section style={{
         position: "relative",
         overflow: "hidden",
-        backgroundColor: "#140b04",
-        padding: "44px 0 40px 0",
+        backgroundColor: "#FAF6EE",
+        padding: "48px 0 44px 0",
       }}>
-        {/* Exact Whacka Chocolate Waffle Background */}
+        {/* Exact Waffle Photography Background */}
         <div style={{
           position: "absolute",
           inset: 0,
@@ -587,16 +673,17 @@ export default function HomePage() {
           backgroundSize: "cover",
           backgroundPosition: lang === "ar" ? "left center" : "right center",
           backgroundRepeat: "no-repeat",
+          opacity: 0.88,
           transform: lang === "en" ? "scaleX(-1)" : "none",
         }} />
 
-        {/* Dynamic Gradient Overlay tailored for text visibility */}
+        {/* Dynamic Warm Ivory Overlay tailored for text visibility */}
         <div style={{
           position: "absolute",
           inset: 0,
           background: lang === "ar"
-            ? "linear-gradient(to left, rgba(20, 11, 4, 0.94) 0%, rgba(20, 11, 4, 0.72) 48%, rgba(20, 11, 4, 0.15) 100%)"
-            : "linear-gradient(to right, rgba(20, 11, 4, 0.94) 0%, rgba(20, 11, 4, 0.72) 48%, rgba(20, 11, 4, 0.15) 100%)",
+            ? "linear-gradient(to left, rgba(250, 246, 238, 0.98) 0%, rgba(250, 246, 238, 0.90) 52%, rgba(250, 246, 238, 0.35) 100%)"
+            : "linear-gradient(to right, rgba(250, 246, 238, 0.98) 0%, rgba(250, 246, 238, 0.90) 52%, rgba(250, 246, 238, 0.35) 100%)",
           pointerEvents: "none",
         }} />
 
@@ -615,76 +702,73 @@ export default function HomePage() {
             display: "inline-flex",
             alignItems: "center",
             gap: "7px",
-            background: "rgba(204, 160, 67, 0.12)",
-            border: "1px solid rgba(204, 160, 67, 0.35)",
+            background: "#FFFFFF",
+            border: "1px solid #E8DAC8",
             borderRadius: "100px",
-            padding: "6px 16px",
+            padding: "6px 18px",
             fontSize: "13px",
-            color: "#cca043",
-            fontWeight: 700,
+            color: "#C6873E",
+            fontWeight: 800,
             marginBottom: "16px",
-            backdropFilter: "blur(8px)",
+            boxShadow: "0 2px 10px rgba(78, 44, 21, 0.05)",
             fontFamily: "var(--font-cairo), system-ui, sans-serif",
           }}>
-            <Sparkles size={13} color="#cca043" />
-            <span>{lang === "en" ? "✦ Luxury desserts, made to order ✦" : "حلويات فاخرة تُحضَّر لحظة الطلب"}</span>
+            <Sparkles size={14} color="#C6873E" />
+            <span>{lang === "en" ? "✦ Handcrafted Chocolate & Desserts • Delivery to 84 Zones ✦" : "✦ حلويات وشوكولاتة بلجيكية فاخرة تُحضّر لحظياً • توصيل لـ 84 منطقة ✦"}</span>
           </div>
 
-          {/* Heading — Exact Whacka Letters, Colors & Proportions */}
+          {/* Heading — Creative, Unique Choco House Identity */}
           <h1 style={{
             margin: "0 0 16px 0",
             lineHeight: 1.22,
             fontFamily: "var(--font-cairo), system-ui, sans-serif",
           }}>
             <span style={{
-              color: "#ffffff",
+              color: "#2B170E",
               display: "block",
               fontWeight: 900,
-              fontSize: "clamp(36px, 5.4vw, 58px)",
+              fontSize: "clamp(34px, 5.2vw, 56px)",
               letterSpacing: lang === "en" ? "-0.2px" : "-0.5px",
-              textShadow: "0 2px 14px rgba(0,0,0,0.6)",
             }}>
-              {lang === "en" ? "The richest Nutella & Lotus waffle" : "أشهى وافل بنوتيلا ولوتس"}
+              {lang === "en" ? "Artisanal Chocolate & Decadent Desserts" : "عالم الشوكولاتة والحلويات الفاخرة"}
             </span>
             <span style={{
-              color: "#cca043",
+              color: "#C6873E",
               display: "block",
               fontWeight: 900,
-              fontSize: "clamp(36px, 5.4vw, 58px)",
+              fontSize: "clamp(32px, 5vw, 54px)",
               letterSpacing: lang === "en" ? "-0.2px" : "-0.5px",
               marginTop: "4px",
-              textShadow: "0 2px 14px rgba(204, 160, 67, 0.3)",
               fontFamily: lang === "en" ? "var(--font-playfair), Georgia, 'Times New Roman', serif" : "var(--font-cairo), system-ui, sans-serif",
             }}>
-              {lang === "en" ? "in 6th of October" : "في 6 أكتوبر"}
+              {lang === "en" ? "Pure Indulgence in Every Bite" : "سعادة تدوب في كل قطمة 🧇🍰"}
             </span>
           </h1>
 
-          {/* Subtitle — Exact Whacka Characters & Punctuation */}
+          {/* Subtitle — Fresh, Mouth-Watering Copy */}
           <p style={{
             fontSize: "clamp(14px, 1.5vw, 16.5px)",
-            color: "#d0bead",
+            color: "#6B4F3B",
             marginBottom: "26px",
-            fontWeight: 500,
-            lineHeight: 1.7,
-            maxWidth: "560px",
-            textShadow: "0 1px 8px rgba(0,0,0,0.5)",
+            fontWeight: 600,
+            lineHeight: 1.8,
+            maxWidth: "600px",
             fontFamily: "var(--font-cairo), system-ui, sans-serif",
           }}>
             {lang === "en"
-              ? "Order delivery and get it hot and fresh in 35 minutes. Original ingredients, premium packaging, a taste that brings you back."
-              : "اطلب دليفري يوصلك سخن وطازة في 35 دقيقة، مكونات أصلية، تغليف فخم، وطعم يخليك تطلب تاني."
+              ? "Golden Belgian waffles, fluffy mini pancakes, molten cakes & signature cheesecakes prepared fresh to your order with premium melted chocolate. Delivering hot & fresh across 84 zones in 6th of October & Giza."
+              : "وافل بلجيكي ذهبي، ميني بان كيك هش، بركان مولتن كيك، وكيكات غنية بالصوصات البلجيكية الأصلية وزبدة اللوتس. بنخبزها طازة لحظة طلبك وتوصلك سخنة ومقرمشة لأي مكان في 84 منطقة بأكتوبر والجيزة."
             }
           </p>
 
-          {/* CTA Buttons — Exact Whacka Styling */}
+          {/* CTA Buttons */}
           <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap", marginBottom: "32px" }}>
             {/* Order Button */}
             <a
               href="#menu"
               style={{
-                background: "#cca043",
-                color: "#180e06",
+                background: "linear-gradient(135deg, #D4954E, #C6873E)",
+                color: "#FFFFFF",
                 fontWeight: 800,
                 padding: "11px 26px",
                 borderRadius: "11px",
@@ -693,7 +777,7 @@ export default function HomePage() {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "8px",
-                boxShadow: "0 4px 16px rgba(204, 160, 67, 0.35)",
+                boxShadow: "0 4px 18px rgba(198, 135, 62, 0.38)",
                 fontFamily: "var(--font-cairo), system-ui, sans-serif",
                 transition: "transform 0.15s ease",
               }}
@@ -708,10 +792,9 @@ export default function HomePage() {
             <a
               href="#track"
               style={{
-                background: "rgba(32, 20, 10, 0.75)",
-                backdropFilter: "blur(10px)",
-                border: "1px solid rgba(255, 255, 255, 0.15)",
-                color: "#ffffff",
+                background: "#FFFFFF",
+                border: "1px solid #D9C5B2",
+                color: "#2B170E",
                 fontWeight: 700,
                 padding: "11px 22px",
                 borderRadius: "11px",
@@ -720,61 +803,61 @@ export default function HomePage() {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "8px",
+                boxShadow: "0 2px 8px rgba(78, 44, 21, 0.05)",
                 fontFamily: "var(--font-cairo), system-ui, sans-serif",
                 transition: "all 0.15s ease",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "rgba(204, 160, 67, 0.5)";
-                e.currentTarget.style.color = "#cca043";
+                e.currentTarget.style.borderColor = "#C6873E";
+                e.currentTarget.style.color = "#C6873E";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.15)";
-                e.currentTarget.style.color = "#ffffff";
+                e.currentTarget.style.borderColor = "#D9C5B2";
+                e.currentTarget.style.color = "#2B170E";
               }}
             >
-              <Truck size={16} color="#e5dcd3" />
+              <Truck size={16} color="#C6873E" />
               <span>{lang === "en" ? "Track your order" : "تتبع طلبك"}</span>
             </a>
           </div>
 
-          {/* ── Feature Cards (Exact 4 Cards from Whacka: Gold Outline Icons, Compact & Integrated) ── */}
+          {/* ── Feature Cards (Choco House Highlights) ── */}
           <div style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
             gap: "12px",
           }}>
             {(lang === "en" ? [
-              { icon: Truck, text: "Delivery in 35 min" },
-              { icon: Star, text: "5-star rated" },
-              { icon: Wallet, text: "Cash or InstaPay" },
-              { icon: BadgeCheck, text: "Certified kitchen" },
+              { icon: Truck, text: "84 Delivery Zones in Giza" },
+              { icon: Star, text: "Freshly Baked on Order" },
+              { icon: Wallet, text: "Cash, InstaPay & Card" },
+              { icon: BadgeCheck, text: "100% Belgian Chocolate" },
             ] : [
-              { icon: Truck, text: "توصيل خلال 35 دقيقة" },
-              { icon: Star, text: "تقييم 5 نجوم" },
-              { icon: Wallet, text: "كاش أو إنستاباي" },
-              { icon: BadgeCheck, text: "كيتشن معتمد" },
+              { icon: Truck, text: "توصيل لـ 84 منطقة بالجيزة وأكتوبر" },
+              { icon: Star, text: "عجينة طازجة تُخبز لحظة طلبك" },
+              { icon: Wallet, text: "كاش أو إنستاباي أو كارت" },
+              { icon: BadgeCheck, text: "شوكولاتة بلجيكي ولوتس أصلية" },
             ]).map((b, i) => {
               const IconComp = b.icon;
               return (
                 <div
                   key={i}
                   style={{
-                    background: "rgba(20, 11, 5, 0.72)",
-                    backdropFilter: "blur(12px)",
-                    WebkitBackdropFilter: "blur(12px)",
-                    border: "1px solid rgba(204, 160, 67, 0.22)",
+                    background: "#FFFFFF",
+                    border: "1px solid #E8DAC8",
                     borderRadius: "12px",
                     padding: "11px 18px",
                     display: "flex",
                     alignItems: "center",
                     gap: "10px",
+                    boxShadow: "0 2px 10px rgba(78, 44, 21, 0.04)",
                   }}
                 >
-                  <IconComp size={16} color="#cca043" strokeWidth={1.8} style={{ flexShrink: 0 }} />
+                  <IconComp size={16} color="#C6873E" strokeWidth={1.8} style={{ flexShrink: 0 }} />
                   <span style={{
                     fontSize: "13px",
                     fontWeight: 700,
-                    color: "#e5dcd3",
+                    color: "#2B170E",
                     fontFamily: "var(--font-cairo), system-ui, sans-serif",
                     whiteSpace: "nowrap",
                   }}>
@@ -788,12 +871,13 @@ export default function HomePage() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          SPECIAL OFFERS SECTION — 1:1 Whacka Exact Replica
+          SPECIAL OFFERS SECTION — Light Warm Ivory Canvas
       ══════════════════════════════════════════════════════════ */}
+      {offers.enabled !== false && (
       <section id="offers" style={{
         maxWidth: "1320px",
         margin: "0 auto",
-        padding: "40px 20px 16px 20px",
+        padding: "44px 20px 20px 20px",
         boxSizing: "border-box",
       }}>
         {/* Header */}
@@ -801,7 +885,7 @@ export default function HomePage() {
           <div style={{
             fontSize: "12.5px",
             fontWeight: 800,
-            color: "#cca043",
+            color: "#C6873E",
             letterSpacing: "1.2px",
             marginBottom: "5px",
             fontFamily: "var(--font-cairo), system-ui, sans-serif",
@@ -811,7 +895,7 @@ export default function HomePage() {
           <h2 style={{
             fontSize: "clamp(28px, 3.4vw, 38px)",
             fontWeight: 900,
-            color: "#ffffff",
+            color: "#2B170E",
             margin: "0 0 6px 0",
             fontFamily: "var(--font-cairo), system-ui, sans-serif",
             letterSpacing: "-0.5px",
@@ -821,7 +905,7 @@ export default function HomePage() {
           </h2>
           <p style={{
             fontSize: "13.5px",
-            color: "#a8927e",
+            color: "#6B4F3B",
             margin: 0,
             fontWeight: 500,
             lineHeight: 1.6,
@@ -848,10 +932,8 @@ export default function HomePage() {
             <div
               key={c.id || i}
               style={{
-                background: "rgba(24, 13, 7, 0.82)",
-                backdropFilter: "blur(12px)",
-                WebkitBackdropFilter: "blur(12px)",
-                border: "1px solid rgba(204, 160, 67, 0.2)",
+                background: "#FFFFFF",
+                border: "1px solid #E8DAC8",
                 borderRadius: "16px",
                 padding: "18px 22px",
                 display: "flex",
@@ -860,16 +942,17 @@ export default function HomePage() {
                 gap: "14px",
                 transition: "all 0.2s ease",
                 cursor: "pointer",
+                boxShadow: "0 2px 12px rgba(78, 44, 21, 0.04)",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "rgba(204, 160, 67, 0.55)";
+                e.currentTarget.style.borderColor = "#C6873E";
                 e.currentTarget.style.transform = "translateY(-3px)";
-                e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 0, 0, 0.4)";
+                e.currentTarget.style.boxShadow = "0 8px 24px rgba(78, 44, 21, 0.1)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "rgba(204, 160, 67, 0.2)";
+                e.currentTarget.style.borderColor = "#E8DAC8";
                 e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "none";
+                e.currentTarget.style.boxShadow = "0 2px 12px rgba(78, 44, 21, 0.04)";
               }}
             >
               {/* Content */}
@@ -877,7 +960,7 @@ export default function HomePage() {
                 <h3 style={{
                   fontSize: "16px",
                   fontWeight: 800,
-                  color: "#cca043",
+                  color: "#2B170E",
                   margin: "0 0 5px 0",
                   fontFamily: "var(--font-cairo), system-ui, sans-serif",
                 }}>
@@ -885,7 +968,7 @@ export default function HomePage() {
                 </h3>
                 <p style={{
                   fontSize: "12px",
-                  color: "#cbbba8",
+                  color: "#6B4F3B",
                   margin: 0,
                   lineHeight: 1.5,
                   fontWeight: 500,
@@ -901,8 +984,8 @@ export default function HomePage() {
                 width: "48px",
                 height: "48px",
                 borderRadius: "12px",
-                background: "rgba(204, 160, 67, 0.08)",
-                border: "1px solid rgba(204, 160, 67, 0.15)",
+                background: "#FAF6EE",
+                border: "1px solid #E8DAC8",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -923,20 +1006,21 @@ export default function HomePage() {
             minHeight: "160px",
             borderRadius: "18px",
             overflow: "hidden",
-            border: "1px solid rgba(204, 160, 67, 0.25)",
-            background: "#160c05",
+            border: "1px solid #E8DAC8",
+            background: "#241309",
             transition: "all 0.25s ease",
             cursor: "pointer",
+            boxShadow: "0 4px 18px rgba(78, 44, 21, 0.08)",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "rgba(204, 160, 67, 0.6)";
+            e.currentTarget.style.borderColor = "#C6873E";
             e.currentTarget.style.transform = "scale(1.008)";
-            e.currentTarget.style.boxShadow = "0 12px 36px rgba(0, 0, 0, 0.6), 0 0 24px rgba(204, 160, 67, 0.2)";
+            e.currentTarget.style.boxShadow = "0 10px 30px rgba(78, 44, 21, 0.16)";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "rgba(204, 160, 67, 0.25)";
+            e.currentTarget.style.borderColor = "#E8DAC8";
             e.currentTarget.style.transform = "scale(1)";
-            e.currentTarget.style.boxShadow = "none";
+            e.currentTarget.style.boxShadow = "0 4px 18px rgba(78, 44, 21, 0.08)";
           }}
         >
           {/* Banner Photo Background */}
@@ -953,8 +1037,8 @@ export default function HomePage() {
             position: "absolute",
             inset: 0,
             background: lang === "ar"
-              ? "linear-gradient(to left, rgba(16, 8, 3, 0.75) 0%, rgba(16, 8, 3, 0.45) 40%, rgba(16, 8, 3, 0.1) 100%)"
-              : "linear-gradient(to right, rgba(16, 8, 3, 0.75) 0%, rgba(16, 8, 3, 0.45) 40%, rgba(16, 8, 3, 0.1) 100%)",
+              ? "linear-gradient(to left, rgba(36, 19, 9, 0.85) 0%, rgba(36, 19, 9, 0.55) 40%, rgba(36, 19, 9, 0.15) 100%)"
+              : "linear-gradient(to right, rgba(36, 19, 9, 0.85) 0%, rgba(36, 19, 9, 0.55) 40%, rgba(36, 19, 9, 0.15) 100%)",
           }} />
 
           {/* Overlay Text positioned on Start side */}
@@ -972,7 +1056,7 @@ export default function HomePage() {
             <div style={{
               fontSize: "12px",
               fontWeight: 800,
-              color: "#cca043",
+              color: "#E0A358",
               marginBottom: "4px",
               fontFamily: "var(--font-cairo), system-ui, sans-serif",
               letterSpacing: "0.5px",
@@ -982,7 +1066,7 @@ export default function HomePage() {
             <div style={{
               fontSize: "clamp(22px, 2.8vw, 32px)",
               fontWeight: 900,
-              color: "#ffffff",
+              color: "#FFFFFF",
               marginBottom: "8px",
               lineHeight: 1.2,
               fontFamily: "var(--font-cairo), system-ui, sans-serif",
@@ -994,7 +1078,7 @@ export default function HomePage() {
               display: "inline-flex",
               alignItems: "center",
               gap: "6px",
-              color: "#cca043",
+              color: "#E0A358",
               fontWeight: 800,
               fontSize: "13.5px",
               fontFamily: "var(--font-cairo), system-ui, sans-serif",
@@ -1005,6 +1089,7 @@ export default function HomePage() {
           </div>
         </a>
       </section>
+      )}
 
       {/* ═══════════════════════════════════════════════════════
           MENU SECTION — Exact Whacka 1:1 Pixel-Perfect Replica
@@ -1015,12 +1100,12 @@ export default function HomePage() {
         padding: "44px 20px 64px 20px",
         boxSizing: "border-box",
       }}>
-        {/* Header — Clean, Luxurious Typography matching Whacka */}
+        {/* Header — Clean, Luxurious Typography matching Choco House */}
         <div style={{ marginBottom: "26px" }}>
           <h2 style={{
             fontSize: "clamp(28px, 3.4vw, 38px)",
             fontWeight: 900,
-            color: "#ffffff",
+            color: "#2B170E",
             margin: "0 0 6px 0",
             fontFamily: "var(--font-cairo), system-ui, sans-serif",
             letterSpacing: "-0.5px",
@@ -1029,7 +1114,7 @@ export default function HomePage() {
           </h2>
           <p style={{
             fontSize: "13.5px",
-            color: "#a8927e",
+            color: "#6B4F3B",
             margin: 0,
             fontWeight: 500,
             fontFamily: "var(--font-cairo), system-ui, sans-serif",
@@ -1041,263 +1126,367 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* Category Filter Pills — 1:1 Whacka Styling, Order & Emojis */}
+        {/* Category Navigation Bar — Visual Carousel matching Image 3 */}
         <div style={{
           display: "flex",
-          gap: "8px",
+          gap: "14px",
           overflowX: "auto",
-          paddingBottom: "8px",
-          marginBottom: "32px",
+          padding: "4px 4px 18px 4px",
+          marginBottom: "20px",
           scrollbarWidth: "none",
+          WebkitOverflowScrolling: "touch",
         }}>
           {categories.map((cat) => {
             const isActive = activeCategory === cat;
             const catLabel = lang === "en" ? (CATEGORY_NAMES_EN[cat] || cat) : cat;
+            const imgSrc = getCategoryIcon(cat);
             return (
               <button
                 key={cat}
                 onClick={() => { setActiveCategory(cat); playSound("click"); }}
                 style={{
                   flexShrink: 0,
-                  height: "38px",
-                  padding: "0 16px",
-                  borderRadius: "10px",
-                  fontSize: "13.5px",
-                  fontWeight: isActive ? 800 : 600,
-                  cursor: "pointer",
-                  border: isActive ? "1px solid #cca043" : "1px solid rgba(204, 160, 67, 0.16)",
-                  background: isActive ? "#cca043" : "rgba(36, 22, 12, 0.72)",
-                  color: isActive ? "#180e06" : "#e5dcd3",
-                  boxShadow: isActive ? "0 3px 12px rgba(204, 160, 67, 0.3)" : "none",
-                  display: "inline-flex",
+                  display: "flex",
+                  flexDirection: "column",
                   alignItems: "center",
                   gap: "8px",
-                  transition: "all 0.18s ease",
-                  whiteSpace: "nowrap",
-                  fontFamily: "var(--font-cairo), system-ui, sans-serif",
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.borderColor = "rgba(204, 160, 67, 0.35)";
-                    e.currentTarget.style.background = "rgba(48, 28, 14, 0.85)";
-                    e.currentTarget.style.color = "#ffffff";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.borderColor = "rgba(204, 160, 67, 0.16)";
-                    e.currentTarget.style.background = "rgba(36, 22, 12, 0.72)";
-                    e.currentTarget.style.color = "#e5dcd3";
-                  }
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "4px 6px",
+                  transition: "all 0.2s ease",
                 }}
               >
-                <span>{catLabel}</span>
-                <span style={{ fontSize: "14.5px" }}>{CATEGORY_EMOJI[cat] || "🍫"}</span>
+                {/* Circular image badge */}
+                <div style={{
+                  width: "66px",
+                  height: "66px",
+                  borderRadius: "50%",
+                  overflow: "hidden",
+                  backgroundColor: "#FAF6EE",
+                  border: isActive ? "3px solid #2B170E" : "1.5px solid #E8DAC8",
+                  boxShadow: isActive ? "0 4px 16px rgba(43,23,14,0.24)" : "0 2px 8px rgba(43,23,14,0.05)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transform: isActive ? "scale(1.08)" : "scale(1)",
+                  transition: "all 0.2s ease",
+                  position: "relative",
+                }}>
+                  {imgSrc ? (
+                    <img
+                      src={imgSrc}
+                      alt={catLabel}
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                        const fb = e.currentTarget.parentElement?.querySelector(".cat-emoji-fb") as HTMLElement | null;
+                        if (fb) fb.style.display = "flex";
+                      }}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        display: "block",
+                      }}
+                    />
+                  ) : null}
+                  <span
+                    className="cat-emoji-fb"
+                    style={{
+                      fontSize: "26px",
+                      display: imgSrc ? "none" : "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {CATEGORY_EMOJI[cat] || "🧇"}
+                  </span>
+                </div>
+
+                {/* Category Label */}
+                <span style={{
+                  fontSize: "13px",
+                  fontWeight: isActive ? 900 : 700,
+                  color: isActive ? "#FFFFFF" : "#5A3825",
+                  backgroundColor: isActive ? "#2B170E" : "#FAF6EE",
+                  padding: "4px 12px",
+                  borderRadius: "100px",
+                  border: isActive ? "1px solid #2B170E" : "1px solid #E8DAC8",
+                  whiteSpace: "nowrap",
+                  fontFamily: "var(--font-cairo), system-ui, sans-serif",
+                  transition: "all 0.2s ease",
+                  boxShadow: isActive ? "0 3px 10px rgba(43,23,14,0.25)" : "none",
+                }}>
+                  {catLabel}
+                </span>
               </button>
             );
           })}
         </div>
 
-        {/* Products Grid — 1:1 Whacka Luxury Cards */}
+        {/* Products Listing — Horizontal Row Cards Layout matching Image 3 */}
         {loading ? (
-          <div style={{ textAlign: "center", padding: "80px 0", color: "#a8927e" }}>
-            <div style={{ fontSize: "40px", marginBottom: "16px" }}>🍫</div>
+          <div style={{ textAlign: "center", padding: "80px 0", color: "#6B4F3B" }}>
+            <div style={{ fontSize: "40px", marginBottom: "16px" }}>🧇</div>
             <p style={{ fontSize: "16px", fontFamily: "var(--font-cairo), sans-serif" }}>
               {lang === "en" ? "Loading menu..." : "جاري تحميل المنيو..."}
             </p>
           </div>
         ) : (
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))",
-            gap: "24px",
-          }}>
-            {filtered.map((p) => {
-              const productName = lang === "en" ? (PRODUCT_NAMES_EN[p.nameAr] || p.nameEn || p.nameAr) : p.nameAr;
-              const description = lang === "en"
-                ? (PRODUCT_DESCRIPTIONS_EN[p.nameAr] || PRODUCT_DESCRIPTIONS_EN[p.nameEn] || "Original luxury ingredients prepared fresh to order.")
-                : (PRODUCT_DESCRIPTIONS_AR[p.nameAr] || p.description || "مكونات أصلية فاخرة تُحضّر خصيصاً ولحظة الطلب.");
+          <div>
+            {(activeCategory === "الكل" 
+              ? categories.filter(c => c !== "الكل" && products.some(p => p.category === c))
+              : [activeCategory]
+            ).map((catName) => {
+              const catProducts = products.filter(p => p.category === catName);
+              if (catProducts.length === 0) return null;
 
               return (
-                <div
-                  key={p.id}
-                  onClick={() => { setSelectedProduct(p); setSelectedExtras([]); playSound("click"); }}
-                  style={{
-                    background: "rgba(24, 13, 7, 0.88)",
-                    border: "1px solid rgba(204, 160, 67, 0.18)",
-                    borderRadius: "18px",
-                    overflow: "hidden",
-                    cursor: "pointer",
-                    transition: "all 0.25s ease",
-                    display: "flex",
-                    flexDirection: "column",
-                  }}
-                  onMouseEnter={(e) => {
-                    const el = e.currentTarget as HTMLDivElement;
-                    el.style.borderColor = "rgba(204, 160, 67, 0.5)";
-                    el.style.transform = "translateY(-4px)";
-                    el.style.boxShadow = "0 12px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(204, 160, 67, 0.15)";
-                  }}
-                  onMouseLeave={(e) => {
-                    const el = e.currentTarget as HTMLDivElement;
-                    el.style.borderColor = "rgba(204, 160, 67, 0.18)";
-                    el.style.transform = "translateY(0)";
-                    el.style.boxShadow = "none";
-                  }}
-                >
-                  {/* Image Container with Warm Glow & Bottom Fade */}
+                <div key={catName} style={{ marginBottom: "40px" }}>
+                  {/* Category Ornamental Header */}
                   <div style={{
-                    width: "100%",
-                    height: "175px",
-                    background: "radial-gradient(ellipse at center, rgba(140, 80, 20, 0.3) 0%, rgba(18, 10, 5, 0.95) 100%)",
-                    overflow: "hidden",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    position: "relative",
+                    gap: "14px",
+                    margin: "24px 0 20px",
+                    textAlign: "center",
                   }}>
-                    {(p.image || CATEGORY_FALLBACK[p.category]) ? (
-                      <img
-                        src={p.image || CATEGORY_FALLBACK[p.category]}
-                        alt={productName}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                          display: "block",
-                          transition: "transform 0.4s ease",
-                        }}
-                        onMouseEnter={(e) => { (e.target as HTMLImageElement).style.transform = "scale(1.07)"; }}
-                        onMouseLeave={(e) => { (e.target as HTMLImageElement).style.transform = "scale(1)"; }}
-                        onError={(e) => {
-                          const img = e.target as HTMLImageElement;
-                          if (img.src !== CATEGORY_FALLBACK[p.category] && CATEGORY_FALLBACK[p.category]) {
-                            img.src = CATEGORY_FALLBACK[p.category];
-                          } else {
-                            const parent = img.parentElement;
-                            if (parent) {
-                              img.style.display = "none";
-                              parent.innerHTML = `<span style="font-size:52px">${CATEGORY_EMOJI[p.category] || "🍫"}</span>`;
-                            }
-                          }
-                        }}
-                      />
-                    ) : (
-                      <span style={{ fontSize: "52px" }}>{CATEGORY_EMOJI[p.category] || "🍫"}</span>
-                    )}
-
-                    {/* Gradient Fade at bottom of image */}
-                    <div style={{
-                      position: "absolute",
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      height: "45px",
-                      background: "linear-gradient(to top, rgba(24, 13, 7, 0.98) 0%, transparent 100%)",
-                      pointerEvents: "none",
-                    }} />
+                    <div style={{ flex: 1, height: "1px", background: "linear-gradient(to right, transparent, #DEC9B5)" }} />
+                    <div>
+                      <div style={{
+                        fontSize: "22px",
+                        fontWeight: 900,
+                        color: "#2B170E",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        justifyContent: "center",
+                        fontFamily: "var(--font-cairo), system-ui, sans-serif",
+                      }}>
+                        <span style={{ fontSize: "24px" }}>{CATEGORY_EMOJI[catName] || "🧇"}</span>
+                        <span>{lang === "en" ? (CATEGORY_NAMES_EN[catName] || catName) : catName}</span>
+                      </div>
+                      <div style={{
+                        fontSize: "12.5px",
+                        color: "#8C6546",
+                        fontWeight: 600,
+                        marginTop: "2px",
+                        fontFamily: "var(--font-cairo), system-ui, sans-serif",
+                      }}>
+                        {CATEGORY_SUBTITLES[catName] || (lang === "en" ? "Crafted fresh with authentic luxury ingredients" : "مُحضّر طازجاً بأجود المكونات خصيصاً لك")}
+                      </div>
+                    </div>
+                    <div style={{ flex: 1, height: "1px", background: "linear-gradient(to left, transparent, #DEC9B5)" }} />
                   </div>
 
-                  {/* Card Body */}
+                  {/* Horizontal Cards Grid (1 col on mobile, 2 col on tablet/desktop) */}
                   <div style={{
-                    padding: "16px 18px 18px 18px",
-                    display: "flex",
-                    flexDirection: "column",
-                    flex: 1,
-                    justifyContent: "space-between",
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))",
+                    gap: "16px",
                   }}>
-                    <div>
-                      {/* Product Name */}
-                      <h3 style={{
-                        fontWeight: 800,
-                        color: "#ffffff",
-                        fontSize: "16px",
-                        margin: "0 0 6px 0",
-                        lineHeight: 1.3,
-                        fontFamily: "var(--font-cairo), system-ui, sans-serif",
-                      }}>
-                        {productName}
-                      </h3>
+                    {catProducts.map((p) => {
+                      const productName = lang === "en" ? (PRODUCT_NAMES_EN[p.nameAr] || p.nameEn || p.nameAr) : p.nameAr;
+                      const description = lang === "en"
+                        ? (PRODUCT_DESCRIPTIONS_EN[p.nameAr] || PRODUCT_DESCRIPTIONS_EN[p.nameEn] || "Original luxury ingredients prepared fresh to order.")
+                        : (PRODUCT_DESCRIPTIONS_AR[p.nameAr] || p.description || "مكونات أصلية فاخرة تُحضّر خصيصاً ولحظة الطلب.");
+                      const imgSrc = p.image || CATEGORY_FALLBACK[p.category];
+                      const inCartQty = cart.filter(i => i.product.id === p.id).reduce((s, i) => s + i.qty, 0);
 
-                      {/* Description */}
-                      <p style={{
-                        fontSize: "12.5px",
-                        color: "#9c8573",
-                        margin: "0 0 14px 0",
-                        lineHeight: 1.5,
-                        minHeight: "36px",
-                        fontFamily: "var(--font-cairo), system-ui, sans-serif",
-                      }}>
-                        {description}
-                      </p>
-                    </div>
+                      return (
+                        <div
+                          key={p.id}
+                          onClick={() => { setSelectedProduct(p); setSelectedExtras([]); playSound("click"); }}
+                          style={{
+                            backgroundColor: "#FFFFFF",
+                            border: "1.5px solid #E8DAC8",
+                            borderRadius: "20px",
+                            padding: "14px 16px",
+                            display: "flex",
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: "16px",
+                            cursor: "pointer",
+                            boxShadow: "0 2px 10px rgba(43,23,14,0.04)",
+                            transition: "all 0.2s ease",
+                            position: "relative",
+                            overflow: "hidden",
+                          }}
+                          onMouseEnter={(e) => {
+                            const el = e.currentTarget as HTMLDivElement;
+                            el.style.borderColor = "#C6873E";
+                            el.style.transform = "translateY(-3px)";
+                            el.style.boxShadow = "0 8px 24px rgba(43,23,14,0.1)";
+                          }}
+                          onMouseLeave={(e) => {
+                            const el = e.currentTarget as HTMLDivElement;
+                            el.style.borderColor = "#E8DAC8";
+                            el.style.transform = "translateY(0)";
+                            el.style.boxShadow = "0 2px 10px rgba(43,23,14,0.04)";
+                          }}
+                        >
+                          {/* Details (Left in RTL, taking flex: 1) */}
+                          <div style={{
+                            flex: 1,
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "space-between",
+                            minHeight: "105px",
+                          }}>
+                            <div>
+                              <div style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "6px",
+                                marginBottom: "4px",
+                              }}>
+                                <span style={{
+                                  fontSize: "16.5px",
+                                  fontWeight: 900,
+                                  color: "#2B170E",
+                                  lineHeight: 1.3,
+                                  fontFamily: "var(--font-cairo), system-ui, sans-serif",
+                                }}>
+                                  {productName}
+                                </span>
+                                {(p.basePrice >= 120 || p.sortOrder === 1) && (
+                                  <span title="الأكثر طلباً" style={{ fontSize: "14px" }}>👑</span>
+                                )}
+                              </div>
 
-                    {/* Price & Action Row */}
-                    <div style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      paddingTop: "6px",
-                      borderTop: "1px solid rgba(255, 255, 255, 0.05)",
-                    }}>
-                      <div style={{ display: "flex", alignItems: "baseline", gap: "10px" }}>
-                        <span style={{
-                          color: "#cca043",
-                          fontWeight: 900,
-                          fontSize: "20px",
-                          fontFamily: "var(--font-cairo), system-ui, sans-serif",
-                        }}>
-                          {lang === "en" ? (
-                            <>
-                              <span style={{ fontSize: "12.5px", fontWeight: 700, marginRight: "4px" }}>EGP</span>
-                              {p.basePrice}
-                            </>
-                          ) : (
-                            <>
-                              {p.basePrice} <span style={{ fontSize: "13px", fontWeight: 700 }}>ج</span>
-                            </>
-                          )}
-                        </span>
-                        <span style={{
-                          fontSize: "11.5px",
-                          color: "#4ade80",
-                          fontWeight: 700,
-                          fontFamily: "var(--font-cairo), system-ui, sans-serif",
-                        }}>
-                          {lang === "en" ? "Available ✓" : "متاح ✓"}
-                        </span>
-                      </div>
+                              <p style={{
+                                margin: 0,
+                                fontSize: "12.5px",
+                                color: "#7E5E49",
+                                lineHeight: 1.45,
+                                display: "-webkit-box",
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: "vertical",
+                                overflow: "hidden",
+                                fontFamily: "var(--font-cairo), system-ui, sans-serif",
+                              }}>
+                                {description}
+                              </p>
+                            </div>
 
-                      {/* Gold Plus Button */}
-                      <button
-                        onClick={(e) => { e.stopPropagation(); addToCart(p, []); }}
-                        style={{
-                          width: "36px",
-                          height: "36px",
-                          borderRadius: "50%",
-                          background: "#cca043",
-                          border: "none",
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          color: "#180e06",
-                          boxShadow: "0 3px 10px rgba(204, 160, 67, 0.35)",
-                          transition: "all 0.15s ease",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = "scale(1.12)";
-                          e.currentTarget.style.background = "#e0b355";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = "scale(1)";
-                          e.currentTarget.style.background = "#cca043";
-                        }}
-                        title={lang === "en" ? "Add to cart" : "أضف للسلة"}
-                      >
-                        <Plus size={18} strokeWidth={2.8} />
-                      </button>
-                    </div>
+                            {/* Bottom row: Price + Add Button */}
+                            <div style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              marginTop: "10px",
+                              paddingTop: "6px",
+                              borderTop: "1px dashed #F0E4D5",
+                            }}>
+                              <div style={{
+                                fontSize: "17px",
+                                fontWeight: 900,
+                                color: "#2B170E",
+                                display: "flex",
+                                alignItems: "baseline",
+                                gap: "4px",
+                                fontFamily: "var(--font-cairo), system-ui, sans-serif",
+                              }}>
+                                <span>{p.basePrice}</span>
+                                <span style={{ fontSize: "12px", color: "#8C6546", fontWeight: 700 }}>
+                                  {lang === "en" ? "EGP" : "ج.م"}
+                                </span>
+                              </div>
+
+                              {/* Quick Add Pill Button (Matching Image 3) */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  addToCart(p, []);
+                                }}
+                                style={{
+                                  backgroundColor: inCartQty > 0 ? "#C6873E" : "#2B170E",
+                                  color: "#FFFFFF",
+                                  border: "none",
+                                  borderRadius: "100px",
+                                  padding: "6px 16px",
+                                  fontSize: "12.5px",
+                                  fontWeight: 900,
+                                  cursor: "pointer",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "6px",
+                                  boxShadow: inCartQty > 0 ? "0 2px 8px rgba(198,135,62,0.3)" : "0 2px 8px rgba(43,23,14,0.18)",
+                                  transition: "all 0.15s ease",
+                                  fontFamily: "var(--font-cairo), system-ui, sans-serif",
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.backgroundColor = "#C6873E";
+                                  e.currentTarget.style.transform = "scale(1.05)";
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor = inCartQty > 0 ? "#C6873E" : "#2B170E";
+                                  e.currentTarget.style.transform = "scale(1)";
+                                }}
+                              >
+                                <span>{inCartQty > 0 ? `✓ (${inCartQty})` : (lang === "en" ? "+ Add" : "+ أضف")}</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Food Photo Container (Large, clear, appetizing) */}
+                          <div style={{
+                            width: "115px",
+                            height: "115px",
+                            flexShrink: 0,
+                            borderRadius: "16px",
+                            overflow: "hidden",
+                            backgroundColor: "#FAF6EE",
+                            border: "1px solid #E8DAC8",
+                            boxShadow: "0 3px 10px rgba(43,23,14,0.06)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            position: "relative",
+                          }}>
+                            {imgSrc ? (
+                              <img
+                                src={imgSrc}
+                                alt={productName}
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  objectFit: "cover",
+                                  display: "block",
+                                  transition: "transform 0.3s ease",
+                                }}
+                                loading="lazy"
+                                onError={(e) => {
+                                  const img = e.currentTarget;
+                                  const fallback = CATEGORY_FALLBACK[p.category];
+                                  if (fallback && !img.dataset.triedFallback) {
+                                    img.dataset.triedFallback = "true";
+                                    img.src = fallback;
+                                  } else {
+                                    img.style.display = "none";
+                                    const fb = img.parentElement?.querySelector(".prod-emoji-fb") as HTMLElement | null;
+                                    if (fb) fb.style.display = "flex";
+                                  }
+                                }}
+                              />
+                            ) : null}
+                            <span
+                              className="prod-emoji-fb"
+                              style={{
+                                fontSize: "38px",
+                                display: imgSrc ? "none" : "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
+                              {CATEGORY_EMOJI[p.category] || "🧇"}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );
@@ -1310,16 +1499,16 @@ export default function HomePage() {
           TRACK ORDER SECTION
       ══════════════════════════════════════════════════════════ */}
       <section id="track" style={{
-        background: "linear-gradient(135deg, #120a04 0%, #1a0d05 100%)",
-        borderTop: `1px solid ${C.border}`,
+        background: "#FAF6EE",
+        borderTop: "1px solid #E8DAC8",
         padding: "64px 20px",
       }}>
         <div style={{ maxWidth: "540px", margin: "0 auto", textAlign: "center" }}>
-          <div style={{ fontSize: "12px", fontWeight: 700, color: C.gold, letterSpacing: "2px", marginBottom: "8px" }}>● TRACK</div>
-          <h2 style={{ fontSize: "28px", fontWeight: 900, color: "#ffffff", marginBottom: "8px" }}>
+          <div style={{ fontSize: "12px", fontWeight: 800, color: "#C6873E", letterSpacing: "2px", marginBottom: "8px" }}>● TRACK</div>
+          <h2 style={{ fontSize: "28px", fontWeight: 900, color: "#2B170E", marginBottom: "8px" }}>
             {lang === "en" ? "Track your order 📦" : "تتبع طلبك 📦"}
           </h2>
-          <p style={{ fontSize: "14px", color: C.muted, marginBottom: "28px" }}>
+          <p style={{ fontSize: "14px", color: "#6B4F3B", marginBottom: "28px" }}>
             {lang === "en" ? "Enter order number or your phone number" : "أدخل رقم الطلب أو رقم موبايلك"}
           </p>
 
@@ -1330,18 +1519,19 @@ export default function HomePage() {
               onKeyDown={(e) => e.key === "Enter" && trackOrder()}
               placeholder={lang === "en" ? "CH-20261027-1234 or 01091413470" : "CH-20261027-1234 أو 01091413470"}
               style={{
-                flex: 1, height: "52px", background: C.dark,
-                border: `1px solid ${C.border}`, borderRadius: "14px",
-                padding: "0 18px", color: "#ffffff", fontSize: "13px",
+                flex: 1, height: "52px", background: "#FFFFFF",
+                border: "1px solid #D9C5B2", borderRadius: "14px",
+                padding: "0 18px", color: "#2B170E", fontSize: "14px",
                 outline: "none", fontFamily: "monospace",
               }}
             />
             <button onClick={trackOrder} disabled={trackLoading} style={{
-              background: `linear-gradient(135deg, ${C.gold}, ${C.goldL})`,
-              color: C.dark, fontWeight: 900, padding: "0 24px", height: "52px",
+              background: "linear-gradient(135deg, #D4954E, #C6873E)",
+              color: "#FFFFFF", fontWeight: 900, padding: "0 24px", height: "52px",
               borderRadius: "14px", border: "none", cursor: "pointer",
               fontSize: "14px", display: "flex", alignItems: "center", gap: "6px",
               minWidth: "100px",
+              boxShadow: "0 4px 14px rgba(198, 135, 62, 0.35)",
             }}>
               {trackLoading ? <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> : <><Search size={16} /> {lang === "en" ? "Search" : "بحث"}</>}
             </button>
@@ -1351,37 +1541,37 @@ export default function HomePage() {
 
           {trackResult && (
             <div style={{
-              marginTop: "24px", background: C.dark,
-              border: `1px solid ${C.border}`, borderRadius: "20px",
+              marginTop: "24px", background: "#FFFFFF",
+              border: "1px solid #E8DAC8", borderRadius: "20px",
               padding: "24px", textAlign: lang === "ar" ? "right" : "left",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+              boxShadow: "0 8px 32px rgba(78, 44, 21, 0.08)",
             }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "14px", alignItems: "center" }}>
-                <span style={{ fontFamily: "monospace", color: C.gold, fontWeight: 900, fontSize: "15px" }}>
+                <span style={{ fontFamily: "monospace", color: "#C6873E", fontWeight: 900, fontSize: "16px" }}>
                   {trackResult.orderNumber}
                 </span>
                 <span style={{
                   fontWeight: 700, fontSize: "13px",
-                  color: (lang === "en" ? ORDER_STATUSES_EN : ORDER_STATUSES_AR)[trackResult.status]?.color || "#ffffff",
-                  background: `${(lang === "en" ? ORDER_STATUSES_EN : ORDER_STATUSES_AR)[trackResult.status]?.color || "#ffffff"}20`,
+                  color: (lang === "en" ? ORDER_STATUSES_EN : ORDER_STATUSES_AR)[trackResult.status]?.color || "#2B170E",
+                  background: `${(lang === "en" ? ORDER_STATUSES_EN : ORDER_STATUSES_AR)[trackResult.status]?.color || "#2B170E"}20`,
                   padding: "4px 12px", borderRadius: "100px",
                 }}>
                   {(lang === "en" ? ORDER_STATUSES_EN : ORDER_STATUSES_AR)[trackResult.status]?.label || trackResult.status}
                 </span>
               </div>
-              <p style={{ fontSize: "13px", color: C.muted }}>
+              <p style={{ fontSize: "13px", color: "#6B4F3B" }}>
                 {trackResult.customerName} — {lang === "en" ? "Total: " : "إجمالي: "}
-                <strong style={{ color: C.gold }}>
+                <strong style={{ color: "#C6873E" }}>
                   {lang === "en" ? `EGP ${trackResult.total}` : `${trackResult.total} ج`}
                 </strong>
               </p>
               {(trackResult.timeline || []).length > 0 && (
-                <div style={{ marginTop: "16px", borderTop: `1px solid ${C.border}`, paddingTop: "14px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                <div style={{ marginTop: "16px", borderTop: "1px solid #E8DAC8", paddingTop: "14px", display: "flex", flexDirection: "column", gap: "8px" }}>
                   {(trackResult.timeline || []).map((t: any, i: number) => (
-                    <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "12px", color: C.muted }}>
-                      <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: C.gold, flexShrink: 0 }} />
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "12px", color: "#6B4F3B" }}>
+                      <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#C6873E", flexShrink: 0 }} />
                       <span>{(lang === "en" ? ORDER_STATUSES_EN : ORDER_STATUSES_AR)[t.stage]?.label || t.stage}</span>
-                      <span style={{ marginInlineStart: "auto", color: C.muted2, fontSize: "11px" }}>
+                      <span style={{ marginInlineStart: "auto", color: "#967B66", fontSize: "11px" }}>
                         {new Date(t.at).toLocaleTimeString(lang === "en" ? "en-US" : "ar-EG")}
                       </span>
                     </div>
@@ -1398,8 +1588,8 @@ export default function HomePage() {
       ══════════════════════════════════════════════════════════ */}
       <section id="about" style={{ maxWidth: "1000px", margin: "0 auto", padding: "64px 20px" }}>
         <div style={{ textAlign: "center", marginBottom: "40px" }}>
-          <div style={{ fontSize: "12px", fontWeight: 700, color: C.gold, letterSpacing: "2px", marginBottom: "8px" }}>● ABOUT</div>
-          <h2 style={{ fontSize: "28px", fontWeight: 900, color: "#ffffff", margin: 0 }}>
+          <div style={{ fontSize: "12px", fontWeight: 800, color: "#C6873E", letterSpacing: "2px", marginBottom: "8px" }}>● ABOUT</div>
+          <h2 style={{ fontSize: "28px", fontWeight: 900, color: "#2B170E", margin: 0 }}>
             {lang === "en" ? "About Choco House" : "عن Choco House"}
           </h2>
         </div>
@@ -1407,48 +1597,64 @@ export default function HomePage() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "20px" }}>
           {(lang === "en" ? [
             {
-              icon: <MapPin size={28} color={C.gold} />,
+              icon: <MapPin size={28} color="#C6873E" />,
               title: "Our Location",
-              body: "District 2, Block 3, Building 3\n6th of October — Delivery only",
+              body: `${storeSettings.address}\nDelivery across 84 zones in Giza & 6th of October`,
+              link: null,
             },
             {
-              icon: <Clock size={28} color={C.gold} />,
+              icon: <Clock size={28} color="#C6873E" />,
               title: "Opening Hours",
-              body: "Midnight to 2 AM\n& 4 PM to Midnight\nDaily",
+              body: "10:00 AM to 2:00 AM\nDaily Freshly Prepared",
+              link: null,
             },
             {
-              icon: <Phone size={28} color={C.gold} />,
+              icon: <Phone size={28} color="#C6873E" />,
               title: "Contact Us",
-              body: "01091413470\nCash | InstaPay | Wallet | Card",
+              body: `${storeSettings.phone}\nCash | InstaPay | Wallet | Card`,
+              link: `tel:${storeSettings.phone}`,
             },
           ] : [
             {
-              icon: <MapPin size={28} color={C.gold} />,
+              icon: <MapPin size={28} color="#C6873E" />,
               title: "موقعنا",
-              body: "الحي الثاني، قطعة 3، مبنى 3\nالسادس من أكتوبر — توصيل فقط",
+              body: `${storeSettings.address}\nتوصيل سريع لـ 84 منطقة بالجيزة وأكتوبر`,
+              link: null,
             },
             {
-              icon: <Clock size={28} color={C.gold} />,
-              title: "مواعيد الفتح",
-              body: "منتصف الليل لـ 2 ص\nو 4 م لـ منتصف الليل\nيومياً",
+              icon: <Clock size={28} color="#C6873E" />,
+              title: "مواعيد العمل",
+              body: "من 10 صباحاً حتى 2 بعد منتصف الليل\nيومياً تحضير طازج ولحظي",
+              link: null,
             },
             {
-              icon: <Phone size={28} color={C.gold} />,
+              icon: <Phone size={28} color="#C6873E" />,
               title: "تواصل معنا",
-              body: "01091413470\nكاش | إنستاباي | محفظة | كارت",
+              body: `${storeSettings.phone}\nكاش | إنستاباي | محفظة | كارت`,
+              link: `tel:${storeSettings.phone}`,
             },
           ]).map((c, i) => (
             <div key={i} style={{
-              background: C.card, border: `1px solid ${C.border}`,
+              background: "#FFFFFF", border: "1px solid #E8DAC8",
               borderRadius: "20px", padding: "28px 24px", textAlign: "center",
-              transition: "border-color 0.2s",
+              transition: "all 0.2s ease",
+              boxShadow: "0 2px 12px rgba(78, 44, 21, 0.04)",
             }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = C.gold; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = C.border; }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "#C6873E"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "#E8DAC8"; }}
             >
               <div style={{ display: "flex", justifyContent: "center", marginBottom: "14px" }}>{c.icon}</div>
-              <h3 style={{ fontWeight: 800, color: "#ffffff", marginBottom: "10px", fontSize: "16px" }}>{c.title}</h3>
-              <p style={{ fontSize: "14px", color: C.muted, whiteSpace: "pre-line", lineHeight: 1.8 }}>{c.body}</p>
+              <h3 style={{ fontWeight: 800, color: "#2B170E", marginBottom: "10px", fontSize: "16px" }}>{c.title}</h3>
+              {c.link ? (
+                <a
+                  href={c.link}
+                  style={{ fontSize: "14px", color: "#C6873E", whiteSpace: "pre-line", lineHeight: 1.8, textDecoration: "none", fontWeight: 700 }}
+                >
+                  {c.body}
+                </a>
+              ) : (
+                <p style={{ fontSize: "14px", color: "#6B4F3B", whiteSpace: "pre-line", lineHeight: 1.8 }}>{c.body}</p>
+              )}
             </div>
           ))}
         </div>
@@ -1458,10 +1664,10 @@ export default function HomePage() {
           FOOTER
       ══════════════════════════════════════════════════════════ */}
       <footer style={{
-        borderTop: "1px solid rgba(204, 160, 67, 0.15)",
+        borderTop: "1px solid #3D2214",
         padding: "36px 20px 48px",
         textAlign: "center",
-        background: "rgba(13, 8, 5, 0.95)",
+        background: "#241309",
       }}>
         <div style={{
           maxWidth: "1200px",
@@ -1473,19 +1679,18 @@ export default function HomePage() {
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <div style={{
-              width: "32px", height: "32px", borderRadius: "50%",
-              background: "#cca043", display: "flex", alignItems: "center", justifyContent: "center",
+              width: "36px", height: "36px", borderRadius: "50%",
+              overflow: "hidden", border: "1.5px solid #C6873E",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              background: "#FAF6EE",
             }}>
-              <span style={{
-                fontSize: "13px", fontWeight: 700, color: "#180e06",
-                fontFamily: "var(--font-playfair), Georgia, serif",
-              }}>CH</span>
+              <img src="/app-icon.png" alt="Choco House" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             </div>
             <span style={{
               fontFamily: "var(--font-playfair), Georgia, serif",
-              fontSize: "17px", fontWeight: 700, color: "#f5ede4",
+              fontSize: "18px", fontWeight: 800, color: "#FAF6EE",
             }}>
-              Choco House <span style={{ color: "#cca043", fontSize: "11px", letterSpacing: "2px" }}>{lang === "en" ? "DESSERTS" : "ديسرتس"}</span>
+              Waffle &amp; Cake <span style={{ color: "#C6873E", fontSize: "11px", letterSpacing: "2px" }}>{lang === "en" ? "DESSERTS" : "ديسرتس"}</span>
             </span>
           </div>
 
@@ -1497,11 +1702,11 @@ export default function HomePage() {
               display: "inline-flex",
               alignItems: "center",
               gap: "8px",
-              background: "rgba(204, 160, 67, 0.1)",
-              border: "1px solid rgba(204, 160, 67, 0.3)",
+              background: "rgba(198, 135, 62, 0.15)",
+              border: "1px solid rgba(198, 135, 62, 0.35)",
               padding: "7px 18px",
               borderRadius: "100px",
-              color: "#e6c37a",
+              color: "#E0A358",
               textDecoration: "none",
               fontSize: "12.5px",
               fontWeight: 800,
@@ -1512,11 +1717,36 @@ export default function HomePage() {
             <span style={{ color: "#4ade80", fontSize: "11px" }}>● v1.0.0</span>
           </Link>
 
-          <p style={{ fontSize: "13px", color: C.muted, margin: 0 }}>
+          <p style={{ fontSize: "13px", color: "#B49279", margin: 0 }}>
             {lang === "en"
-              ? "© 2026 Choco House Desserts. Luxury desserts made to order in 6th of October."
-              : "© 2026 شوكو هاوس ديسرتس. حلويات فاخرة تُحضّر طازجة لحظة الطلب في 6 أكتوبر."}
+              ? "© 2026 Choco House Desserts. Luxury waffles, pancakes & cheesecakes in 6th of October."
+              : "© 2026 شوكو هاوس ديسرتس. ألذ وأفخر وافل وبانكيك وتشيز كيك طازج في 6 أكتوبر."}
           </p>
+
+          <div style={{ marginTop: "6px" }}>
+            <a
+              href="https://wa.me/201091413470"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: "#38bdf8",
+                textDecoration: "none",
+                fontSize: "12px",
+                fontWeight: 700,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "8px 18px",
+                borderRadius: "100px",
+                background: "rgba(56, 189, 248, 0.08)",
+                border: "1px solid rgba(56, 189, 248, 0.22)",
+                transition: "all 0.2s ease",
+              }}
+            >
+              <span>تم تطوير وبرمجة النظام بواسطة شركة أوركا للحلول البرمجية والخدمات السحابية</span>
+              <span style={{ direction: "ltr", fontFamily: "monospace" }}>01091413470</span>
+            </a>
+          </div>
         </div>
       </footer>
 
@@ -1528,11 +1758,11 @@ export default function HomePage() {
           position: "fixed", bottom: "24px",
           ...(lang === "ar" ? { right: "20px" } : { left: "20px" }),
           zIndex: 40,
-          background: `linear-gradient(135deg, ${C.gold}, ${C.goldL})`,
-          color: C.dark, fontWeight: 900, padding: "14px 22px",
+          background: "linear-gradient(135deg, #D4954E, #C6873E)",
+          color: "#FFFFFF", fontWeight: 900, padding: "14px 22px",
           borderRadius: "20px", border: "none", cursor: "pointer",
           fontSize: "14px", display: "flex", alignItems: "center", gap: "10px",
-          boxShadow: "0 6px 28px rgba(200,134,10,0.55)",
+          boxShadow: "0 6px 28px rgba(198, 135, 62, 0.45)",
           animation: "pulse-glow 2s infinite",
         }}>
           <ShoppingCart size={18} />
@@ -1550,26 +1780,27 @@ export default function HomePage() {
           position: "fixed", inset: 0, zIndex: 50, display: "flex",
           justifyContent: lang === "ar" ? "flex-end" : "flex-start",
         }}>
-          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.65)" }} onClick={() => setCartOpen(false)} />
+          <div style={{ position: "absolute", inset: 0, background: "rgba(43, 23, 14, 0.45)", backdropFilter: "blur(4px)" }} onClick={() => setCartOpen(false)} />
           <div style={{
             position: "relative", width: "100%", maxWidth: "420px",
-            background: "#120a04",
-            borderLeft: lang === "ar" ? `1px solid ${C.border}` : "none",
-            borderRight: lang === "en" ? `1px solid ${C.border}` : "none",
+            background: "#FAF6EE",
+            borderLeft: lang === "ar" ? "1px solid #E8DAC8" : "none",
+            borderRight: lang === "en" ? "1px solid #E8DAC8" : "none",
             height: "100%", display: "flex", flexDirection: "column",
-            boxShadow: lang === "ar" ? "-8px 0 40px rgba(0,0,0,0.6)" : "8px 0 40px rgba(0,0,0,0.6)",
+            boxShadow: lang === "ar" ? "-8px 0 40px rgba(78, 44, 21, 0.25)" : "8px 0 40px rgba(78, 44, 21, 0.25)",
             direction: lang === "ar" ? "rtl" : "ltr",
           }}>
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "18px 20px", borderBottom: `1px solid ${C.border}`,
+              padding: "18px 20px", borderBottom: "1px solid #E8DAC8",
+              background: "#FFFFFF",
             }}>
-              <h2 style={{ fontWeight: 900, color: "#ffffff", fontSize: "18px", margin: 0 }}>
+              <h2 style={{ fontWeight: 900, color: "#2B170E", fontSize: "18px", margin: 0 }}>
                 🛒 {lang === "en" ? "Cart" : "السلة"} ({cartCount})
               </h2>
               <button onClick={() => setCartOpen(false)} style={{
-                background: "rgba(255,255,255,0.08)", border: "none",
-                cursor: "pointer", color: C.muted, padding: "8px",
+                background: "#FAF6EE", border: "1px solid #E8DAC8",
+                cursor: "pointer", color: "#7E5E49", padding: "8px",
                 borderRadius: "10px",
               }}>
                 <X size={20} />
@@ -1579,10 +1810,10 @@ export default function HomePage() {
             {cart.length === 0 ? (
               <div style={{
                 flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-                flexDirection: "column", color: C.muted, gap: "14px",
+                flexDirection: "column", color: "#6B4F3B", gap: "14px",
               }}>
                 <span style={{ fontSize: "56px" }}>🛒</span>
-                <p style={{ fontSize: "16px" }}>{lang === "en" ? "Cart is empty" : "السلة فارغة"}</p>
+                <p style={{ fontSize: "16px", fontWeight: 700 }}>{lang === "en" ? "Cart is empty" : "السلة فارغة"}</p>
               </div>
             ) : (
               <>
@@ -1591,42 +1822,44 @@ export default function HomePage() {
                     const itemName = lang === "en" ? (PRODUCT_NAMES_EN[item.product.nameAr] || item.product.nameEn || item.product.nameAr) : item.product.nameAr;
                     return (
                       <div key={idx} style={{
-                        background: C.card, border: `1px solid ${C.border}`,
+                        background: "#FFFFFF", border: "1px solid #E8DAC8",
                         borderRadius: "16px", padding: "12px", display: "flex", gap: "12px",
+                        boxShadow: "0 2px 8px rgba(78, 44, 21, 0.04)",
                       }}>
                         <div style={{
                           width: "60px", height: "60px", borderRadius: "12px",
-                          background: C.card2, overflow: "hidden", flexShrink: 0,
+                          background: "#FAF6EE", overflow: "hidden", flexShrink: 0,
                           display: "flex", alignItems: "center", justifyContent: "center",
+                          border: "1px solid #E8DAC8",
                         }}>
                           {item.product.image
                             ? <img src={item.product.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                            : <span style={{ fontSize: "28px" }}>{CATEGORY_EMOJI[item.product.category] || "🍫"}</span>
+                            : <span style={{ fontSize: "28px" }}>{CATEGORY_EMOJI[item.product.category] || "🧇"}</span>
                           }
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontWeight: 700, color: "#ffffff", fontSize: "14px", margin: 0 }}>{itemName}</p>
+                          <p style={{ fontWeight: 800, color: "#2B170E", fontSize: "14px", margin: 0 }}>{itemName}</p>
                           {item.extras.length > 0 && (
-                            <p style={{ fontSize: "11px", color: C.muted, marginTop: "3px" }}>{item.extras.join(" + ")}</p>
+                            <p style={{ fontSize: "11px", color: "#6B4F3B", marginTop: "3px" }}>{item.extras.join(" + ")}</p>
                           )}
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "10px" }}>
-                            <span style={{ fontWeight: 900, color: C.gold, fontSize: "15px" }}>
+                            <span style={{ fontWeight: 900, color: "#C6873E", fontSize: "15px" }}>
                               {lang === "en" ? `EGP ${item.unitPrice * item.qty}` : `${item.unitPrice * item.qty} ج`}
                             </span>
                             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                               <button onClick={() => updateQty(idx, -1)} style={{
                                 width: "30px", height: "30px", borderRadius: "8px",
-                                background: "#3d1f0a", border: "none", color: "#fff",
+                                background: "#FAF6EE", border: "1px solid #D9C5B2", color: "#2B170E",
                                 cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
                               }}>
                                 <Minus size={14} />
                               </button>
-                              <span style={{ fontWeight: 900, color: "#fff", width: "22px", textAlign: "center", fontSize: "15px" }}>
+                              <span style={{ fontWeight: 900, color: "#2B170E", width: "22px", textAlign: "center", fontSize: "15px" }}>
                                 {item.qty}
                               </span>
                               <button onClick={() => updateQty(idx, 1)} style={{
                                 width: "30px", height: "30px", borderRadius: "8px",
-                                background: "#3d1f0a", border: "none", color: "#fff",
+                                background: "#FAF6EE", border: "1px solid #D9C5B2", color: "#2B170E",
                                 cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
                               }}>
                                 <Plus size={14} />
@@ -1639,31 +1872,31 @@ export default function HomePage() {
                   })}
                 </div>
 
-                <div style={{ padding: "18px 20px", borderTop: `1px solid ${C.border}` }}>
+                <div style={{ padding: "18px 20px", borderTop: "1px solid #E8DAC8", background: "#FFFFFF" }}>
                   <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "16px", fontSize: "14px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", color: C.muted }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", color: "#6B4F3B" }}>
                       <span>{lang === "en" ? "Products" : "المنتجات"}</span>
                       <span>{lang === "en" ? `EGP ${cartTotal}` : `${cartTotal} ج`}</span>
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", color: C.muted }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", color: "#6B4F3B" }}>
                       <span>{lang === "en" ? "Delivery" : "توصيل"}</span>
                       <span>{lang === "en" ? `EGP ${currentZone.fee}` : `${currentZone.fee} ج`}</span>
                     </div>
                     <div style={{
                       display: "flex", justifyContent: "space-between",
-                      color: "#ffffff", fontWeight: 900, fontSize: "17px",
-                      borderTop: `1px solid ${C.border}`, paddingTop: "10px", marginTop: "4px",
+                      color: "#2B170E", fontWeight: 900, fontSize: "17px",
+                      borderTop: "1px solid #E8DAC8", paddingTop: "10px", marginTop: "4px",
                     }}>
                       <span>{lang === "en" ? "Total" : "الإجمالي"}</span>
-                      <span style={{ color: C.gold }}>{lang === "en" ? `EGP ${grandTotal}` : `${grandTotal} ج`}</span>
+                      <span style={{ color: "#C6873E" }}>{lang === "en" ? `EGP ${grandTotal}` : `${grandTotal} ج`}</span>
                     </div>
                   </div>
                   <button onClick={() => { setCheckoutOpen(true); setCartOpen(false); playSound("click"); }} style={{
                     width: "100%",
-                    background: `linear-gradient(135deg, ${C.gold}, ${C.goldL})`,
-                    color: C.dark, fontWeight: 900, padding: "15px",
+                    background: "linear-gradient(135deg, #D4954E, #C6873E)",
+                    color: "#FFFFFF", fontWeight: 900, padding: "15px",
                     borderRadius: "14px", border: "none", cursor: "pointer", fontSize: "16px",
-                    boxShadow: "0 4px 20px rgba(200,134,10,0.4)",
+                    boxShadow: "0 4px 20px rgba(198, 135, 62, 0.4)",
                   }}>
                     {lang === "en" ? "Proceed to Checkout 🛵" : "إتمام الطلب 🛵"}
                   </button>
@@ -1679,27 +1912,28 @@ export default function HomePage() {
       ══════════════════════════════════════════════════════════ */}
       {selectedProduct && (
         <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.8)" }} onClick={() => setSelectedProduct(null)} />
+          <div style={{ position: "absolute", inset: 0, background: "rgba(43, 23, 14, 0.55)", backdropFilter: "blur(4px)" }} onClick={() => setSelectedProduct(null)} />
           <div style={{
             position: "relative", width: "100%", maxWidth: "460px",
-            background: C.card, border: `1px solid ${C.border}`,
+            background: "#FFFFFF", border: "1px solid #E8DAC8",
             borderRadius: "28px 28px 0 0", padding: "24px",
-            boxShadow: "0 -8px 48px rgba(0,0,0,0.5)",
+            boxShadow: "0 -8px 48px rgba(78, 44, 21, 0.2)",
             maxHeight: "92vh", overflowY: "auto",
             direction: lang === "ar" ? "rtl" : "ltr",
           }}>
             <button onClick={() => setSelectedProduct(null)} style={{
               position: "absolute", top: "16px", [lang === "en" ? "right" : "left"]: "16px",
-              background: "rgba(255,255,255,0.08)", border: "none",
-              borderRadius: "10px", padding: "7px", cursor: "pointer", color: C.muted,
+              background: "#FAF6EE", border: "1px solid #E8DAC8",
+              borderRadius: "10px", padding: "7px", cursor: "pointer", color: "#7E5E49",
             }}>
               <X size={20} />
             </button>
 
             <div style={{
               width: "100%", height: "220px", borderRadius: "18px",
-              background: C.card2, overflow: "hidden", marginBottom: "18px",
+              background: "#FAF6EE", overflow: "hidden", marginBottom: "18px",
               display: "flex", alignItems: "center", justifyContent: "center",
+              border: "1px solid #E8DAC8",
             }}>
               {(selectedProduct.image || CATEGORY_FALLBACK[selectedProduct.category]) ? (
                 <img
@@ -1716,26 +1950,26 @@ export default function HomePage() {
                   }}
                 />
               ) : (
-                <span style={{ fontSize: "72px" }}>{CATEGORY_EMOJI[selectedProduct.category] || "🍫"}</span>
+                <span style={{ fontSize: "72px" }}>{CATEGORY_EMOJI[selectedProduct.category] || "🧇"}</span>
               )}
             </div>
 
-            <h3 style={{ fontWeight: 900, color: "#ffffff", fontSize: "22px", margin: 0 }}>
+            <h3 style={{ fontWeight: 900, color: "#2B170E", fontSize: "22px", margin: 0 }}>
               {lang === "en" ? (PRODUCT_NAMES_EN[selectedProduct.nameAr] || selectedProduct.nameEn) : selectedProduct.nameAr}
             </h3>
-            <p style={{ fontSize: "13px", color: C.muted, marginTop: "6px", lineHeight: "1.6" }}>
+            <p style={{ fontSize: "13px", color: "#6B4F3B", marginTop: "6px", lineHeight: "1.6" }}>
               {lang === "en"
                 ? (PRODUCT_DESCRIPTIONS_EN[selectedProduct.nameAr] || selectedProduct.nameEn)
                 : (PRODUCT_DESCRIPTIONS_AR[selectedProduct.nameAr] || selectedProduct.description || "")}
             </p>
-            <p style={{ color: C.gold, fontWeight: 900, fontSize: "24px", marginTop: "12px" }}>
+            <p style={{ color: "#C6873E", fontWeight: 900, fontSize: "24px", marginTop: "12px" }}>
               {lang === "en"
                 ? `EGP ${selectedProduct.basePrice + selectedExtras.reduce((s, e) => s + (currentExtras.find((x) => x.label === e)?.price || 0), 0)}`
                 : `${selectedProduct.basePrice + selectedExtras.reduce((s, e) => s + (currentExtras.find((x) => x.label === e)?.price || 0), 0)} ج`}
             </p>
 
             <div style={{ marginTop: "18px" }}>
-              <p style={{ fontSize: "13px", fontWeight: 700, color: C.muted, marginBottom: "12px" }}>
+              <p style={{ fontSize: "13px", fontWeight: 700, color: "#6B4F3B", marginBottom: "12px" }}>
                 {lang === "en" ? "Add-ons (optional):" : "إضافات (اختياري):"}
               </p>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
@@ -1752,13 +1986,13 @@ export default function HomePage() {
                         cursor: "pointer", border: "1px solid",
                         display: "flex", justifyContent: "space-between", alignItems: "center",
                         transition: "all 0.15s",
-                        background: isSelected ? C.gold : C.card2,
-                        borderColor: isSelected ? C.gold : C.border,
-                        color: isSelected ? C.dark : C.muted,
+                        background: isSelected ? "linear-gradient(135deg, #D4954E, #C6873E)" : "#FAF6EE",
+                        borderColor: isSelected ? "#C6873E" : "#E8DAC8",
+                        color: isSelected ? "#FFFFFF" : "#4A2814",
                       }}
                     >
                       <span>{ex.label}</span>
-                      <span style={{ opacity: 0.7, fontSize: "11px" }}>+{ex.price}</span>
+                      <span style={{ opacity: 0.8, fontSize: "11px" }}>+{ex.price}</span>
                     </button>
                   );
                 })}
@@ -1767,11 +2001,11 @@ export default function HomePage() {
 
             <button onClick={() => addToCart(selectedProduct, selectedExtras)} style={{
               width: "100%", marginTop: "22px",
-              background: `linear-gradient(135deg, ${C.gold}, ${C.goldL})`,
-              color: C.dark, fontWeight: 900, padding: "15px",
+              background: "linear-gradient(135deg, #D4954E, #C6873E)",
+              color: "#FFFFFF", fontWeight: 900, padding: "15px",
               borderRadius: "14px", border: "none", cursor: "pointer",
               fontSize: "16px", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px",
-              boxShadow: "0 4px 20px rgba(200,134,10,0.4)",
+              boxShadow: "0 4px 20px rgba(198, 135, 62, 0.4)",
             }}>
               <ShoppingCart size={18} /> {lang === "en" ? "Add to Cart" : "أضف للسلة"}
             </button>
@@ -1784,23 +2018,23 @@ export default function HomePage() {
       ══════════════════════════════════════════════════════════ */}
       {checkoutOpen && (
         <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
-          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.8)" }} onClick={() => setCheckoutOpen(false)} />
+          <div style={{ position: "absolute", inset: 0, background: "rgba(43, 23, 14, 0.55)", backdropFilter: "blur(4px)" }} onClick={() => setCheckoutOpen(false)} />
           <div style={{
             position: "relative", width: "100%", maxWidth: "460px",
-            background: C.card, border: `1px solid ${C.border}`,
+            background: "#FFFFFF", border: "1px solid #E8DAC8",
             borderRadius: "24px", padding: "28px",
-            boxShadow: "0 12px 48px rgba(0,0,0,0.6)",
+            boxShadow: "0 12px 48px rgba(78, 44, 21, 0.2)",
             maxHeight: "92vh", overflowY: "auto",
             direction: lang === "ar" ? "rtl" : "ltr",
           }}>
             <button onClick={() => setCheckoutOpen(false)} style={{
               position: "absolute", top: "18px", [lang === "en" ? "right" : "left"]: "18px",
-              background: "rgba(255,255,255,0.08)", border: "none",
-              borderRadius: "10px", padding: "7px", cursor: "pointer", color: C.muted,
+              background: "#FAF6EE", border: "1px solid #E8DAC8",
+              borderRadius: "10px", padding: "7px", cursor: "pointer", color: "#7E5E49",
             }}>
               <X size={20} />
             </button>
-            <h3 style={{ fontWeight: 900, color: "#ffffff", fontSize: "22px", margin: "0 0 24px 0" }}>
+            <h3 style={{ fontWeight: 900, color: "#2B170E", fontSize: "22px", margin: "0 0 24px 0" }}>
               {lang === "en" ? "Confirm Order 🛵" : "تأكيد الطلب 🛵"}
             </h3>
 
@@ -1824,17 +2058,41 @@ export default function HomePage() {
                 style={inputStyle}
               />
 
-              <select value={orderForm.zone} onChange={(e) => setOrderForm({ ...orderForm, zone: e.target.value })}
-                style={{ ...inputStyle, height: "46px" }}>
-                {currentZones.map((z) => (
-                  <option key={z.name} value={z.name}>
-                    {z.name} — {lang === "en" ? `${z.fee} EGP delivery` : `${z.fee} ج توصيل`}
-                  </option>
-                ))}
-              </select>
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <label style={{ fontSize: "12px", fontWeight: 700, color: "#6B4F3B" }}>
+                    {lang === "en" ? "Delivery Zone (84 Areas in 6th of October & Giza)" : "منطقة التوصيل (84 منطقة بـ 6 أكتوبر والجيزة)"}
+                  </label>
+                  <span style={{ fontSize: "11px", color: "#C6873E", fontWeight: 700 }}>
+                    ⏱️ {currentZone.timeMinutes} {lang === "en" ? "mins" : "دقيقة"} • 🛵 {currentZone.fee} {lang === "en" ? "EGP" : "ج.م"}
+                  </span>
+                </div>
+
+                <input
+                  type="text"
+                  placeholder={lang === "en" ? "🔍 Filter 84 areas (e.g. Dream Land, District 1)..." : "🔍 ابحث في المناطق (مثال: المتميز، دريم لاند، الحي الأول)..."}
+                  value={zoneFilter}
+                  onChange={(e) => setZoneFilter(e.target.value)}
+                  style={{ ...inputStyle, height: "38px", fontSize: "12px", background: "#FAF6EE" }}
+                />
+
+                <select
+                  value={orderForm.zone}
+                  onChange={(e) => setOrderForm({ ...orderForm, zone: e.target.value })}
+                  style={{ ...inputStyle, height: "46px" }}
+                >
+                  {currentZones
+                    .filter((z) => !zoneFilter.trim() || z.name.toLowerCase().includes(zoneFilter.trim().toLowerCase()))
+                    .map((z) => (
+                      <option key={z.name} value={z.name}>
+                        {z.name} — {lang === "en" ? `${z.fee} EGP (${z.timeMinutes} mins)` : `${z.fee} ج.م (${z.timeMinutes} دقيقة)`}
+                      </option>
+                    ))}
+                </select>
+              </div>
 
               <div>
-                <p style={{ fontSize: "13px", fontWeight: 700, color: C.muted, marginBottom: "10px" }}>
+                <p style={{ fontSize: "13px", fontWeight: 700, color: "#6B4F3B", marginBottom: "10px" }}>
                   {lang === "en" ? "Payment Method" : "طريقة الدفع"}
                 </p>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
@@ -1846,9 +2104,9 @@ export default function HomePage() {
                     <button key={pm.val} onClick={() => setOrderForm({ ...orderForm, paymentMethod: pm.val })} style={{
                       padding: "11px 8px", borderRadius: "12px", fontSize: "13px", fontWeight: 700,
                       cursor: "pointer", border: "1px solid", transition: "all 0.15s",
-                      background: orderForm.paymentMethod === pm.val ? C.gold : C.card2,
-                      borderColor: orderForm.paymentMethod === pm.val ? C.gold : C.border,
-                      color: orderForm.paymentMethod === pm.val ? C.dark : C.muted,
+                      background: orderForm.paymentMethod === pm.val ? "linear-gradient(135deg, #D4954E, #C6873E)" : "#FAF6EE",
+                      borderColor: orderForm.paymentMethod === pm.val ? "#C6873E" : "#E8DAC8",
+                      color: orderForm.paymentMethod === pm.val ? "#FFFFFF" : "#4A2814",
                     }}>
                       {pm.label}
                     </button>
@@ -1859,8 +2117,8 @@ export default function HomePage() {
               <textarea value={orderForm.notes} onChange={(e) => setOrderForm({ ...orderForm, notes: e.target.value })}
                 placeholder={lang === "en" ? "Special notes..." : "ملاحظات خاصة..."} rows={2}
                 style={{
-                  width: "100%", background: C.dark, border: `1px solid ${C.border}`,
-                  borderRadius: "12px", padding: "12px 14px", color: "#ffffff", fontSize: "14px",
+                  width: "100%", background: "#FAF6EE", border: "1px solid #D9C5B2",
+                  borderRadius: "12px", padding: "12px 14px", color: "#2B170E", fontSize: "14px",
                   outline: "none", resize: "none", boxSizing: "border-box",
                 }}
               />
@@ -1868,25 +2126,26 @@ export default function HomePage() {
 
             {/* Order Summary */}
             <div style={{
-              background: C.dark, borderRadius: "16px",
+              background: "#FAF6EE", borderRadius: "16px",
               padding: "18px", margin: "20px 0",
+              border: "1px solid #E8DAC8",
               display: "flex", flexDirection: "column", gap: "8px", fontSize: "14px",
             }}>
-              <div style={{ display: "flex", justifyContent: "space-between", color: C.muted }}>
+              <div style={{ display: "flex", justifyContent: "space-between", color: "#6B4F3B" }}>
                 <span>{lang === "en" ? "Products" : "المنتجات"}</span>
                 <span>{lang === "en" ? `EGP ${cartTotal}` : `${cartTotal} ج`}</span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", color: C.muted }}>
+              <div style={{ display: "flex", justifyContent: "space-between", color: "#6B4F3B" }}>
                 <span>{lang === "en" ? `Delivery (${currentZone.name})` : `توصيل (${currentZone.name})`}</span>
                 <span>{lang === "en" ? `EGP ${currentZone.fee}` : `${currentZone.fee} ج`}</span>
               </div>
               <div style={{
                 display: "flex", justifyContent: "space-between",
-                color: "#ffffff", fontWeight: 900, fontSize: "17px",
-                borderTop: `1px solid ${C.border}`, paddingTop: "10px", marginTop: "4px",
+                color: "#2B170E", fontWeight: 900, fontSize: "17px",
+                borderTop: "1px solid #E8DAC8", paddingTop: "10px", marginTop: "4px",
               }}>
                 <span>{lang === "en" ? "Total" : "الإجمالي"}</span>
-                <span style={{ color: C.gold }}>{lang === "en" ? `EGP ${grandTotal}` : `${grandTotal} ج`}</span>
+                <span style={{ color: "#C6873E" }}>{lang === "en" ? `EGP ${grandTotal}` : `${grandTotal} ج`}</span>
               </div>
             </div>
 
@@ -1894,16 +2153,16 @@ export default function HomePage() {
               disabled={placing || !orderForm.customerName || !orderForm.phone}
               style={{
                 width: "100%",
-                background: `linear-gradient(135deg, ${C.gold}, ${C.goldL})`,
-                color: C.dark, fontWeight: 900, padding: "16px",
+                background: "linear-gradient(135deg, #D4954E, #C6873E)",
+                color: "#FFFFFF", fontWeight: 900, padding: "16px",
                 borderRadius: "14px", border: "none", cursor: "pointer",
                 fontSize: "16px", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px",
                 opacity: (placing || !orderForm.customerName || !orderForm.phone) ? 0.5 : 1,
-                boxShadow: "0 4px 20px rgba(200,134,10,0.4)",
+                boxShadow: "0 4px 20px rgba(198, 135, 62, 0.4)",
               }}>
               {placing
                 ? (lang === "en" ? "Sending order..." : "جاري إرسال الطلب...")
-                : <><CheckCircle2 size={18} /> {lang === "en" ? "Confirm Order 🍫" : "أكد الطلب 🍫"}</>}
+                : <><CheckCircle2 size={18} /> {lang === "en" ? "Confirm Order 🧇" : "أكد الطلب 🧇"}</>}
             </button>
           </div>
         </div>
@@ -1914,40 +2173,40 @@ export default function HomePage() {
       ══════════════════════════════════════════════════════════ */}
       {orderResult && (
         <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
-          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.9)" }} />
+          <div style={{ position: "absolute", inset: 0, background: "rgba(43, 23, 14, 0.65)", backdropFilter: "blur(4px)" }} />
           <div style={{
-            position: "relative", background: C.card,
-            border: `1px solid rgba(200,134,10,0.5)`,
+            position: "relative", background: "#FFFFFF",
+            border: "1px solid #E8DAC8",
             borderRadius: "28px", padding: "40px 28px",
             textAlign: "center", maxWidth: "360px", width: "100%",
-            boxShadow: "0 12px 64px rgba(200,134,10,0.25)",
+            boxShadow: "0 12px 64px rgba(78, 44, 21, 0.2)",
             direction: lang === "ar" ? "rtl" : "ltr",
           }}>
             <div style={{ fontSize: "72px", marginBottom: "20px" }}>🎉</div>
-            <h3 style={{ fontSize: "26px", fontWeight: 900, color: "#ffffff", marginBottom: "10px" }}>
+            <h3 style={{ fontSize: "26px", fontWeight: 900, color: "#2B170E", marginBottom: "10px" }}>
               {lang === "en" ? "Order Received!" : "تم استلام طلبك!"}
             </h3>
-            <p style={{ color: C.muted, fontSize: "15px", marginBottom: "24px" }}>
+            <p style={{ color: "#6B4F3B", fontSize: "15px", marginBottom: "24px" }}>
               {lang === "en"
                 ? "We will start preparing right away and deliver fresh to you ⚡"
                 : "سنبدأ التحضير فوراً ونوصل لك في أقرب وقت ⚡"}
             </p>
             <div style={{
-              background: C.dark, borderRadius: "16px",
+              background: "#FAF6EE", borderRadius: "16px",
               padding: "20px", marginBottom: "24px",
-              border: `1px solid ${C.border}`,
+              border: "1px solid #E8DAC8",
             }}>
-              <p style={{ fontSize: "13px", color: C.muted, marginBottom: "6px" }}>
+              <p style={{ fontSize: "13px", color: "#6B4F3B", marginBottom: "6px" }}>
                 {lang === "en" ? "Your Order Number" : "رقم طلبك"}
               </p>
-              <p style={{ fontFamily: "monospace", color: C.gold, fontWeight: 900, fontSize: "22px" }}>
+              <p style={{ fontFamily: "monospace", color: "#C6873E", fontWeight: 900, fontSize: "22px" }}>
                 {orderResult.orderNumber}
               </p>
             </div>
             {/* WhatsApp 100% Free Confirmation Button */}
             <a
-              href={`https://wa.me/201091413470?text=${encodeURIComponent(
-                `مرحباً بيت الشوكولاتة Choco House 🍫\nأنا العميل: ${orderForm.customerName}\nقمت بطلب أوردر جديد رقم: #${orderResult.orderNumber}\nالمطلوب تحصيله: ${grandTotal} ج.م\nالعنوان: ${orderForm.address || ""} (${orderForm.zone})\nبرجاء التأكيد والتجهيز طازج!`
+              href={`https://wa.me/2${storeSettings.phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                `مرحباً ${storeSettings.restaurantName} 🧇🍰\nأنا العميل: ${orderForm.customerName}\nقمت بطلب أوردر جديد رقم: #${orderResult.orderNumber}\nالمطلوب تحصيله: ${grandTotal} ج.م\nالعنوان: ${orderForm.address || ""} (${orderForm.zone})\nوقت التوصيل التقديري: ${currentZone.timeMinutes} دقيقة\nبرجاء التأكيد والتجهيز طازج!`
               )}`}
               target="_blank"
               rel="noopener noreferrer"
@@ -1984,14 +2243,15 @@ export default function HomePage() {
               }}
               style={{
                 width: "100%",
-                background: `linear-gradient(135deg, ${C.gold}, ${C.goldL})`,
-                color: C.dark,
+                background: "linear-gradient(135deg, #D4954E, #C6873E)",
+                color: "#FFFFFF",
                 fontWeight: 900,
                 padding: "14px",
                 borderRadius: "14px",
                 border: "none",
                 cursor: "pointer",
                 fontSize: "15px",
+                boxShadow: "0 4px 14px rgba(198, 135, 62, 0.35)",
               }}
             >
               {lang === "en" ? "Awesome! Track order live 📍" : "ممتاز! تتبع طلبك لايف 📍"}
