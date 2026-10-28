@@ -36,6 +36,15 @@ const DEFAULT_OFFERS = {
     linkHref: "#menu",
     image: "/whacka-offers-banner.jpg",
   },
+  discount: {
+    enabled: false,
+    title: "خصم خاص لفترة محدودة 🔥",
+    type: "percentage",
+    value: 15,
+    scope: "all",
+    categoryName: "",
+    productIds: [],
+  },
 };
 
 export async function GET() {

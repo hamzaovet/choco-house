@@ -22,9 +22,19 @@ interface OfferCard {
   icon: string;
 }
 
+export interface DiscountRule {
+  enabled: boolean;
+  title: string;
+  type: "percentage" | "fixed";
+  value: number;
+  scope: "all" | "category" | "products";
+  categoryName?: string;
+  productIds?: string[];
+}
+
 interface OfferData {
   enabled?: boolean;
-  badge: string;
+  badge?: string;
   title: string;
   subtitle: string;
   cards: OfferCard[];
@@ -35,6 +45,7 @@ interface OfferData {
     linkHref: string;
     image: string;
   };
+  discount?: DiscountRule;
 }
 
 const DEFAULT_OFFERS: OfferData = {
@@ -547,12 +558,48 @@ export default function HomePage() {
     } catch { /* ignore */ }
   }, [cartCount]);
 
+  // Helper to calculate promotional discount on any product
+  const getProductPricing = (p: Product) => {
+    const d = offers.discount;
+    if (offers.enabled === false || !d || !d.enabled || !d.value || d.value <= 0) {
+      return { originalPrice: p.basePrice, finalPrice: p.basePrice, hasDiscount: false, badgeText: "" };
+    }
+
+    let applies = false;
+    if (d.scope === "all") {
+      applies = true;
+    } else if (d.scope === "category" && d.categoryName) {
+      applies = p.category === d.categoryName;
+    } else if (d.scope === "products" && d.productIds) {
+      applies = d.productIds.includes(p.id);
+    }
+
+    if (!applies) {
+      return { originalPrice: p.basePrice, finalPrice: p.basePrice, hasDiscount: false, badgeText: "" };
+    }
+
+    const discountAmount = d.type === "percentage"
+      ? Math.round((p.basePrice * d.value) / 100)
+      : d.value;
+
+    const finalPrice = Math.max(1, p.basePrice - discountAmount);
+    const badgeText = d.type === "percentage" ? `-${d.value}% 🔥` : `-${d.value} ج 🔥`;
+
+    return {
+      originalPrice: p.basePrice,
+      finalPrice,
+      hasDiscount: true,
+      badgeText,
+    };
+  };
+
   function addToCart(product: Product, extras: string[]) {
+    const pricing = getProductPricing(product);
     const extraPrice = extras.reduce((s, e) => {
       const match = EXTRAS_AR.find((x) => x.label === e) || EXTRAS_EN.find((x) => x.label === e);
       return s + (match?.price || 0);
     }, 0);
-    const unitPrice  = product.basePrice + extraPrice;
+    const unitPrice  = pricing.finalPrice + extraPrice;
     setCart((prev) => {
       const key = product.id + extras.sort().join(",");
       const ex  = prev.find((i) => i.product.id + i.extras.sort().join(",") === key);
@@ -1122,6 +1169,55 @@ export default function HomePage() {
           </p>
         </div>
 
+        {/* ── Active Promotional Discount Banner (Live Discount Engine) ── */}
+        {offers.enabled !== false && offers.discount?.enabled && offers.discount.title && (
+          <div
+            style={{
+              background: "linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(204, 160, 67, 0.18) 50%, rgba(239, 68, 68, 0.15) 100%)",
+              border: "1.5px solid rgba(204, 160, 67, 0.4)",
+              borderRadius: "16px",
+              padding: "12px 20px",
+              marginBottom: "24px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: "12px",
+              boxShadow: "0 6px 24px rgba(0, 0, 0, 0.4), 0 0 16px rgba(204, 160, 67, 0.12)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{ fontSize: "22px" }}>🔥</span>
+              <div>
+                <div style={{ fontSize: "14.5px", fontWeight: 900, color: "#ffffff" }}>
+                  {offers.discount.title}
+                </div>
+                <div style={{ fontSize: "12px", color: "#a8927e" }}>
+                  {offers.discount.scope === "all"
+                    ? "يطبق الخصم تلقائياً على جميع أصناف المنيو الآن!"
+                    : offers.discount.scope === "category"
+                    ? `يطبق الخصم على جميع أصناف قسم (${offers.discount.categoryName})!`
+                    : "يطبق الخصم على الأصناف المحددة بالشارة الحمراء 🔥!"}
+                </div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                background: "#cca043",
+                color: "#180e06",
+                fontSize: "12.5px",
+                fontWeight: 900,
+                padding: "4px 14px",
+                borderRadius: "100px",
+                boxShadow: "0 2px 8px rgba(204, 160, 67, 0.4)",
+              }}
+            >
+              {offers.discount.type === "percentage" ? `خصم ${offers.discount.value}%` : `وفر ${offers.discount.value} ج.م`}
+            </div>
+          </div>
+        )}
+
         {/* Category Navigation Bar — Visual Circular Carousel matching Image 2 */}
         <div style={{
           display: "flex",
@@ -1290,6 +1386,7 @@ export default function HomePage() {
                       const imgSrc = p.image || CATEGORY_FALLBACK[p.category];
                       const inCartQty = cart.filter(i => i.product.id === p.id).reduce((s, i) => s + i.qty, 0);
                       const isFav = favorites.includes(p.id);
+                      const pricing = getProductPricing(p);
 
                       return (
                         <div
@@ -1393,7 +1490,7 @@ export default function HomePage() {
                                 gap: "6px",
                                 marginBottom: "4px",
                               }}>
-                                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
                                   <span style={{
                                     fontSize: "16.5px",
                                     fontWeight: 900,
@@ -1405,6 +1502,21 @@ export default function HomePage() {
                                   </span>
                                   {(p.basePrice >= 120 || p.sortOrder === 1) && (
                                     <span title="الأكثر طلباً" style={{ fontSize: "14px" }}>👑</span>
+                                  )}
+                                  {pricing.hasDiscount && (
+                                    <span
+                                      style={{
+                                        background: "rgba(239, 68, 68, 0.18)",
+                                        border: "1px solid rgba(239, 68, 68, 0.4)",
+                                        color: "#f87171",
+                                        fontSize: "10.5px",
+                                        fontWeight: 900,
+                                        padding: "1px 6px",
+                                        borderRadius: "6px",
+                                      }}
+                                    >
+                                      {pricing.badgeText}
+                                    </span>
                                   )}
                                 </div>
 
@@ -1462,13 +1574,29 @@ export default function HomePage() {
                                 color: "#cca043",
                                 display: "flex",
                                 alignItems: "baseline",
-                                gap: "4px",
+                                gap: "6px",
                                 fontFamily: "var(--font-cairo), system-ui, sans-serif",
                               }}>
-                                <span>{p.basePrice}</span>
-                                <span style={{ fontSize: "12px", color: "#a8927e", fontWeight: 700 }}>
-                                  {lang === "en" ? "EGP" : "ج.م"}
-                                </span>
+                                {pricing.hasDiscount ? (
+                                  <>
+                                    <del style={{ fontSize: "12px", color: "#a8927e", textDecoration: "line-through" }}>
+                                      {p.basePrice}
+                                    </del>
+                                    <span style={{ fontSize: "17.5px", fontWeight: 900, color: "#22c55e" }}>
+                                      {pricing.finalPrice}
+                                    </span>
+                                    <span style={{ fontSize: "12px", color: "#4ade80", fontWeight: 700 }}>
+                                      {lang === "en" ? "EGP" : "ج.م"}
+                                    </span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span>{p.basePrice}</span>
+                                    <span style={{ fontSize: "12px", color: "#a8927e", fontWeight: 700 }}>
+                                      {lang === "en" ? "EGP" : "ج.م"}
+                                    </span>
+                                  </>
+                                )}
                               </div>
 
                               {/* Quick Add Pill Button */}
@@ -2068,11 +2196,24 @@ export default function HomePage() {
                 ? (PRODUCT_DESCRIPTIONS_EN[selectedProduct.nameAr] || selectedProduct.nameEn)
                 : (PRODUCT_DESCRIPTIONS_AR[selectedProduct.nameAr] || selectedProduct.description || "")}
             </p>
-            <p style={{ color: C.gold, fontWeight: 900, fontSize: "24px", marginTop: "12px" }}>
-              {lang === "en"
-                ? `EGP ${selectedProduct.basePrice + selectedExtras.reduce((s, e) => s + (currentExtras.find((x) => x.label === e)?.price || 0), 0)}`
-                : `${selectedProduct.basePrice + selectedExtras.reduce((s, e) => s + (currentExtras.find((x) => x.label === e)?.price || 0), 0)} ج`}
-            </p>
+            {getProductPricing(selectedProduct).hasDiscount ? (
+              <div style={{ display: "flex", alignItems: "baseline", gap: "10px", marginTop: "12px" }}>
+                <del style={{ color: "#a8927e", fontSize: "16px", textDecoration: "line-through" }}>
+                  {selectedProduct.basePrice}
+                </del>
+                <p style={{ color: "#22c55e", fontWeight: 900, fontSize: "26px", margin: 0 }}>
+                  {lang === "en"
+                    ? `EGP ${getProductPricing(selectedProduct).finalPrice + selectedExtras.reduce((s, e) => s + (currentExtras.find((x) => x.label === e)?.price || 0), 0)}`
+                    : `${getProductPricing(selectedProduct).finalPrice + selectedExtras.reduce((s, e) => s + (currentExtras.find((x) => x.label === e)?.price || 0), 0)} ج.م`}
+                </p>
+              </div>
+            ) : (
+              <p style={{ color: C.gold, fontWeight: 900, fontSize: "24px", marginTop: "12px" }}>
+                {lang === "en"
+                  ? `EGP ${selectedProduct.basePrice + selectedExtras.reduce((s, e) => s + (currentExtras.find((x) => x.label === e)?.price || 0), 0)}`
+                  : `${selectedProduct.basePrice + selectedExtras.reduce((s, e) => s + (currentExtras.find((x) => x.label === e)?.price || 0), 0)} ج`}
+              </p>
+            )}
 
             <div style={{ marginTop: "18px" }}>
               <p style={{ fontSize: "13px", fontWeight: 700, color: C.muted, marginBottom: "12px" }}>
