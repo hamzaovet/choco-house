@@ -12,6 +12,7 @@ import {
   Star, Bike, CreditCard, ChefHat, ChevronDown,
   Truck, Sparkles, Wallet, BadgeCheck,
   PartyPopper, GraduationCap, Flame, Gift,
+  Heart, Home, Package, User,
 } from "lucide-react";
 
 interface OfferCard {
@@ -512,6 +513,27 @@ export default function HomePage() {
   const cartTotal  = cart.reduce((s, i) => s + i.unitPrice * i.qty, 0);
   const cartCount  = cart.reduce((s, i) => s + i.qty, 0);
 
+  // Favorites Heart toggle state
+  const [favorites, setFavorites] = useState<string[]>([]);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("choco_favorites");
+      if (saved) setFavorites(JSON.parse(saved));
+    } catch {}
+  }, []);
+
+  const toggleFavorite = (productId: string) => {
+    playSound("click");
+    setFavorites((prev) => {
+      const next = prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId];
+      try {
+        localStorage.setItem("choco_favorites", JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
+
   // Delivery zone fee lookup
   const zoneIndex  = Math.max(0, currentZones.findIndex((z) => z.name === orderForm.zone));
   const currentZone = currentZones[zoneIndex] || currentZones[0];
@@ -614,6 +636,18 @@ export default function HomePage() {
   ────────────────────────────────────────────────────────── */
   return (
     <div dir={lang === "ar" ? "rtl" : "ltr"} style={{ minHeight: "100vh", backgroundColor: C.dark, color: C.cream, fontFamily: "var(--font-cairo), system-ui, -apple-system, Arial, sans-serif" }}>
+      <style jsx global>{`
+        @media (min-width: 769px) {
+          .choco-mobile-nav {
+            display: none !important;
+          }
+        }
+        @media (max-width: 768px) {
+          body {
+            padding-bottom: 74px !important;
+          }
+        }
+      `}</style>
 
       {/* ═══════════════════════════════════════════════════════
           HERO — Exact Whacka 1:1 Pixel-Perfect Replica
@@ -1255,6 +1289,7 @@ export default function HomePage() {
                         : (PRODUCT_DESCRIPTIONS_AR[p.nameAr] || p.description || "مكونات أصلية فاخرة تُحضّر خصيصاً ولحظة الطلب.");
                       const imgSrc = p.image || CATEGORY_FALLBACK[p.category];
                       const inCartQty = cart.filter(i => i.product.id === p.id).reduce((s, i) => s + i.qty, 0);
+                      const isFav = favorites.includes(p.id);
 
                       return (
                         <div
@@ -1288,7 +1323,61 @@ export default function HomePage() {
                             el.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.4)";
                           }}
                         >
-                          {/* Details (Left in RTL, taking flex: 1) */}
+                          {/* Food Photo Container (Rendered first: Right in RTL, Left in LTR) */}
+                          <div style={{
+                            width: "115px",
+                            height: "115px",
+                            flexShrink: 0,
+                            borderRadius: "16px",
+                            overflow: "hidden",
+                            backgroundColor: "rgba(36, 22, 12, 0.72)",
+                            border: "1px solid rgba(204, 160, 67, 0.25)",
+                            boxShadow: "0 3px 12px rgba(0, 0, 0, 0.4)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            position: "relative",
+                          }}>
+                            {imgSrc ? (
+                              <img
+                                src={imgSrc}
+                                alt={productName}
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  objectFit: "cover",
+                                  display: "block",
+                                  transition: "transform 0.3s ease",
+                                }}
+                                loading="lazy"
+                                onError={(e) => {
+                                  const img = e.currentTarget;
+                                  const fallback = CATEGORY_FALLBACK[p.category];
+                                  if (fallback && !img.dataset.triedFallback) {
+                                    img.dataset.triedFallback = "true";
+                                    img.src = fallback;
+                                  } else {
+                                    img.style.display = "none";
+                                    const fb = img.parentElement?.querySelector(".prod-emoji-fb") as HTMLElement | null;
+                                    if (fb) fb.style.display = "flex";
+                                  }
+                                }}
+                              />
+                            ) : null}
+                            <span
+                              className="prod-emoji-fb"
+                              style={{
+                                fontSize: "38px",
+                                display: imgSrc ? "none" : "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
+                              {CATEGORY_EMOJI[p.category] || "🍫"}
+                            </span>
+                          </div>
+
+                          {/* Details (Left in RTL, Right in LTR) */}
                           <div style={{
                             flex: 1,
                             display: "flex",
@@ -1300,21 +1389,47 @@ export default function HomePage() {
                               <div style={{
                                 display: "flex",
                                 alignItems: "center",
+                                justifyContent: "space-between",
                                 gap: "6px",
                                 marginBottom: "4px",
                               }}>
-                                <span style={{
-                                  fontSize: "16.5px",
-                                  fontWeight: 900,
-                                  color: "#ffffff",
-                                  lineHeight: 1.3,
-                                  fontFamily: "var(--font-cairo), system-ui, sans-serif",
-                                }}>
-                                  {productName}
-                                </span>
-                                {(p.basePrice >= 120 || p.sortOrder === 1) && (
-                                  <span title="الأكثر طلباً" style={{ fontSize: "14px" }}>👑</span>
-                                )}
+                                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                  <span style={{
+                                    fontSize: "16.5px",
+                                    fontWeight: 900,
+                                    color: "#ffffff",
+                                    lineHeight: 1.3,
+                                    fontFamily: "var(--font-cairo), system-ui, sans-serif",
+                                  }}>
+                                    {productName}
+                                  </span>
+                                  {(p.basePrice >= 120 || p.sortOrder === 1) && (
+                                    <span title="الأكثر طلباً" style={{ fontSize: "14px" }}>👑</span>
+                                  )}
+                                </div>
+
+                                {/* Favorite Heart Toggle */}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleFavorite(p.id);
+                                  }}
+                                  style={{
+                                    background: "none",
+                                    border: "none",
+                                    color: isFav ? "#ef4444" : "rgba(204, 160, 67, 0.45)",
+                                    cursor: "pointer",
+                                    padding: "2px",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    transition: "transform 0.15s ease",
+                                  }}
+                                  title={isFav ? "إزالة من المفضلة" : "إضافة للمفضلة"}
+                                >
+                                  <Heart size={18} fill={isFav ? "#ef4444" : "none"} />
+                                </button>
                               </div>
 
                               <p style={{
@@ -1392,60 +1507,6 @@ export default function HomePage() {
                               </button>
                             </div>
                           </div>
-
-                          {/* Food Photo Container */}
-                          <div style={{
-                            width: "115px",
-                            height: "115px",
-                            flexShrink: 0,
-                            borderRadius: "16px",
-                            overflow: "hidden",
-                            backgroundColor: "rgba(36, 22, 12, 0.72)",
-                            border: "1px solid rgba(204, 160, 67, 0.25)",
-                            boxShadow: "0 3px 12px rgba(0, 0, 0, 0.4)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            position: "relative",
-                          }}>
-                            {imgSrc ? (
-                              <img
-                                src={imgSrc}
-                                alt={productName}
-                                style={{
-                                  width: "100%",
-                                  height: "100%",
-                                  objectFit: "cover",
-                                  display: "block",
-                                  transition: "transform 0.3s ease",
-                                }}
-                                loading="lazy"
-                                onError={(e) => {
-                                  const img = e.currentTarget;
-                                  const fallback = CATEGORY_FALLBACK[p.category];
-                                  if (fallback && !img.dataset.triedFallback) {
-                                    img.dataset.triedFallback = "true";
-                                    img.src = fallback;
-                                  } else {
-                                    img.style.display = "none";
-                                    const fb = img.parentElement?.querySelector(".prod-emoji-fb") as HTMLElement | null;
-                                    if (fb) fb.style.display = "flex";
-                                  }
-                                }}
-                              />
-                            ) : null}
-                            <span
-                              className="prod-emoji-fb"
-                              style={{
-                                fontSize: "38px",
-                                display: imgSrc ? "none" : "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                              }}
-                            >
-                              {CATEGORY_EMOJI[p.category] || "🍫"}
-                            </span>
-                          </div>
                         </div>
                       );
                     })}
@@ -1455,6 +1516,134 @@ export default function HomePage() {
             })}
           </div>
         )}
+            {/* ── Promo Banner: "كل لقمة حكاية لذة ♡" (Mockup Image 2) ── */}
+            <div
+              style={{
+                marginTop: "48px",
+                background: "linear-gradient(135deg, rgba(34, 19, 10, 0.95) 0%, rgba(20, 11, 5, 0.98) 100%)",
+                border: "1.5px solid rgba(204, 160, 67, 0.35)",
+                borderRadius: "24px",
+                padding: "28px 32px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "24px",
+                flexWrap: "wrap",
+                boxShadow: "0 16px 40px rgba(0, 0, 0, 0.6), 0 0 24px rgba(204, 160, 67, 0.12)",
+                position: "relative",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  top: "-50px",
+                  right: "-50px",
+                  width: "160px",
+                  height: "160px",
+                  borderRadius: "50%",
+                  background: "radial-gradient(circle, rgba(204, 160, 67, 0.25) 0%, transparent 70%)",
+                  pointerEvents: "none",
+                }}
+              />
+
+              <div style={{ flex: "1 1 320px", zIndex: 1 }}>
+                <div
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    background: "rgba(204, 160, 67, 0.15)",
+                    border: "1px solid rgba(204, 160, 67, 0.3)",
+                    padding: "4px 14px",
+                    borderRadius: "100px",
+                    color: "#cca043",
+                    fontSize: "12px",
+                    fontWeight: 800,
+                    marginBottom: "12px",
+                  }}
+                >
+                  <Sparkles size={14} />
+                  <span>{lang === "en" ? "Choco House Signature" : "شوكو هاوس — حكاية المذاق الأصيل"}</span>
+                </div>
+
+                <h3
+                  style={{
+                    fontSize: "24px",
+                    fontWeight: 900,
+                    color: "#ffffff",
+                    margin: "0 0 8px 0",
+                    lineHeight: 1.3,
+                    fontFamily: "var(--font-cairo), system-ui, sans-serif",
+                  }}
+                >
+                  {lang === "en" ? "Every bite is a story of bliss ♡" : "كل لقمة حكاية لذة ♡"}
+                </h3>
+
+                <p
+                  style={{
+                    fontSize: "13.5px",
+                    color: "#a8927e",
+                    lineHeight: 1.6,
+                    margin: "0 0 20px 0",
+                    maxWidth: "460px",
+                    fontFamily: "var(--font-cairo), system-ui, sans-serif",
+                  }}
+                >
+                  {lang === "en"
+                    ? "Freshly baked waffles, rich Belgian chocolate, and decadent desserts made to elevate your moments."
+                    : "وافل ساخن يخبز أمامك لحظة بلحظة، مغطى بأفخر أنواع الشوكولاتة البلجيكية الغنية وحلويات تُعد بكل شغف لتُسعد كل حواسك."}
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const menuEl = document.getElementById("menu");
+                    if (menuEl) menuEl.scrollIntoView({ behavior: "smooth" });
+                    playSound("click");
+                  }}
+                  style={{
+                    background: "#cca043",
+                    color: "#180e06",
+                    border: "none",
+                    borderRadius: "12px",
+                    padding: "12px 24px",
+                    fontSize: "14px",
+                    fontWeight: 900,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    boxShadow: "0 4px 16px rgba(204, 160, 67, 0.4)",
+                    transition: "all 0.15s ease",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#dfb252")}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#cca043")}
+                >
+                  <span>{lang === "en" ? "Order Now ›" : "اطلب الآن ›"}</span>
+                </button>
+              </div>
+
+              <div
+                style={{
+                  width: "180px",
+                  height: "180px",
+                  borderRadius: "20px",
+                  overflow: "hidden",
+                  border: "2px solid rgba(204, 160, 67, 0.35)",
+                  boxShadow: "0 8px 24px rgba(0, 0, 0, 0.5)",
+                  flexShrink: 0,
+                  position: "relative",
+                  zIndex: 1,
+                }}
+              >
+                <img
+                  src="/categories/waffle.jpg"
+                  alt="Choco House Signature Dessert"
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              </div>
+            </div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════
@@ -2150,6 +2339,155 @@ export default function HomePage() {
           </div>
         </div>
       )}
+
+      {/* ═══════════════════════════════════════════════════════
+          FLOATING MOBILE BOTTOM NAVIGATION BAR (Image 2 Mockup)
+      ══════════════════════════════════════════════════════════ */}
+      <nav
+        className="choco-mobile-nav"
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 90,
+          background: "rgba(18, 10, 4, 0.96)",
+          backdropFilter: "blur(12px)",
+          borderTop: "1px solid rgba(204, 160, 67, 0.25)",
+          boxShadow: "0 -4px 20px rgba(0, 0, 0, 0.6)",
+          padding: "8px 16px 12px 16px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-around",
+        }}
+      >
+        {/* Tab 1: Home / الرئيسية */}
+        <button
+          type="button"
+          onClick={() => {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            playSound("click");
+          }}
+          style={{
+            background: "none",
+            border: "none",
+            color: "#cca043",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "4px",
+            fontSize: "11px",
+            fontWeight: 800,
+            cursor: "pointer",
+            padding: "4px 8px",
+          }}
+        >
+          <Home size={20} />
+          <span>{lang === "en" ? "Home" : "الرئيسية"}</span>
+        </button>
+
+        {/* Tab 2: Orders / طلباتي */}
+        <button
+          type="button"
+          onClick={() => {
+            const trackEl = document.getElementById("track");
+            if (trackEl) trackEl.scrollIntoView({ behavior: "smooth" });
+            else setCustomerModalOpen(true);
+            playSound("click");
+          }}
+          style={{
+            background: "none",
+            border: "none",
+            color: "#a8927e",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "4px",
+            fontSize: "11px",
+            fontWeight: 800,
+            cursor: "pointer",
+            padding: "4px 8px",
+          }}
+        >
+          <Package size={20} />
+          <span>{lang === "en" ? "My Orders" : "طلباتي"}</span>
+        </button>
+
+        {/* Tab 3: Cart / سلة المشتريات */}
+        <button
+          type="button"
+          onClick={() => {
+            setCartOpen(true);
+            playSound("click");
+          }}
+          style={{
+            background: "none",
+            border: "none",
+            color: cartCount > 0 ? "#cca043" : "#a8927e",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "4px",
+            fontSize: "11px",
+            fontWeight: 800,
+            cursor: "pointer",
+            padding: "4px 8px",
+            position: "relative",
+          }}
+        >
+          <div style={{ position: "relative" }}>
+            <ShoppingCart size={20} />
+            {cartCount > 0 && (
+              <span
+                style={{
+                  position: "absolute",
+                  top: "-6px",
+                  right: "-10px",
+                  background: "#cca043",
+                  color: "#180e06",
+                  fontSize: "10px",
+                  fontWeight: 900,
+                  width: "18px",
+                  height: "18px",
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
+                }}
+              >
+                {cartCount}
+              </span>
+            )}
+          </div>
+          <span>{lang === "en" ? "Cart" : "السلة"}</span>
+        </button>
+
+        {/* Tab 4: Account / حسابي */}
+        <button
+          type="button"
+          onClick={() => {
+            setCustomerModalOpen(true);
+            playSound("click");
+          }}
+          style={{
+            background: "none",
+            border: "none",
+            color: "#a8927e",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "4px",
+            fontSize: "11px",
+            fontWeight: 800,
+            cursor: "pointer",
+            padding: "4px 8px",
+          }}
+        >
+          <User size={20} />
+          <span>{lang === "en" ? "Account" : "حسابي"}</span>
+        </button>
+      </nav>
 
       {/* ── Customer Account & Orders Modal ── */}
       <CustomerAccountModal

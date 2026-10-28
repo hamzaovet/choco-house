@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -13,7 +13,8 @@ import {
   RefreshCw, ChefHat, Bike, XCircle, AlertCircle, Printer,
   Volume2, VolumeX, MessageSquare, Send, UserCheck, Eye,
   ExternalLink, User, MessageCircle, DollarSign, QrCode, Copy, Check,
-  Edit3, ArrowRight, ArrowLeft
+  Edit3, ArrowRight, ArrowLeft,
+  Power, Plus, Trash2, Star, Sparkles
 } from "lucide-react";
 
 interface OrderItem {
@@ -52,6 +53,8 @@ interface Captain {
   name: string;
   phone: string;
   vehicle?: string;
+  isActive?: boolean;
+  createdAt?: string;
 }
 
 interface ChatMsg {
@@ -93,6 +96,20 @@ export default function DashboardOrdersPage() {
   const [newCaptainPhone, setNewCaptainPhone] = useState("");
   const [savingCaptain, setSavingCaptain] = useState(false);
 
+  // Dynamic Fleet Operations Command Center Modal
+  const [fleetModalOpen, setFleetModalOpen] = useState(false);
+  const [fleetCaptainName, setFleetCaptainName] = useState("");
+  const [fleetCaptainPhone, setFleetCaptainPhone] = useState("");
+  const [fleetCaptainVehicle, setFleetCaptainVehicle] = useState("Ø³ÙƒÙˆØªØ±");
+  const [savingFleetCaptain, setSavingFleetCaptain] = useState(false);
+
+  // Instant WhatsApp Dispatch Banner after assignment
+  const [assignedDispatch, setAssignedDispatch] = useState<{
+    order: Order;
+    captainName: string;
+    captainPhone: string;
+  } | null>(null);
+
   // Live Customer Inquiries / Chat Drawer
   const [chatDrawerOpen, setChatDrawerOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMsg[]>([]);
@@ -111,7 +128,7 @@ export default function DashboardOrdersPage() {
         const existing = map.get(key);
         map.set(key, {
           id: key,
-          name: (!m.isStaff && m.senderName) ? m.senderName : (existing?.name || (m.customerPhone ? "عميل" : "زائر ضيف")),
+          name: (!m.isStaff && m.senderName) ? m.senderName : (existing?.name || (m.customerPhone ? "Ø¹Ù…ÙŠÙ„" : "Ø²Ø§Ø¦Ø± Ø¶ÙŠÙ")),
           phone: m.customerPhone || "",
           token: m.senderId || undefined,
           count: (existing?.count || 0) + 1,
@@ -131,13 +148,13 @@ export default function DashboardOrdersPage() {
   }, [chatCustomers, selectedChatPhone]);
 
   const STATUS_TABS = [
-    { id: "active",     label: t("النشطة", "Active") },
-    { id: "new",        label: t("جديد", "New") },
-    { id: "preparing",  label: t("قيد التحضير", "Preparing") },
-    { id: "ready",      label: t("جاهز للتسليم", "Ready") },
-    { id: "delivering", label: t("مع الكابتن", "With Captain") },
-    { id: "delivered",  label: t("تم التسليم والتحصيل", "Delivered & Settled") },
-    { id: "cancelled",  label: t("ملغي", "Cancelled") },
+    { id: "active",     label: t("Ø§Ù„Ù†Ø´Ø·Ø©", "Active") },
+    { id: "new",        label: t("Ø¬Ø¯ÙŠØ¯", "New") },
+    { id: "preparing",  label: t("Ù‚ÙŠØ¯ Ø§Ù„ØªØ­Ø¶ÙŠØ±", "Preparing") },
+    { id: "ready",      label: t("Ø¬Ø§Ù‡Ø² Ù„Ù„ØªØ³Ù„ÙŠÙ…", "Ready") },
+    { id: "delivering", label: t("Ù…Ø¹ Ø§Ù„ÙƒØ§Ø¨ØªÙ†", "With Captain") },
+    { id: "delivered",  label: t("ØªÙ… Ø§Ù„ØªØ³Ù„ÙŠÙ… ÙˆØ§Ù„ØªØ­ØµÙŠÙ„", "Delivered & Settled") },
+    { id: "cancelled",  label: t("Ù…Ù„ØºÙŠ", "Cancelled") },
   ];
 
   const fetchOrders = useCallback(async () => {
@@ -235,6 +252,114 @@ export default function DashboardOrdersPage() {
     }
   }
 
+  // Calculate active orders currently with a specific captain
+  const getCaptainActiveOrders = useCallback((phone: string) => {
+    return orders.filter((o) => o.status === "delivering" && o.captainPhone === phone);
+  }, [orders]);
+
+  // Toggle captain on/off duty
+  async function handleToggleCaptainActive(cpt: Captain) {
+    playSound("click");
+    const nextActive = cpt.isActive === false ? true : false;
+    try {
+      const res = await fetch("/api/captains", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: cpt.id, isActive: nextActive }),
+      });
+      if (res.ok) {
+        playSound("success");
+        setCaptains((prev) => prev.map((c) => (c.id === cpt.id ? { ...c, isActive: nextActive } : c)));
+      }
+    } catch {}
+  }
+
+  // Quick Add Captain to Fleet
+  async function handleAddFleetCaptain(e: React.FormEvent) {
+    e.preventDefault();
+    if (!fleetCaptainName.trim() || !fleetCaptainPhone.trim()) {
+      alert("Ø¨Ø±Ø¬Ø§Ø¡ ÙƒØªØ§Ø¨Ø© Ø§Ø³Ù… ÙˆØ±Ù‚Ù… Ù‡Ø§ØªÙ Ø§Ù„Ø·ÙŠØ§Ø±");
+      return;
+    }
+    setSavingFleetCaptain(true);
+    playSound("click");
+    try {
+      const res = await fetch("/api/captains", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: fleetCaptainName.trim(),
+          phone: fleetCaptainPhone.trim(),
+          vehicle: fleetCaptainVehicle,
+          isActive: true,
+        }),
+      });
+      if (res.ok) {
+        playSound("success");
+        setFleetCaptainName("");
+        setFleetCaptainPhone("");
+        fetchCaptains();
+      }
+    } finally {
+      setSavingFleetCaptain(false);
+    }
+  }
+
+  // Delete Captain
+  async function handleDeleteCaptain(cpt: Captain) {
+    if (!confirm(`Ù‡Ù„ Ø£Ù†Øª Ù…ØªØ£ÙƒØ¯ Ù…Ù† Ø­Ø°Ù Ø§Ù„ÙƒØ§Ø¨ØªÙ† ${cpt.name} Ù†Ù‡Ø§Ø¦ÙŠØ§Ù‹ Ù…Ù† Ø£Ø³Ø·ÙˆÙ„ Ø´ÙˆÙƒÙˆ Ù‡Ø§ÙˆØ³ØŸ`)) return;
+    playSound("alert");
+    try {
+      const res = await fetch(`/api/captains?id=${cpt.id}`, { method: "DELETE" });
+      if (res.ok) {
+        fetchCaptains();
+      }
+    } catch {}
+  }
+
+  // Smart WhatsApp Dispatch Generator with Google Maps & Full Items Breakdown
+  const getCaptainDispatchUrl = (order: Order, captainPhoneOverride?: string, captainNameOverride?: string) => {
+    const captPhone = captainPhoneOverride || order.captainPhone || "";
+    if (!captPhone) return "#";
+    const cleanCaptPhone = captPhone.replace(/[^0-9]/g, "");
+    const captIntl = cleanCaptPhone.startsWith("0") ? "2" + cleanCaptPhone : cleanCaptPhone;
+    const captName = captainNameOverride || order.captainName || "Ø§Ù„ÙƒØ§Ø¨ØªÙ†";
+
+    const itemsList = parseItems(order.items)
+      .map(
+        (it) =>
+          `â€¢ ${it.qty} Ã— ${lang === "en" ? it.nameEn || it.nameAr : it.nameAr || it.nameEn} ${
+            it.extras && it.extras.length ? `(${it.extras.join(" + ")})` : ""
+          } [${it.unitPrice * it.qty} Ø¬]`
+      )
+      .join("\n");
+
+    const addressQuery = encodeURIComponent(
+      `${order.address || ""} ${order.zone || "Ø§Ù„Ø³Ø§Ø¯Ø³ Ù…Ù† Ø£ÙƒØªÙˆØ¨Ø±"}`
+    );
+    const mapsUrl = `https://maps.google.com/?q=${addressQuery}`;
+
+    const msg =
+      `ðŸ›µ *Ø¨ÙŠØ§Ù† ØªÙˆØµÙŠÙ„ Ø£ÙˆØ±Ø¯Ø± Ø¬Ø¯ÙŠØ¯ â€” Choco House Desserts ðŸ«ðŸ‘‘*\n\n` +
+      `Ø£Ù‡Ù„Ø§Ù‹ ÙƒØ§Ø¨ØªÙ† ${captName}ØŒ ØªÙØ§ØµÙŠÙ„ Ø§Ù„Ø·Ù„Ø¨ Ù„Ù„ØªÙˆØµÙŠÙ„ Ø§Ù„ÙÙˆØ±ÙŠ:\n` +
+      `â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n` +
+      `ðŸ·ï¸ *Ø£ÙˆØ±Ø¯Ø± Ø±Ù‚Ù…:* #${order.orderNumber}\n` +
+      `ðŸ‘¤ *Ø§Ø³Ù… Ø§Ù„Ø¹Ù…ÙŠÙ„:* ${order.customerName}\n` +
+      `ðŸ“ž *Ù‡Ø§ØªÙ Ø§Ù„Ø¹Ù…ÙŠÙ„:* ${order.phone}\n` +
+      `ðŸ“ *Ø§Ù„Ø¹Ù†ÙˆØ§Ù†:* ${order.address || "ØºÙŠØ± Ù…Ø­Ø¯Ø¯"} (${order.zone || "Ø§Ù„Ø­ÙŠ Ø§Ù„Ø«Ø§Ù†ÙŠ"})\n` +
+      `ðŸ—ºï¸ *Ù„ÙˆÙƒÙŠØ´Ù† Ø§Ù„Ø®Ø±ÙŠØ·Ø© Ø§Ù„Ù…Ø¨Ø§Ø´Ø±:*\n${mapsUrl}\n\n` +
+      `ðŸ« *Ø§Ù„Ø£ØµÙ†Ø§Ù Ø§Ù„Ù…Ø·Ù„ÙˆØ¨Ø©:*\n${itemsList || "Ø£ØµÙ†Ø§Ù Ù…ØªÙ†ÙˆØ¹Ø©"}\n\n` +
+      `ðŸ’° *Ø§Ù„Ù…Ø·Ù„ÙˆØ¨ ØªØ­ØµÙŠÙ„Ù‡ ÙƒØ§Ø´:* ${order.total} Ø¬.Ù… ${
+        order.paymentMethod === "cash"
+          ? "(ðŸ’µ ÙƒØ§Ø´ Ø¹Ù†Ø¯ Ø§Ù„Ø§Ø³ØªÙ„Ø§Ù…)"
+          : "(ðŸ’³ Ù…Ø¯ÙÙˆØ¹ Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠØ§Ù‹ Ø¨Ø§Ù„ÙƒØ§Ù…Ù„ - Ù„Ø§ ØªØ­ØµÙ„ Ù…Ø¨Ø§Ù„Øº)"
+      }\n` +
+      (order.notes ? `âš ï¸ *Ù…Ù„Ø§Ø­Ø¸Ø§Øª Ø®Ø§ØµØ©:* ${order.notes}\n\n` : `\n`) +
+      `Ø¨Ø§Ù„ØªÙˆÙÙŠÙ‚ ÙŠØ§ Ø¨Ø·Ù„! ðŸš€`;
+
+    return `https://wa.me/${captIntl}?text=${encodeURIComponent(msg)}`;
+  };
+
   // Assign Captain and change status to 'delivering'
   async function assignCaptainToOrder() {
     if (!captainModalOrder) return;
@@ -247,7 +372,7 @@ export default function DashboardOrdersPage() {
         captainName = newCaptainName.trim();
         captainPhone = newCaptainPhone.trim();
         if (!captainName || !captainPhone) {
-          alert("برجاء إدخال اسم ورقم هاتف الكابتن");
+          alert("Ø¨Ø±Ø¬Ø§Ø¡ Ø¥Ø¯Ø®Ø§Ù„ Ø§Ø³Ù… ÙˆØ±Ù‚Ù… Ù‡Ø§ØªÙ Ø§Ù„ÙƒØ§Ø¨ØªÙ†");
           setSavingCaptain(false);
           return;
         }
@@ -264,13 +389,19 @@ export default function DashboardOrdersPage() {
           captainName = found.name;
           captainPhone = found.phone;
         } else {
-          alert("برجاء اختيار كابتن");
+          alert("Ø¨Ø±Ø¬Ø§Ø¡ Ø§Ø®ØªÙŠØ§Ø± ÙƒØ§Ø¨ØªÙ†");
           setSavingCaptain(false);
           return;
         }
       }
 
       await updateStatus(captainModalOrder.id, "delivering", {
+        captainName,
+        captainPhone,
+      });
+
+      setAssignedDispatch({
+        order: captainModalOrder,
         captainName,
         captainPhone,
       });
@@ -297,7 +428,7 @@ export default function DashboardOrdersPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          senderName: currentUser?.name || "فريق Choco House",
+          senderName: currentUser?.name || "ÙØ±ÙŠÙ‚ Choco House",
           senderRole: currentUser?.role || "staff",
           text: chatReplyText.trim(),
           isStaff: true,
@@ -354,9 +485,9 @@ export default function DashboardOrdersPage() {
   const getCustomerWhatsAppUrl = (order: Order) => {
     const cleanPhone = order.phone.replace(/[^0-9]/g, "");
     const egyptianPhone = cleanPhone.startsWith("0") ? "2" + cleanPhone : cleanPhone;
-    const msg = `مرحباً ${order.customerName} من Choco House 🍫\nأوردر رقم: #${order.orderNumber}\nالحالة الحالية: ${
-      order.status === "delivering" ? `مع الكابتن ${order.captainName || ""} 🛵` : "قيد التجهيز 👨‍🍳"
-    }\nالإجمالي المطلوب: ${order.total} ج.م\nلأي استفسار تواصل معنا!`;
+    const msg = `Ù…Ø±Ø­Ø¨Ø§Ù‹ ${order.customerName} Ù…Ù† Choco House ðŸ«\nØ£ÙˆØ±Ø¯Ø± Ø±Ù‚Ù…: #${order.orderNumber}\nØ§Ù„Ø­Ø§Ù„Ø© Ø§Ù„Ø­Ø§Ù„ÙŠØ©: ${
+      order.status === "delivering" ? `Ù…Ø¹ Ø§Ù„ÙƒØ§Ø¨ØªÙ† ${order.captainName || ""} ðŸ›µ` : "Ù‚ÙŠØ¯ Ø§Ù„ØªØ¬Ù‡ÙŠØ² ðŸ‘¨â€ðŸ³"
+    }\nØ§Ù„Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø§Ù„Ù…Ø·Ù„ÙˆØ¨: ${order.total} Ø¬.Ù…\nÙ„Ø£ÙŠ Ø§Ø³ØªÙØ³Ø§Ø± ØªÙˆØ§ØµÙ„ Ù…Ø¹Ù†Ø§!`;
     return `https://wa.me/${egyptianPhone}?text=${encodeURIComponent(msg)}`;
   };
 
@@ -365,14 +496,103 @@ export default function DashboardOrdersPage() {
     if (!order.captainPhone) return "#";
     const cleanPhone = order.captainPhone.replace(/[^0-9]/g, "");
     const egyptianPhone = cleanPhone.startsWith("0") ? "2" + cleanPhone : cleanPhone;
-    const msg = `أهلاً كابتن ${order.captainName} 🛵\nتفاصيل الأوردر للتسليم:\nرقم الأوردر: #${order.orderNumber}\nالعميل: ${order.customerName}\nالهاتف: ${order.phone}\nالعنوان: ${order.address || "غير محدد"} (${order.zone || ""})\nالمطلوب تحصيله: ${order.total} ج.م\nطريقة الدفع: ${order.paymentMethod === "cash" ? "كاش 💵" : "مدفوع إلكترونياً 💳"}`;
+    const msg = `Ø£Ù‡Ù„Ø§Ù‹ ÙƒØ§Ø¨ØªÙ† ${order.captainName} ðŸ›µ\nØªÙØ§ØµÙŠÙ„ Ø§Ù„Ø£ÙˆØ±Ø¯Ø± Ù„Ù„ØªØ³Ù„ÙŠÙ…:\nØ±Ù‚Ù… Ø§Ù„Ø£ÙˆØ±Ø¯Ø±: #${order.orderNumber}\nØ§Ù„Ø¹Ù…ÙŠÙ„: ${order.customerName}\nØ§Ù„Ù‡Ø§ØªÙ: ${order.phone}\nØ§Ù„Ø¹Ù†ÙˆØ§Ù†: ${order.address || "ØºÙŠØ± Ù…Ø­Ø¯Ø¯"} (${order.zone || ""})\nØ§Ù„Ù…Ø·Ù„ÙˆØ¨ ØªØ­ØµÙŠÙ„Ù‡: ${order.total} Ø¬.Ù…\nØ·Ø±ÙŠÙ‚Ø© Ø§Ù„Ø¯ÙØ¹: ${order.paymentMethod === "cash" ? "ÙƒØ§Ø´ ðŸ’µ" : "Ù…Ø¯ÙÙˆØ¹ Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠØ§Ù‹ ðŸ’³"}`;
     return `https://wa.me/${egyptianPhone}?text=${encodeURIComponent(msg)}`;
   };
 
   return (
     <ErpLayout activeItem="orders">
       <div>
-        {/* ── Persistent Alarm Flashing Banner ── */}
+        {/* â”€â”€ Assigned Dispatch Success Notification (1-Click WhatsApp Send) â”€â”€ */}
+        {assignedDispatch && (
+          <div
+            style={{
+              background: "rgba(24, 13, 7, 0.95)",
+              border: "2px solid #cca043",
+              borderRadius: "16px",
+              padding: "14px 20px",
+              marginBottom: "20px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: "14px",
+              boxShadow: "0 8px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(204, 160, 67, 0.2)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div
+                style={{
+                  width: "42px",
+                  height: "42px",
+                  borderRadius: "12px",
+                  background: "rgba(204, 160, 67, 0.18)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "22px",
+                }}
+              >
+                ðŸ›µ
+              </div>
+              <div>
+                <h4 style={{ margin: 0, fontSize: "15px", fontWeight: 900, color: "#ffffff" }}>
+                  ØªÙ… Ø¥Ø³Ù†Ø§Ø¯ Ø§Ù„Ø£ÙˆØ±Ø¯Ø± #{assignedDispatch.order.orderNumber} Ù„Ù„Ø·ÙŠØ§Ø± ({assignedDispatch.captainName}) Ø¨Ù†Ø¬Ø§Ø­!
+                </h4>
+                <p style={{ margin: "2px 0 0 0", fontSize: "12px", color: "#a8927e" }}>
+                  Ø§Ø¶ØºØ· Ø§Ù„Ø²Ø± Ø§Ù„Ø£Ø®Ø¶Ø± Ù„Ø¥Ø±Ø³Ø§Ù„ Ø¨ÙŠØ§Ù† Ø§Ù„Ø£ÙˆØ±Ø¯Ø± Ø¨Ø§Ù„ÙƒØ§Ù…Ù„ Ù…Ø¹ Ø±Ø§Ø¨Ø· Ù„ÙˆÙƒÙŠØ´Ù† Ø¬ÙˆØ¬Ù„ Ù…Ø§Ø¨Ø³ Ù„Ù„Ø·ÙŠØ§Ø± Ø¹Ø¨Ø± ÙˆØ§ØªØ³Ø§Ø¨ Ø¨Ù†Ù‚Ø±Ø© ÙˆØ§Ø­Ø¯Ø©
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <a
+                href={getCaptainDispatchUrl(
+                  assignedDispatch.order,
+                  assignedDispatch.captainPhone,
+                  assignedDispatch.captainName
+                )}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => playSound("click")}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  background: "#22c55e",
+                  color: "#ffffff",
+                  padding: "10px 20px",
+                  borderRadius: "12px",
+                  fontWeight: 900,
+                  fontSize: "13.5px",
+                  textDecoration: "none",
+                  boxShadow: "0 4px 14px rgba(34, 197, 94, 0.4)",
+                  transition: "all 0.15s ease",
+                }}
+              >
+                <MessageCircle size={17} />
+                <span>ðŸ“² Ø¥Ø±Ø³Ø§Ù„ Ø¨ÙŠØ§Ù† Ø§Ù„Ø£ÙˆØ±Ø¯Ø± ÙˆØ§Ù„Ù„ÙˆÙƒÙŠØ´Ù† Ø¹Ø¨Ø± ÙˆØ§ØªØ³Ø§Ø¨ ÙÙˆØ±Ø§Ù‹ ðŸš€</span>
+              </a>
+
+              <button
+                onClick={() => setAssignedDispatch(null)}
+                style={{
+                  background: "rgba(255, 255, 255, 0.08)",
+                  border: "none",
+                  color: "#a8927e",
+                  borderRadius: "10px",
+                  padding: "8px 12px",
+                  cursor: "pointer",
+                  fontSize: "12px",
+                  fontWeight: 700,
+                }}
+              >
+                Ø¥ØºÙ„Ø§Ù‚ âœ•
+              </button>
+            </div>
+          </div>
+        )}
+        {/* â”€â”€ Persistent Alarm Flashing Banner â”€â”€ */}
         {newOrdersCount > 0 && (
           <div
             style={{
@@ -405,13 +625,13 @@ export default function DashboardOrdersPage() {
               <div>
                 <h3 style={{ margin: 0, fontSize: "16.5px", fontWeight: 900 }}>
                   {t(
-                    `🚨 تنبيه فوري: يوجد ${newOrdersCount} طلب جديد بانتظار استلامك والتحضير!`,
-                    `🚨 Alert: ${newOrdersCount} new order(s) waiting for acceptance & prep!`
+                    `ðŸš¨ ØªÙ†Ø¨ÙŠÙ‡ ÙÙˆØ±ÙŠ: ÙŠÙˆØ¬Ø¯ ${newOrdersCount} Ø·Ù„Ø¨ Ø¬Ø¯ÙŠØ¯ Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ø³ØªÙ„Ø§Ù…Ùƒ ÙˆØ§Ù„ØªØ­Ø¶ÙŠØ±!`,
+                    `ðŸš¨ Alert: ${newOrdersCount} new order(s) waiting for acceptance & prep!`
                   )}
                 </h3>
                 <p style={{ margin: "2px 0 0 0", fontSize: "12.5px", opacity: 0.9 }}>
                   {t(
-                    "صوت المنبه يعمل باستمرار لتنبيه المطبخ والكاشير حتى يتم قبول الطلب",
+                    "ØµÙˆØª Ø§Ù„Ù…Ù†Ø¨Ù‡ ÙŠØ¹Ù…Ù„ Ø¨Ø§Ø³ØªÙ…Ø±Ø§Ø± Ù„ØªÙ†Ø¨ÙŠÙ‡ Ø§Ù„Ù…Ø·Ø¨Ø® ÙˆØ§Ù„ÙƒØ§Ø´ÙŠØ± Ø­ØªÙ‰ ÙŠØªÙ… Ù‚Ø¨ÙˆÙ„ Ø§Ù„Ø·Ù„Ø¨",
                     "Continuous kitchen alarm ringing until order is accepted or muted"
                   )}
                 </p>
@@ -441,19 +661,19 @@ export default function DashboardOrdersPage() {
               {alarmMuted ? (
                 <>
                   <Volume2 size={18} />
-                  <span>{t("تشغيل الصوت 🔔", "Unmute Alarm 🔔")}</span>
+                  <span>{t("ØªØ´ØºÙŠÙ„ Ø§Ù„ØµÙˆØª ðŸ””", "Unmute Alarm ðŸ””")}</span>
                 </>
               ) : (
                 <>
                   <VolumeX size={18} />
-                  <span>{t("كتم الصوت مؤقتاً 🔕", "Mute Alarm 🔕")}</span>
+                  <span>{t("ÙƒØªÙ… Ø§Ù„ØµÙˆØª Ù…Ø¤Ù‚ØªØ§Ù‹ ðŸ”•", "Mute Alarm ðŸ”•")}</span>
                 </>
               )}
             </button>
           </div>
         )}
 
-        {/* ── Page Header & Top Quick Actions ── */}
+        {/* â”€â”€ Page Header & Top Quick Actions â”€â”€ */}
         <div
           style={{
             display: "flex",
@@ -474,7 +694,7 @@ export default function DashboardOrdersPage() {
                 lineHeight: 1.2,
               }}
             >
-              {t("شاشة المطبخ والطلبات ولوجستيات التوصيل", "Kitchen & Delivery Logistics Board")}
+              {t("Ø´Ø§Ø´Ø© Ø§Ù„Ù…Ø·Ø¨Ø® ÙˆØ§Ù„Ø·Ù„Ø¨Ø§Øª ÙˆÙ„ÙˆØ¬Ø³ØªÙŠØ§Øª Ø§Ù„ØªÙˆØµÙŠÙ„", "Kitchen & Delivery Logistics Board")}
             </h1>
             <p
               style={{
@@ -485,8 +705,8 @@ export default function DashboardOrdersPage() {
               }}
             >
               {t(
-                "إدارة دورة حياة الأوردر — طباعة ريسيت حراري 80mm — تعيين الطيار — تحصيل الفلوس",
-                "Full order lifecycle — 80mm thermal receipt printing — Captain assignment & cash settlement"
+                "Ø¥Ø¯Ø§Ø±Ø© Ø¯ÙˆØ±Ø© Ø­ÙŠØ§Ø© Ø§Ù„Ø£ÙˆØ±Ø¯Ø± â€” Ø·Ø¨Ø§Ø¹Ø© Ø±ÙŠØ³ÙŠØª Ø­Ø±Ø§Ø±ÙŠ 80mm â€” ØªØ¹ÙŠÙŠÙ† Ø§Ù„Ø·ÙŠØ§Ø± â€” ØªØ­ØµÙŠÙ„ Ø§Ù„ÙÙ„ÙˆØ³",
+                "Full order lifecycle â€” 80mm thermal receipt printing â€” Captain assignment & cash settlement"
               )}
             </p>
           </div>
@@ -514,7 +734,7 @@ export default function DashboardOrdersPage() {
               }}
             >
               <MessageSquare size={16} />
-              <span>{t("شات واستفسارات العملاء 💬", "Customer Live Chat 💬")}</span>
+              <span>{t("Ø´Ø§Øª ÙˆØ§Ø³ØªÙØ³Ø§Ø±Ø§Øª Ø§Ù„Ø¹Ù…Ù„Ø§Ø¡ ðŸ’¬", "Customer Live Chat ðŸ’¬")}</span>
               {chatMessages.length > 0 && (
                 <span
                   style={{
@@ -529,6 +749,43 @@ export default function DashboardOrdersPage() {
                   {chatMessages.length}
                 </span>
               )}
+            </button>
+
+                        {/* Delivery Fleet Operations Center Button */}
+            <button
+              onClick={() => {
+                setFleetModalOpen(true);
+                playSound("click");
+              }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                background: "rgba(204, 160, 67, 0.12)",
+                border: "1px solid rgba(204, 160, 67, 0.35)",
+                color: "#cca043",
+                padding: "9px 16px",
+                borderRadius: "12px",
+                fontWeight: 800,
+                fontSize: "13px",
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
+            >
+              <Bike size={16} />
+              <span>{t("Ø£Ø³Ø·ÙˆÙ„ Ø§Ù„Ø¯Ù„ÙŠÙØ±ÙŠ ÙˆØ§Ù„Ø·ÙŠØ§Ø±ÙŠÙ† ðŸ›µ", "Delivery Fleet ðŸ›µ")}</span>
+              <span
+                style={{
+                  background: "#cca043",
+                  color: "#180e06",
+                  fontSize: "11px",
+                  fontWeight: 900,
+                  padding: "1px 7px",
+                  borderRadius: "100px",
+                }}
+              >
+                {captains.filter((c) => c.isActive !== false).length}
+              </span>
             </button>
 
             <button
@@ -552,12 +809,12 @@ export default function DashboardOrdersPage() {
               }}
             >
               <RefreshCw size={15} />
-              <span>{t("تحديث 🔄", "Refresh 🔄")}</span>
+              <span>{t("ØªØ­Ø¯ÙŠØ« ðŸ”„", "Refresh ðŸ”„")}</span>
             </button>
           </div>
         </div>
 
-        {/* ── Horizontal Status Tabs ── */}
+        {/* â”€â”€ Horizontal Status Tabs â”€â”€ */}
         <div
           style={{
             display: "flex",
@@ -612,7 +869,7 @@ export default function DashboardOrdersPage() {
           })}
         </div>
 
-        {/* ── Orders Display Container ── */}
+        {/* â”€â”€ Orders Display Container â”€â”€ */}
         {filteredOrders.length === 0 ? (
           <div
             style={{
@@ -653,7 +910,7 @@ export default function DashboardOrdersPage() {
                 margin: "0 0 6px 0",
               }}
             >
-              {t("لا توجد طلبات في هذا القسم", "No orders in this section")}
+              {t("Ù„Ø§ ØªÙˆØ¬Ø¯ Ø·Ù„Ø¨Ø§Øª ÙÙŠ Ù‡Ø°Ø§ Ø§Ù„Ù‚Ø³Ù…", "No orders in this section")}
             </h3>
             <p
               style={{
@@ -665,7 +922,7 @@ export default function DashboardOrdersPage() {
               }}
             >
               {t(
-                "أي طلب جديد من الموقع هيظهر هنا فوراً مع تنبيه صوتي مستمر",
+                "Ø£ÙŠ Ø·Ù„Ø¨ Ø¬Ø¯ÙŠØ¯ Ù…Ù† Ø§Ù„Ù…ÙˆÙ‚Ø¹ Ù‡ÙŠØ¸Ù‡Ø± Ù‡Ù†Ø§ ÙÙˆØ±Ø§Ù‹ Ù…Ø¹ ØªÙ†Ø¨ÙŠÙ‡ ØµÙˆØªÙŠ Ù…Ø³ØªÙ…Ø±",
                 "Any new order from the website will appear here immediately with continuous sound alert"
               )}
             </p>
@@ -727,7 +984,7 @@ export default function DashboardOrdersPage() {
                         {/* Direct Print Thermal Receipt Button */}
                         <button
                           onClick={() => printThermalReceipt(order as any)}
-                          title={t("طباعة ريسيت حراري فوري 🖨️", "Print Thermal Receipt 🖨️")}
+                          title={t("Ø·Ø¨Ø§Ø¹Ø© Ø±ÙŠØ³ÙŠØª Ø­Ø±Ø§Ø±ÙŠ ÙÙˆØ±ÙŠ ðŸ–¨ï¸", "Print Thermal Receipt ðŸ–¨ï¸")}
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
@@ -752,7 +1009,7 @@ export default function DashboardOrdersPage() {
                             setQrModalOrder(order);
                             playSound("click");
                           }}
-                          title={t("كيو ار الفاتورة الذكية للموبايل 📱", "Digital QR Receipt 📱")}
+                          title={t("ÙƒÙŠÙˆ Ø§Ø± Ø§Ù„ÙØ§ØªÙˆØ±Ø© Ø§Ù„Ø°ÙƒÙŠØ© Ù„Ù„Ù…ÙˆØ¨Ø§ÙŠÙ„ ðŸ“±", "Digital QR Receipt ðŸ“±")}
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
@@ -768,7 +1025,7 @@ export default function DashboardOrdersPage() {
                           }}
                         >
                           <QrCode size={13} />
-                          <span>QR 📱</span>
+                          <span>QR ðŸ“±</span>
                         </button>
 
                         {/* Edit Order Button */}
@@ -778,7 +1035,7 @@ export default function DashboardOrdersPage() {
                               setOrderToEdit(order);
                               playSound("click");
                             }}
-                            title={t("تعديل أصناف وتفاصيل الأوردر ✏️", "Edit Order Items & Details ✏️")}
+                            title={t("ØªØ¹Ø¯ÙŠÙ„ Ø£ØµÙ†Ø§Ù ÙˆØªÙØ§ØµÙŠÙ„ Ø§Ù„Ø£ÙˆØ±Ø¯Ø± âœï¸", "Edit Order Items & Details âœï¸")}
                             style={{
                               display: "inline-flex",
                               alignItems: "center",
@@ -794,13 +1051,13 @@ export default function DashboardOrdersPage() {
                             }}
                           >
                             <Edit3 size={13} />
-                            <span>{t("تعديل ✏️", "Edit ✏️")}</span>
+                            <span>{t("ØªØ¹Ø¯ÙŠÙ„ âœï¸", "Edit âœï¸")}</span>
                           </button>
                         )}
 
                         <button
                           onClick={() => setPreviewOrder(order)}
-                          title={t("معاينة الفاتورة", "Preview Receipt")}
+                          title={t("Ù…Ø¹Ø§ÙŠÙ†Ø© Ø§Ù„ÙØ§ØªÙˆØ±Ø©", "Preview Receipt")}
                           style={{
                             background: "transparent",
                             border: "none",
@@ -826,9 +1083,9 @@ export default function DashboardOrdersPage() {
                               border: "1px solid rgba(249, 115, 22, 0.4)",
                               color: "#fb923c",
                             }}
-                            title={t("تم تعديل أصناف هذا الطلب", "Order has been edited")}
+                            title={t("ØªÙ… ØªØ¹Ø¯ÙŠÙ„ Ø£ØµÙ†Ø§Ù Ù‡Ø°Ø§ Ø§Ù„Ø·Ù„Ø¨", "Order has been edited")}
                           >
-                            معدّل ✏️
+                            Ù…Ø¹Ø¯Ù‘Ù„ âœï¸
                           </span>
                         )}
                         <span
@@ -864,16 +1121,16 @@ export default function DashboardOrdersPage() {
                         }}
                       >
                         {order.status === "new"
-                          ? t("جديد 📋", "New 📋")
+                          ? t("Ø¬Ø¯ÙŠØ¯ ðŸ“‹", "New ðŸ“‹")
                           : order.status === "preparing"
-                          ? t("قيد التحضير 👨‍🍳", "Preparing 👨‍🍳")
+                          ? t("Ù‚ÙŠØ¯ Ø§Ù„ØªØ­Ø¶ÙŠØ± ðŸ‘¨â€ðŸ³", "Preparing ðŸ‘¨â€ðŸ³")
                           : order.status === "ready"
-                          ? t("جاهز للتسليم 🛵", "Ready 🛵")
+                          ? t("Ø¬Ø§Ù‡Ø² Ù„Ù„ØªØ³Ù„ÙŠÙ… ðŸ›µ", "Ready ðŸ›µ")
                           : order.status === "delivering"
-                          ? t("مع الكابتن 🚴", "With Captain 🚴")
+                          ? t("Ù…Ø¹ Ø§Ù„ÙƒØ§Ø¨ØªÙ† ðŸš´", "With Captain ðŸš´")
                           : order.status === "delivered"
-                          ? t("تم التسليم والتحصيل 🎉", "Delivered 🎉")
-                          : t("ملغي ❌", "Cancelled ❌")}
+                          ? t("ØªÙ… Ø§Ù„ØªØ³Ù„ÙŠÙ… ÙˆØ§Ù„ØªØ­ØµÙŠÙ„ ðŸŽ‰", "Delivered ðŸŽ‰")
+                          : t("Ù…Ù„ØºÙŠ âŒ", "Cancelled âŒ")}
                       </span>
                     </div>
                   </div>
@@ -913,7 +1170,7 @@ export default function DashboardOrdersPage() {
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={() => playSound("click")}
-                          title={t("مراسلة العميل عبر واتساب مجاناً", "Message Customer on WhatsApp")}
+                          title={t("Ù…Ø±Ø§Ø³Ù„Ø© Ø§Ù„Ø¹Ù…ÙŠÙ„ Ø¹Ø¨Ø± ÙˆØ§ØªØ³Ø§Ø¨ Ù…Ø¬Ø§Ù†Ø§Ù‹", "Message Customer on WhatsApp")}
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
@@ -929,7 +1186,7 @@ export default function DashboardOrdersPage() {
                           }}
                         >
                           <MessageCircle size={12} />
-                          <span>واتساب 💬</span>
+                          <span>ÙˆØ§ØªØ³Ø§Ø¨ ðŸ’¬</span>
                         </a>
                       </div>
 
@@ -965,7 +1222,7 @@ export default function DashboardOrdersPage() {
                         >
                           <MapPin size={13} color="#cca043" />
                           <span>
-                            {order.address} ({order.zone || "6 أكتوبر"})
+                            {order.address} ({order.zone || "6 Ø£ÙƒØªÙˆØ¨Ø±"})
                           </span>
                         </div>
                       )}
@@ -981,7 +1238,7 @@ export default function DashboardOrdersPage() {
                             borderRadius: "6px",
                           }}
                         >
-                          ⚠️ {order.notes}
+                          âš ï¸ {order.notes}
                         </div>
                       )}
                     </div>
@@ -1004,7 +1261,7 @@ export default function DashboardOrdersPage() {
                           <Bike size={18} color="#c084fc" />
                           <div>
                             <div style={{ fontSize: "11px", color: "#c084fc", fontWeight: 700 }}>
-                              {t("طيار التوصيل المسؤول:", "Assigned Captain:")}
+                              {t("Ø·ÙŠØ§Ø± Ø§Ù„ØªÙˆØµÙŠÙ„ Ø§Ù„Ù…Ø³Ø¤ÙˆÙ„:", "Assigned Captain:")}
                             </div>
                             <div style={{ fontSize: "13.5px", fontWeight: 900, color: "#ffffff" }}>
                               {order.captainName}
@@ -1037,7 +1294,7 @@ export default function DashboardOrdersPage() {
                             }}
                           >
                             <Send size={11} />
-                            <span>بياناته 📱</span>
+                            <span>Ø¨ÙŠØ§Ù†Ø§ØªÙ‡ ðŸ“±</span>
                           </a>
                         )}
                       </div>
@@ -1067,7 +1324,7 @@ export default function DashboardOrdersPage() {
                         >
                           <div>
                             <span style={{ color: "#ffffff", fontWeight: 700 }}>
-                              {it.qty} ×{" "}
+                              {it.qty} Ã—{" "}
                               {lang === "en"
                                 ? it.nameEn || it.nameAr
                                 : it.nameAr || it.nameEn}
@@ -1079,7 +1336,7 @@ export default function DashboardOrdersPage() {
                             )}
                           </div>
                           <span style={{ color: "#cca043", fontWeight: 800 }}>
-                            {it.unitPrice * it.qty} {t("ج", "EGP")}
+                            {it.unitPrice * it.qty} {t("Ø¬", "EGP")}
                           </span>
                         </div>
                       ))}
@@ -1100,15 +1357,15 @@ export default function DashboardOrdersPage() {
                     >
                       <div>
                         <span style={{ fontSize: "12px", color: "#8a7565", display: "block" }}>
-                          {t("المطلوب تحصيله", "To Collect")}{" "}
-                          {order.paymentMethod === "cash" ? "(كاش 💵)" : "(مدفوع 💳)"}
+                          {t("Ø§Ù„Ù…Ø·Ù„ÙˆØ¨ ØªØ­ØµÙŠÙ„Ù‡", "To Collect")}{" "}
+                          {order.paymentMethod === "cash" ? "(ÙƒØ§Ø´ ðŸ’µ)" : "(Ù…Ø¯ÙÙˆØ¹ ðŸ’³)"}
                         </span>
                         <span style={{ fontSize: "11px", color: "#cca043" }}>
-                          + توصيل {order.deliveryFee} ج
+                          + ØªÙˆØµÙŠÙ„ {order.deliveryFee} Ø¬
                         </span>
                       </div>
                       <span style={{ fontSize: "20px", color: "#cca043", fontWeight: 900 }}>
-                        {order.total} {t("ج", "EGP")}
+                        {order.total} {t("Ø¬", "EGP")}
                       </span>
                     </div>
 
@@ -1136,7 +1393,7 @@ export default function DashboardOrdersPage() {
                           }}
                         >
                           <ChefHat size={16} />
-                          <span>{t("بدء التحضير 👨‍🍳", "Start Preparing 👨‍🍳")}</span>
+                          <span>{t("Ø¨Ø¯Ø¡ Ø§Ù„ØªØ­Ø¶ÙŠØ± ðŸ‘¨â€ðŸ³", "Start Preparing ðŸ‘¨â€ðŸ³")}</span>
                         </button>
                       )}
 
@@ -1162,7 +1419,7 @@ export default function DashboardOrdersPage() {
                           }}
                         >
                           <CheckCircle2 size={16} />
-                          <span>{t("جاهز للتوصيل 🛵", "Ready for Delivery 🛵")}</span>
+                          <span>{t("Ø¬Ø§Ù‡Ø² Ù„Ù„ØªÙˆØµÙŠÙ„ ðŸ›µ", "Ready for Delivery ðŸ›µ")}</span>
                         </button>
                       )}
 
@@ -1193,7 +1450,7 @@ export default function DashboardOrdersPage() {
                           }}
                         >
                           <Bike size={16} />
-                          <span>{t("تسليم للطيار 🛵", "Assign to Captain 🛵")}</span>
+                          <span>{t("ØªØ³Ù„ÙŠÙ… Ù„Ù„Ø·ÙŠØ§Ø± ðŸ›µ", "Assign to Captain ðŸ›µ")}</span>
                         </button>
                       )}
 
@@ -1220,7 +1477,7 @@ export default function DashboardOrdersPage() {
                           }}
                         >
                           <DollarSign size={16} />
-                          <span>{t("تم التحصيل والتسليم 🎉", "Collect Cash & Deliver 🎉")}</span>
+                          <span>{t("ØªÙ… Ø§Ù„ØªØ­ØµÙŠÙ„ ÙˆØ§Ù„ØªØ³Ù„ÙŠÙ… ðŸŽ‰", "Collect Cash & Deliver ðŸŽ‰")}</span>
                         </button>
                       )}
 
@@ -1240,9 +1497,9 @@ export default function DashboardOrdersPage() {
                             fontWeight: 700,
                             cursor: "pointer",
                           }}
-                          title={t("إلغاء الطلب", "Cancel Order")}
+                          title={t("Ø¥Ù„ØºØ§Ø¡ Ø§Ù„Ø·Ù„Ø¨", "Cancel Order")}
                         >
-                          {t("إلغاء ❌", "Cancel ❌")}
+                          {t("Ø¥Ù„ØºØ§Ø¡ âŒ", "Cancel âŒ")}
                         </button>
                       )}
                     </div>
@@ -1253,9 +1510,9 @@ export default function DashboardOrdersPage() {
           </div>
         )}
 
-        {/* ═══════════════════════════════════════════════════════
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
             MODAL 1: ASSIGN CAPTAIN TO ORDER
-        ══════════════════════════════════════════════════════════ */}
+        â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         {captainModalOrder && (
           <div
             style={{
@@ -1306,10 +1563,10 @@ export default function DashboardOrdersPage() {
                   </div>
                   <div>
                     <h3 style={{ margin: 0, fontSize: "17px", fontWeight: 900 }}>
-                      {t("ربط الطيار بالأوردر", "Assign Delivery Captain")}
+                      {t("Ø±Ø¨Ø· Ø§Ù„Ø·ÙŠØ§Ø± Ø¨Ø§Ù„Ø£ÙˆØ±Ø¯Ø±", "Assign Delivery Captain")}
                     </h3>
                     <p style={{ margin: "2px 0 0 0", fontSize: "12px", color: "#cca043" }}>
-                      أوردر رقم {captainModalOrder.orderNumber} — المطلوب: {captainModalOrder.total} ج
+                      Ø£ÙˆØ±Ø¯Ø± Ø±Ù‚Ù… {captainModalOrder.orderNumber} â€” Ø§Ù„Ù…Ø·Ù„ÙˆØ¨: {captainModalOrder.total} Ø¬
                     </p>
                   </div>
                 </div>
@@ -1338,47 +1595,93 @@ export default function DashboardOrdersPage() {
                     marginBottom: "8px",
                   }}
                 >
-                  {t("اختر الطيار من القائمة المسجلة:", "Select Captain from Registered Staff:")}
+                  {t("Ø§Ø®ØªØ± Ø§Ù„Ø·ÙŠØ§Ø± Ù…Ù† Ø§Ù„Ù‚Ø§Ø¦Ù…Ø© Ø§Ù„Ù…Ø³Ø¬Ù„Ø©:", "Select Captain from Registered Staff:")}
                 </label>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  {captains.map((cpt) => (
-                    <label
-                      key={cpt.id}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "10px",
-                        padding: "10px 14px",
-                        borderRadius: "12px",
-                        background:
-                          selectedCaptainPhone === cpt.phone
-                            ? "rgba(204, 160, 67, 0.15)"
-                            : "rgba(255,255,255,0.03)",
-                        border:
-                          selectedCaptainPhone === cpt.phone
-                            ? "1.5px solid #cca043"
-                            : "1px solid rgba(255,255,255,0.08)",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <input
-                        type="radio"
-                        name="captain"
-                        value={cpt.phone}
-                        checked={selectedCaptainPhone === cpt.phone}
-                        onChange={() => setSelectedCaptainPhone(cpt.phone)}
-                      />
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 800, fontSize: "13.5px", color: "#ffffff" }}>
-                          {cpt.name}
+                  {captains
+                    .map((cpt) => {
+                      const activeLoad = getCaptainActiveOrders(cpt.phone);
+                      const isOffline = cpt.isActive === false;
+                      return { cpt, activeLoad, isOffline };
+                    })
+                    .sort((a, b) => {
+                      if (a.isOffline && !b.isOffline) return 1;
+                      if (!a.isOffline && b.isOffline) return -1;
+                      return a.activeLoad.length - b.activeLoad.length;
+                    })
+                    .map(({ cpt, activeLoad, isOffline }) => (
+                      <label
+                        key={cpt.id}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "10px",
+                          padding: "10px 14px",
+                          borderRadius: "12px",
+                          background:
+                            selectedCaptainPhone === cpt.phone
+                              ? "rgba(204, 160, 67, 0.18)"
+                              : isOffline
+                              ? "rgba(255,255,255,0.02)"
+                              : "rgba(255,255,255,0.04)",
+                          border:
+                            selectedCaptainPhone === cpt.phone
+                              ? "1.5px solid #cca043"
+                              : "1px solid rgba(204, 160, 67, 0.18)",
+                          cursor: "pointer",
+                          opacity: isOffline ? 0.6 : 1,
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name="captain"
+                          value={cpt.phone}
+                          checked={selectedCaptainPhone === cpt.phone}
+                          onChange={() => setSelectedCaptainPhone(cpt.phone)}
+                        />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                            <div style={{ fontWeight: 800, fontSize: "13.5px", color: "#ffffff" }}>
+                              {cpt.name}
+                            </div>
+                            <span
+                              style={{
+                                fontSize: "11px",
+                                fontWeight: 800,
+                                padding: "2px 8px",
+                                borderRadius: "100px",
+                                background: isOffline
+                                  ? "rgba(255,255,255,0.08)"
+                                  : activeLoad.length === 0
+                                  ? "rgba(34, 197, 94, 0.2)"
+                                  : activeLoad.length === 1
+                                  ? "rgba(234, 179, 8, 0.2)"
+                                  : "rgba(239, 68, 68, 0.2)",
+                                color: isOffline
+                                  ? "#a8927e"
+                                  : activeLoad.length === 0
+                                  ? "#4ade80"
+                                  : activeLoad.length === 1
+                                  ? "#facc15"
+                                  : "#f87171",
+                              }}
+                            >
+                              {isOffline
+                                ? "âšª ØºÙŠØ± Ù…ØªØ§Ø­ (Ø§Ø³ØªØ±Ø§Ø­Ø©)"
+                                : activeLoad.length === 0
+                                ? "ðŸŸ¢ Ù…ØªØ§Ø­ ÙˆØ¬Ø§Ù‡Ø² (0 Ø£ÙˆØ±Ø¯Ø±Ø§Øª) â­"
+                                : activeLoad.length === 1
+                                ? `ðŸŸ¡ ÙÙŠ Ø§Ù„Ø·Ø±ÙŠÙ‚ (Ø£ÙˆØ±Ø¯Ø± #${activeLoad[0].orderNumber})`
+                                : `ðŸ”´ Ø­Ù…ÙˆÙ„Ø© (${activeLoad.length} Ø£ÙˆØ±Ø¯Ø±Ø§Øª)`}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: "11.5px", color: "#a8927e" }} dir="ltr">
+                            {cpt.phone} â€¢ {cpt.vehicle || "Ø³ÙƒÙˆØªØ± Ø¯Ù„ÙŠÙØ±ÙŠ"}
+                          </div>
                         </div>
-                        <div style={{ fontSize: "11.5px", color: "#8a7565" }} dir="ltr">
-                          {cpt.phone} • {cpt.vehicle || "سكوتر دليفري"}
-                        </div>
-                      </div>
-                    </label>
-                  ))}
+                      </label>
+                    ))}
 
                   {/* Option for New / External Captain */}
                   <label
@@ -1407,7 +1710,7 @@ export default function DashboardOrdersPage() {
                       onChange={() => setSelectedCaptainPhone("custom")}
                     />
                     <div style={{ fontWeight: 800, fontSize: "13.5px", color: "#ffffff" }}>
-                      {t("طيار جديد / خارجي ➕", "Add New / External Captain ➕")}
+                      {t("Ø·ÙŠØ§Ø± Ø¬Ø¯ÙŠØ¯ / Ø®Ø§Ø±Ø¬ÙŠ âž•", "Add New / External Captain âž•")}
                     </div>
                   </label>
                 </div>
@@ -1429,11 +1732,11 @@ export default function DashboardOrdersPage() {
                 >
                   <div>
                     <label style={{ fontSize: "12px", color: "#b0957e", display: "block", marginBottom: "4px" }}>
-                      اسم الكابتن:
+                      Ø§Ø³Ù… Ø§Ù„ÙƒØ§Ø¨ØªÙ†:
                     </label>
                     <input
                       type="text"
-                      placeholder="مثال: كابتن خالد المصري"
+                      placeholder="Ù…Ø«Ø§Ù„: ÙƒØ§Ø¨ØªÙ† Ø®Ø§Ù„Ø¯ Ø§Ù„Ù…ØµØ±ÙŠ"
                       value={newCaptainName}
                       onChange={(e) => setNewCaptainName(e.target.value)}
                       style={{
@@ -1451,7 +1754,7 @@ export default function DashboardOrdersPage() {
                   </div>
                   <div>
                     <label style={{ fontSize: "12px", color: "#b0957e", display: "block", marginBottom: "4px" }}>
-                      رقم موبايل الكابتن:
+                      Ø±Ù‚Ù… Ù…ÙˆØ¨Ø§ÙŠÙ„ Ø§Ù„ÙƒØ§Ø¨ØªÙ†:
                     </label>
                     <input
                       type="tel"
@@ -1493,8 +1796,8 @@ export default function DashboardOrdersPage() {
                   }}
                 >
                   {savingCaptain
-                    ? t("جاري التعيين...", "Assigning...")
-                    : t("تأكيد وإسناد الأوردر للطيار 🛵", "Confirm & Assign 🛵")}
+                    ? t("Ø¬Ø§Ø±ÙŠ Ø§Ù„ØªØ¹ÙŠÙŠÙ†...", "Assigning...")
+                    : t("ØªØ£ÙƒÙŠØ¯ ÙˆØ¥Ø³Ù†Ø§Ø¯ Ø§Ù„Ø£ÙˆØ±Ø¯Ø± Ù„Ù„Ø·ÙŠØ§Ø± ðŸ›µ", "Confirm & Assign ðŸ›µ")}
                 </button>
                 <button
                   onClick={() => setCaptainModalOrder(null)}
@@ -1510,16 +1813,16 @@ export default function DashboardOrdersPage() {
                     cursor: "pointer",
                   }}
                 >
-                  {t("إلغاء", "Cancel")}
+                  {t("Ø¥Ù„ØºØ§Ø¡", "Cancel")}
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* ═══════════════════════════════════════════════════════
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
             MODAL 2: CUSTOMER INQUIRIES & LIVE CHAT DRAWER
-        ══════════════════════════════════════════════════════════ */}
+        â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         {chatDrawerOpen && (
           <div
             style={{
@@ -1581,7 +1884,7 @@ export default function DashboardOrdersPage() {
                       }}
                     >
                       {dir === "rtl" ? <ArrowRight size={14} /> : <ArrowLeft size={14} />}
-                      <span>{t("المحادثات", "Chats")}</span>
+                      <span>{t("Ø§Ù„Ù…Ø­Ø§Ø¯Ø«Ø§Øª", "Chats")}</span>
                     </button>
                   )}
 
@@ -1590,13 +1893,13 @@ export default function DashboardOrdersPage() {
                     <div>
                       <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 900, color: "#ffffff" }}>
                         {chatView === "thread" && selectedChatPhone
-                          ? chatCustomers.find((c) => c.id === selectedChatPhone)?.name || "محادثة عميل"
-                          : t("شات واستفسارات العملاء", "Customer Inquiries Chat")}
+                          ? chatCustomers.find((c) => c.id === selectedChatPhone)?.name || "Ù…Ø­Ø§Ø¯Ø«Ø© Ø¹Ù…ÙŠÙ„"
+                          : t("Ø´Ø§Øª ÙˆØ§Ø³ØªÙØ³Ø§Ø±Ø§Øª Ø§Ù„Ø¹Ù…Ù„Ø§Ø¡", "Customer Inquiries Chat")}
                       </h3>
                       <p style={{ margin: 0, fontSize: "11px", color: "#8a7565" }}>
                         {chatView === "thread" && selectedChatPhone
-                          ? (chatCustomers.find((c) => c.id === selectedChatPhone)?.phone || "عميل عبر المتجر")
-                          : `${chatCustomers.length} ${t("محادثة نشطة", "active chats")}`}
+                          ? (chatCustomers.find((c) => c.id === selectedChatPhone)?.phone || "Ø¹Ù…ÙŠÙ„ Ø¹Ø¨Ø± Ø§Ù„Ù…ØªØ¬Ø±")
+                          : `${chatCustomers.length} ${t("Ù…Ø­Ø§Ø¯Ø«Ø© Ù†Ø´Ø·Ø©", "active chats")}`}
                       </p>
                     </div>
                   </div>
@@ -1609,10 +1912,10 @@ export default function DashboardOrdersPage() {
                         selectedChatPhone.replace(/[^0-9]/g, "").startsWith("0")
                           ? "2" + selectedChatPhone.replace(/[^0-9]/g, "")
                           : selectedChatPhone.replace(/[^0-9]/g, "")
-                      }?text=${encodeURIComponent("مرحباً من فريق Choco House 🍫")}`}
+                      }?text=${encodeURIComponent("Ù…Ø±Ø­Ø¨Ø§Ù‹ Ù…Ù† ÙØ±ÙŠÙ‚ Choco House ðŸ«")}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      title="مراسلة العميل عبر واتساب مباشرة"
+                      title="Ù…Ø±Ø§Ø³Ù„Ø© Ø§Ù„Ø¹Ù…ÙŠÙ„ Ø¹Ø¨Ø± ÙˆØ§ØªØ³Ø§Ø¨ Ù…Ø¨Ø§Ø´Ø±Ø©"
                       style={{
                         background: "rgba(34, 197, 94, 0.15)",
                         border: "1px solid rgba(34, 197, 94, 0.35)",
@@ -1628,7 +1931,7 @@ export default function DashboardOrdersPage() {
                       }}
                     >
                       <MessageCircle size={13} />
-                      <span>واتساب</span>
+                      <span>ÙˆØ§ØªØ³Ø§Ø¨</span>
                     </a>
                   )}
 
@@ -1677,19 +1980,19 @@ export default function DashboardOrdersPage() {
                         fontWeight: 900,
                         fontSize: "14px",
                       }}>
-                        📢
+                        ðŸ“¢
                       </div>
                       <div>
                         <div style={{ fontSize: "13px", fontWeight: 800, color: "#f5ede4" }}>
-                          {t("بث رسالة عامة للجميع", "Broadcast Message to All")}
+                          {t("Ø¨Ø« Ø±Ø³Ø§Ù„Ø© Ø¹Ø§Ù…Ø© Ù„Ù„Ø¬Ù…ÙŠØ¹", "Broadcast Message to All")}
                         </div>
                         <div style={{ fontSize: "11px", color: "#8a7565" }}>
-                          إرسال تنبيه أو إشعار لجميع زوار المتجر
+                          Ø¥Ø±Ø³Ø§Ù„ ØªÙ†Ø¨ÙŠÙ‡ Ø£Ùˆ Ø¥Ø´Ø¹Ø§Ø± Ù„Ø¬Ù…ÙŠØ¹ Ø²ÙˆØ§Ø± Ø§Ù„Ù…ØªØ¬Ø±
                         </div>
                       </div>
                     </div>
                     <span style={{ fontSize: "11px", color: "#cca043", fontWeight: 700 }}>
-                      {chatMessages.length} رسالة
+                      {chatMessages.length} Ø±Ø³Ø§Ù„Ø©
                     </span>
                   </div>
 
@@ -1697,10 +2000,10 @@ export default function DashboardOrdersPage() {
                     <div style={{ textAlign: "center", padding: "60px 20px", color: "#8a7565" }}>
                       <MessageSquare size={36} color="#7a5c3e" style={{ margin: "0 auto 12px", opacity: 0.5 }} />
                       <div style={{ fontSize: "14px", fontWeight: 700, color: "#f5ede4", marginBottom: "4px" }}>
-                        لا توجد محادثات عملاء حتى الآن
+                        Ù„Ø§ ØªÙˆØ¬Ø¯ Ù…Ø­Ø§Ø¯Ø«Ø§Øª Ø¹Ù…Ù„Ø§Ø¡ Ø­ØªÙ‰ Ø§Ù„Ø¢Ù†
                       </div>
                       <div style={{ fontSize: "12px" }}>
-                        أي استفسار يكتبه عميل في المتجر سيظهر هنا فوراً للتواصل معه
+                        Ø£ÙŠ Ø§Ø³ØªÙØ³Ø§Ø± ÙŠÙƒØªØ¨Ù‡ Ø¹Ù…ÙŠÙ„ ÙÙŠ Ø§Ù„Ù…ØªØ¬Ø± Ø³ÙŠØ¸Ù‡Ø± Ù‡Ù†Ø§ ÙÙˆØ±Ø§Ù‹ Ù„Ù„ØªÙˆØ§ØµÙ„ Ù…Ø¹Ù‡
                       </div>
                     </div>
                   ) : (
@@ -1742,7 +2045,7 @@ export default function DashboardOrdersPage() {
                             fontSize: "15px",
                             flexShrink: 0,
                           }}>
-                            {cust.name.slice(0, 1) || "ع"}
+                            {cust.name.slice(0, 1) || "Ø¹"}
                           </div>
 
                           {/* Info & Last Message */}
@@ -1766,7 +2069,7 @@ export default function DashboardOrdersPage() {
                                 textOverflow: "ellipsis",
                                 whiteSpace: "nowrap",
                               }}>
-                                {cust.lastMessage || (cust.phone ? `هاتف: ${cust.phone}` : "محادثة نشطة")}
+                                {cust.lastMessage || (cust.phone ? `Ù‡Ø§ØªÙ: ${cust.phone}` : "Ù…Ø­Ø§Ø¯Ø«Ø© Ù†Ø´Ø·Ø©")}
                               </p>
                               <span style={{
                                 background: "#cca043",
@@ -1801,7 +2104,7 @@ export default function DashboardOrdersPage() {
                   >
                     {chatMessages.length === 0 ? (
                       <div style={{ textAlign: "center", padding: "40px 0", color: "#8a7565", fontSize: "13px" }}>
-                        لا توجد رسائل في هذه المحادثة حتى الآن
+                        Ù„Ø§ ØªÙˆØ¬Ø¯ Ø±Ø³Ø§Ø¦Ù„ ÙÙŠ Ù‡Ø°Ù‡ Ø§Ù„Ù…Ø­Ø§Ø¯Ø«Ø© Ø­ØªÙ‰ Ø§Ù„Ø¢Ù†
                       </div>
                     ) : (
                       (selectedChatPhone
@@ -1866,11 +2169,11 @@ export default function DashboardOrdersPage() {
                   >
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "11.5px" }}>
                       <span style={{ color: "#cca043", fontWeight: 700 }}>
-                        الرد موجه إلى:{" "}
+                        Ø§Ù„Ø±Ø¯ Ù…ÙˆØ¬Ù‡ Ø¥Ù„Ù‰:{" "}
                         <strong>
                           {selectedChatPhone
                             ? chatCustomers.find((c) => c.id === selectedChatPhone)?.name || selectedChatPhone
-                            : "جميع العملاء (بث عام)"}
+                            : "Ø¬Ù…ÙŠØ¹ Ø§Ù„Ø¹Ù…Ù„Ø§Ø¡ (Ø¨Ø« Ø¹Ø§Ù…)"}
                         </strong>
                       </span>
                     </div>
@@ -1878,7 +2181,7 @@ export default function DashboardOrdersPage() {
                     <div style={{ display: "flex", gap: "8px" }}>
                       <input
                         type="text"
-                        placeholder="اكتب ردك للعميل..."
+                        placeholder="Ø§ÙƒØªØ¨ Ø±Ø¯Ùƒ Ù„Ù„Ø¹Ù…ÙŠÙ„..."
                         value={chatReplyText}
                         onChange={(e) => setChatReplyText(e.target.value)}
                         onKeyDown={(e) => {
@@ -1922,9 +2225,9 @@ export default function DashboardOrdersPage() {
           </div>
         )}
 
-        {/* ═══════════════════════════════════════════════════════
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
             MODAL 3: THERMAL RECEIPT MODAL PREVIEW
-        ══════════════════════════════════════════════════════════ */}
+        â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         {previewOrder && (
           <ThermalReceiptModal
             order={previewOrder as any}
@@ -1932,9 +2235,9 @@ export default function DashboardOrdersPage() {
           />
         )}
 
-        {/* ═══════════════════════════════════════════════════════
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
             MODAL 4: DIGITAL QR RECEIPT MODAL
-        ══════════════════════════════════════════════════════════ */}
+        â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         {qrModalOrder && (
           <div
             style={{
@@ -1965,7 +2268,7 @@ export default function DashboardOrdersPage() {
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                   <QrCode size={22} color="#cca043" />
                   <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 900, color: "#ffffff" }}>
-                    الفاتورة الذكية والتتبع (QR) 📱
+                    Ø§Ù„ÙØ§ØªÙˆØ±Ø© Ø§Ù„Ø°ÙƒÙŠØ© ÙˆØ§Ù„ØªØªØ¨Ø¹ (QR) ðŸ“±
                   </h3>
                 </div>
                 <button
@@ -1977,7 +2280,7 @@ export default function DashboardOrdersPage() {
               </div>
 
               <p style={{ margin: "0 0 16px 0", fontSize: "12.5px", color: "#8a7565" }}>
-                امسح الرمز بكاميرا الموبايل لفتح الفاتورة الذكية والتتبع للطيار أو العميل بدون طابعة
+                Ø§Ù…Ø³Ø­ Ø§Ù„Ø±Ù…Ø² Ø¨ÙƒØ§Ù…ÙŠØ±Ø§ Ø§Ù„Ù…ÙˆØ¨Ø§ÙŠÙ„ Ù„ÙØªØ­ Ø§Ù„ÙØ§ØªÙˆØ±Ø© Ø§Ù„Ø°ÙƒÙŠØ© ÙˆØ§Ù„ØªØªØ¨Ø¹ Ù„Ù„Ø·ÙŠØ§Ø± Ø£Ùˆ Ø§Ù„Ø¹Ù…ÙŠÙ„ Ø¨Ø¯ÙˆÙ† Ø·Ø§Ø¨Ø¹Ø©
               </p>
 
               <div
@@ -2006,14 +2309,14 @@ export default function DashboardOrdersPage() {
                   {qrModalOrder.orderNumber}
                 </div>
                 <div style={{ color: "#ffffff", fontWeight: 700, marginTop: "2px" }}>
-                  العميل: {qrModalOrder.customerName} ({qrModalOrder.phone})
+                  Ø§Ù„Ø¹Ù…ÙŠÙ„: {qrModalOrder.customerName} ({qrModalOrder.phone})
                 </div>
                 <div style={{ color: "#4ade80", fontWeight: 800, marginTop: "2px" }}>
-                  المطلوب تحصيله: {qrModalOrder.total} ج.م
+                  Ø§Ù„Ù…Ø·Ù„ÙˆØ¨ ØªØ­ØµÙŠÙ„Ù‡: {qrModalOrder.total} Ø¬.Ù…
                 </div>
                 {qrModalOrder.captainName && (
                   <div style={{ color: "#c084fc", fontSize: "12px", marginTop: "4px" }}>
-                    🛵 الكابتن: {qrModalOrder.captainName}
+                    ðŸ›µ Ø§Ù„ÙƒØ§Ø¨ØªÙ†: {qrModalOrder.captainName}
                   </div>
                 )}
               </div>
@@ -2047,7 +2350,7 @@ export default function DashboardOrdersPage() {
                   }}
                 >
                   {copiedQrLink ? <Check size={16} /> : <Copy size={16} />}
-                  <span>{copiedQrLink ? "تم النسخ!" : "نسخ الرابط 📋"}</span>
+                  <span>{copiedQrLink ? "ØªÙ… Ø§Ù„Ù†Ø³Ø®!" : "Ù†Ø³Ø® Ø§Ù„Ø±Ø§Ø¨Ø· ðŸ“‹"}</span>
                 </button>
 
                 <a
@@ -2070,16 +2373,16 @@ export default function DashboardOrdersPage() {
                   }}
                 >
                   <ExternalLink size={16} />
-                  <span>فتح الفاتورة 🔗</span>
+                  <span>ÙØªØ­ Ø§Ù„ÙØ§ØªÙˆØ±Ø© ðŸ”—</span>
                 </a>
               </div>
             </div>
           </div>
         )}
 
-        {/* ═══════════════════════════════════════════════════════
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
             MODAL 5: ORDER EDIT MODAL
-        ══════════════════════════════════════════════════════════ */}
+        â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
         {orderToEdit && (
           <OrderEditModal
             order={orderToEdit}
@@ -2094,6 +2397,543 @@ export default function DashboardOrdersPage() {
             onPrintReceipt={(ord) => printThermalReceipt(ord as any)}
             lang={lang}
           />
+        )}
+        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+            NEW MODAL: FLEET OPERATIONS COMMAND CENTER (ØºØ±ÙØ© Ø¹Ù…Ù„ÙŠØ§Øª ÙˆØ¥Ø¯Ø§Ø±Ø© Ø£Ø³Ø·ÙˆÙ„ Ø§Ù„Ø·ÙŠØ§Ø±ÙŠÙ† ðŸ›µ)
+        â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+        {fleetModalOpen && (
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 1000,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "18px",
+              background: "rgba(0, 0, 0, 0.85)",
+              backdropFilter: "blur(6px)",
+            }}
+          >
+            <div
+              style={{
+                width: "100%",
+                maxWidth: "740px",
+                maxHeight: "92vh",
+                background: "#180e06",
+                border: "1.5px solid rgba(204, 160, 67, 0.35)",
+                borderRadius: "24px",
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
+                boxShadow: "0 24px 64px rgba(0, 0, 0, 0.7), 0 0 20px rgba(204, 160, 67, 0.15)",
+                color: "#ffffff",
+              }}
+            >
+              {/* Fleet Modal Header */}
+              <div
+                style={{
+                  padding: "18px 24px",
+                  borderBottom: "1px solid rgba(204, 160, 67, 0.2)",
+                  background: "#22130a",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <div
+                    style={{
+                      width: "42px",
+                      height: "42px",
+                      borderRadius: "12px",
+                      background: "rgba(204, 160, 67, 0.15)",
+                      border: "1px solid rgba(204, 160, 67, 0.35)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#cca043",
+                    }}
+                  >
+                    <Bike size={24} />
+                  </div>
+                  <div>
+                    <h2 style={{ margin: 0, fontSize: "18px", fontWeight: 900, color: "#cca043" }}>
+                      {t("ØºØ±ÙØ© Ø¹Ù…Ù„ÙŠØ§Øª ÙˆØ¥Ø¯Ø§Ø±Ø© Ø£Ø³Ø·ÙˆÙ„ Ø§Ù„ØªÙˆØµÙŠÙ„ ÙˆØ§Ù„Ø·ÙŠØ§Ø±ÙŠÙ† ðŸ›µ", "Delivery Fleet Operations Center")}
+                    </h2>
+                    <p style={{ margin: "2px 0 0 0", fontSize: "12px", color: "#a8927e" }}>
+                      {t(
+                        "Ù…ØªØ§Ø¨Ø¹Ø© Ø­ÙŠØ© Ù„Ø­Ù…ÙˆÙ„Ø© ÙƒÙ„ Ø·ÙŠØ§Ø±ØŒ Ø¥Ø±Ø³Ø§Ù„ Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ù„ÙˆÙƒÙŠØ´Ù†ØŒ Ø§Ù„ØªØ¨Ø¯ÙŠÙ„ Ø¨ÙŠÙ† Ù…ØªØ§Ø­ ÙˆØ§Ø³ØªØ±Ø§Ø­Ø©ØŒ ÙˆØ¥Ø¶Ø§ÙØ© Ø·ÙŠØ§Ø±ÙŠÙ†",
+                        "Live courier workload tracking, WhatsApp GPS dispatch, active toggles & fleet CRUD"
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setFleetModalOpen(false)}
+                  style={{
+                    background: "rgba(255, 255, 255, 0.06)",
+                    border: "1px solid rgba(204, 160, 67, 0.25)",
+                    color: "#a8927e",
+                    borderRadius: "10px",
+                    padding: "6px",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <XCircle size={20} />
+                </button>
+              </div>
+
+              {/* Fleet Modal Body */}
+              <div style={{ padding: "20px 24px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "20px" }}>
+                {/* 4 Fleet Overview Stats */}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+                    gap: "10px",
+                  }}
+                >
+                  <div
+                    style={{
+                      background: "rgba(36, 22, 12, 0.72)",
+                      border: "1px solid rgba(204, 160, 67, 0.25)",
+                      borderRadius: "14px",
+                      padding: "12px 14px",
+                      textAlign: "center",
+                    }}
+                  >
+                    <div style={{ fontSize: "11px", color: "#a8927e", fontWeight: 700 }}>
+                      Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø§Ù„Ø£Ø³Ø·ÙˆÙ„
+                    </div>
+                    <div style={{ fontSize: "22px", fontWeight: 900, color: "#ffffff", marginTop: "2px" }}>
+                      {captains.length} ðŸ›µ
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      background: "rgba(34, 197, 94, 0.12)",
+                      border: "1px solid rgba(34, 197, 94, 0.35)",
+                      borderRadius: "14px",
+                      padding: "12px 14px",
+                      textAlign: "center",
+                    }}
+                  >
+                    <div style={{ fontSize: "11px", color: "#4ade80", fontWeight: 700 }}>
+                      Ù…ØªØ§Ø­ÙˆÙ† Ù„Ù„Ø·Ù„Ø¨ Ø§Ù„Ø¢Ù†
+                    </div>
+                    <div style={{ fontSize: "22px", fontWeight: 900, color: "#4ade80", marginTop: "2px" }}>
+                      {captains.filter((c) => c.isActive !== false).length} ðŸŸ¢
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      background: "rgba(204, 160, 67, 0.12)",
+                      border: "1px solid rgba(204, 160, 67, 0.35)",
+                      borderRadius: "14px",
+                      padding: "12px 14px",
+                      textAlign: "center",
+                    }}
+                  >
+                    <div style={{ fontSize: "11px", color: "#cca043", fontWeight: 700 }}>
+                      Ø£ÙˆØ±Ø¯Ø±Ø§Øª ÙÙŠ Ø§Ù„Ø·Ø±ÙŠÙ‚ Ø­Ø§Ù„ÙŠØ§Ù‹
+                    </div>
+                    <div style={{ fontSize: "22px", fontWeight: 900, color: "#cca043", marginTop: "2px" }}>
+                      {orders.filter((o) => o.status === "delivering").length} âš¡
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      background: "rgba(34, 197, 94, 0.1)",
+                      border: "1px solid rgba(34, 197, 94, 0.25)",
+                      borderRadius: "14px",
+                      padding: "12px 14px",
+                      textAlign: "center",
+                    }}
+                  >
+                    <div style={{ fontSize: "11px", color: "#86efac", fontWeight: 700 }}>
+                      Ø·Ù„Ø¨Ø§Øª Ø³ÙÙ„Ù…Øª Ø¨Ø§Ù„ÙƒØ§Ù…Ù„
+                    </div>
+                    <div style={{ fontSize: "22px", fontWeight: 900, color: "#86efac", marginTop: "2px" }}>
+                      {orders.filter((o) => o.status === "delivered").length} âœ…
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 1: Quick Add Captain to Fleet */}
+                <form
+                  onSubmit={handleAddFleetCaptain}
+                  style={{
+                    background: "rgba(36, 22, 12, 0.72)",
+                    border: "1px solid rgba(204, 160, 67, 0.25)",
+                    borderRadius: "16px",
+                    padding: "16px",
+                  }}
+                >
+                  <div style={{ fontSize: "13.5px", fontWeight: 900, color: "#ffffff", marginBottom: "10px" }}>
+                    {t("Ø¥Ø¶Ø§ÙØ© Ø·ÙŠØ§Ø± Ø¬Ø¯ÙŠØ¯ Ù„Ø£Ø³Ø·ÙˆÙ„ Ø´ÙˆÙƒÙˆ Ù‡Ø§ÙˆØ³ âž•", "Add New Courier to Fleet âž•")}
+                  </div>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+                      gap: "10px",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    <div>
+                      <input
+                        type="text"
+                        placeholder="Ø§Ø³Ù… Ø§Ù„ÙƒØ§Ø¨ØªÙ† (Ù…Ø«Ø§Ù„: ÙƒØ§Ø¨ØªÙ† Ø£Ø­Ù…Ø¯ Ø­Ø³Ù†)"
+                        value={fleetCaptainName}
+                        onChange={(e) => setFleetCaptainName(e.target.value)}
+                        style={{
+                          width: "100%",
+                          height: "40px",
+                          background: "#0d0805",
+                          border: "1px solid rgba(204, 160, 67, 0.3)",
+                          borderRadius: "10px",
+                          padding: "0 12px",
+                          fontSize: "13px",
+                          color: "#ffffff",
+                          boxSizing: "border-box",
+                          outline: "none",
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <input
+                        type="tel"
+                        placeholder="Ø±Ù‚Ù… Ø§Ù„Ù…ÙˆØ¨Ø§ÙŠÙ„ (Ù…Ø«Ø§Ù„: 010XXXXXXXX)"
+                        value={fleetCaptainPhone}
+                        onChange={(e) => setFleetCaptainPhone(e.target.value)}
+                        dir="ltr"
+                        style={{
+                          width: "100%",
+                          height: "40px",
+                          background: "#0d0805",
+                          border: "1px solid rgba(204, 160, 67, 0.3)",
+                          borderRadius: "10px",
+                          padding: "0 12px",
+                          fontSize: "13px",
+                          color: "#ffffff",
+                          boxSizing: "border-box",
+                          outline: "none",
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <select
+                        value={fleetCaptainVehicle}
+                        onChange={(e) => setFleetCaptainVehicle(e.target.value)}
+                        style={{
+                          width: "100%",
+                          height: "40px",
+                          background: "#0d0805",
+                          border: "1px solid rgba(204, 160, 67, 0.3)",
+                          borderRadius: "10px",
+                          padding: "0 10px",
+                          fontSize: "13px",
+                          color: "#ffffff",
+                          boxSizing: "border-box",
+                          outline: "none",
+                        }}
+                      >
+                        <option value="Ø³ÙƒÙˆØªØ±">ðŸ›µ Ø³ÙƒÙˆØªØ± Ø¯Ù„ÙŠÙØ±ÙŠ</option>
+                        <option value="Ù…ÙˆØªÙˆØ³ÙŠÙƒÙ„">ðŸï¸ Ù…ÙˆØªÙˆØ³ÙŠÙƒÙ„</option>
+                        <option value="Ø¹Ø¬Ù„Ø©">ðŸš² Ø¯Ø±Ø§Ø¬Ø© / Ø¹Ø¬Ù„Ø©</option>
+                        <option value="Ø³ÙŠØ§Ø±Ø©">ðŸš— Ø³ÙŠØ§Ø±Ø© Ø®Ø§ØµØ©</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={savingFleetCaptain || !fleetCaptainName.trim() || !fleetCaptainPhone.trim()}
+                    style={{
+                      height: "40px",
+                      padding: "0 20px",
+                      background: "#cca043",
+                      color: "#180e06",
+                      borderRadius: "10px",
+                      border: "none",
+                      fontWeight: 900,
+                      fontSize: "13px",
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      boxShadow: "0 2px 8px rgba(204, 160, 67, 0.3)",
+                    }}
+                  >
+                    <Plus size={16} />
+                    <span>{savingFleetCaptain ? t("Ø¬Ø§Ø±ÙŠ Ø§Ù„Ø­ÙØ¸...", "Saving...") : t("Ø­ÙØ¸ ÙˆØ¥Ø¶Ø§ÙØ© Ù„Ù„Ø£Ø³Ø·ÙˆÙ„ ðŸš€", "Save Courier ðŸš€")}</span>
+                  </button>
+                </form>
+
+                {/* Section 2: Fleet Directory & Live Operations List */}
+                <div>
+                  <div style={{ fontSize: "14px", fontWeight: 900, color: "#cca043", marginBottom: "12px" }}>
+                    {t("Ù‚Ø§Ø¦Ù…Ø© Ø§Ù„Ø·ÙŠØ§Ø±ÙŠÙ† ÙˆØ§Ù„ØªØ´ØºÙŠÙ„ Ø§Ù„Ù…Ø¨Ø§Ø´Ø±:", "Active Fleet Couriers & Real-Time Status:")}
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                    {captains.length === 0 ? (
+                      <div style={{ textAlign: "center", padding: "30px 20px", color: "#a8927e" }}>
+                        Ù„Ø§ ÙŠÙˆØ¬Ø¯ Ø·ÙŠØ§Ø±ÙŠÙ† Ù…Ø³Ø¬Ù„ÙŠÙ† Ø¨Ø¹Ø¯. Ø£Ø¶Ù Ø£ÙˆÙ„ Ø·ÙŠØ§Ø± Ù…Ù† Ø§Ù„Ù†Ù…ÙˆØ°Ø¬ Ø£Ø¹Ù„Ø§Ù‡.
+                      </div>
+                    ) : (
+                      captains.map((cpt) => {
+                        const activeOrders = getCaptainActiveOrders(cpt.phone);
+                        const isOffline = cpt.isActive === false;
+
+                        return (
+                          <div
+                            key={cpt.id}
+                            style={{
+                              background: "rgba(36, 22, 12, 0.72)",
+                              border: "1px solid rgba(204, 160, 67, 0.2)",
+                              borderRadius: "16px",
+                              padding: "16px",
+                              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                flexWrap: "wrap",
+                                gap: "10px",
+                              }}
+                            >
+                              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                <div
+                                  style={{
+                                    width: "42px",
+                                    height: "42px",
+                                    borderRadius: "12px",
+                                    background: isOffline ? "rgba(255,255,255,0.04)" : "rgba(204, 160, 67, 0.15)",
+                                    border: isOffline ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(204, 160, 67, 0.35)",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    color: isOffline ? "#78716c" : "#cca043",
+                                    fontSize: "20px",
+                                  }}
+                                >
+                                  {cpt.vehicle?.includes("Ù…ÙˆØªÙˆØ³ÙŠÙƒÙ„")
+                                    ? "ðŸï¸"
+                                    : cpt.vehicle?.includes("Ø¹Ø¬Ù„Ø©")
+                                    ? "ðŸš²"
+                                    : cpt.vehicle?.includes("Ø³ÙŠØ§Ø±Ø©")
+                                    ? "ðŸš—"
+                                    : "ðŸ›µ"}
+                                </div>
+                                <div>
+                                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                    <h4 style={{ margin: 0, fontSize: "15px", fontWeight: 900, color: "#ffffff" }}>
+                                      {cpt.name}
+                                    </h4>
+                                    <span
+                                      style={{
+                                        fontSize: "11px",
+                                        fontWeight: 800,
+                                        padding: "2px 8px",
+                                        borderRadius: "100px",
+                                        background: isOffline ? "rgba(255,255,255,0.08)" : "rgba(34, 197, 94, 0.18)",
+                                        color: isOffline ? "#a8927e" : "#4ade80",
+                                        border: isOffline ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(34, 197, 94, 0.35)",
+                                      }}
+                                    >
+                                      {isOffline ? "âšª Ø®Ø§Ø±Ø¬ Ø§Ù„Ø®Ø¯Ù…Ø© (Ø¥Ø¬Ø§Ø²Ø©)" : "ðŸŸ¢ Ù†Ø´Ø· Ø¨Ø§Ù„Ø®Ø¯Ù…Ø©"}
+                                    </span>
+                                  </div>
+                                  <div style={{ fontSize: "12px", color: "#a8927e", marginTop: "2px" }} dir="ltr">
+                                    {cpt.phone} â€¢ {cpt.vehicle || "Ø³ÙƒÙˆØªØ± Ø¯Ù„ÙŠÙØ±ÙŠ"}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Controls: Active Toggle, Direct WhatsApp, Direct Call, Delete */}
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleCaptainActive(cpt)}
+                                  title={isOffline ? "ØªÙØ¹ÙŠÙ„ Ø§Ù„ÙƒØ§Ø¨ØªÙ† Ù„Ù„Ø®Ø¯Ù…Ø©" : "ØªØ¹Ø·ÙŠÙ„ Ø§Ù„ÙƒØ§Ø¨ØªÙ† Ù…Ø¤Ù‚ØªØ§Ù‹"}
+                                  style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "5px",
+                                    height: "34px",
+                                    padding: "0 10px",
+                                    borderRadius: "8px",
+                                    background: isOffline ? "rgba(255,255,255,0.06)" : "rgba(34, 197, 94, 0.15)",
+                                    border: isOffline ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(34, 197, 94, 0.35)",
+                                    color: isOffline ? "#a8927e" : "#4ade80",
+                                    fontSize: "11.5px",
+                                    fontWeight: 800,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  <Power size={13} />
+                                  <span>{isOffline ? "ØªÙØ¹ÙŠÙ„ ðŸŸ¢" : "Ø§Ø³ØªØ±Ø§Ø­Ø© âšª"}</span>
+                                </button>
+
+                                <a
+                                  href={`https://wa.me/${
+                                    cpt.phone.replace(/[^0-9]/g, "").startsWith("0")
+                                      ? "2" + cpt.phone.replace(/[^0-9]/g, "")
+                                      : cpt.phone.replace(/[^0-9]/g, "")
+                                  }?text=${encodeURIComponent("Ù…Ø±Ø­Ø¨Ø§Ù‹ ÙƒØ§Ø¨ØªÙ† " + cpt.name + " Ù…Ù† Ø¥Ø¯Ø§Ø±Ø© Ø´ÙˆÙƒÙˆ Ù‡Ø§ÙˆØ³ Choco House ðŸ«ðŸ‘‘")}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  title="Ù…Ø±Ø§Ø³Ù„Ø© Ø§Ù„ÙƒØ§Ø¨ØªÙ† Ø¹Ø¨Ø± ÙˆØ§ØªØ³Ø§Ø¨"
+                                  style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    width: "34px",
+                                    height: "34px",
+                                    borderRadius: "8px",
+                                    background: "rgba(34, 197, 94, 0.15)",
+                                    border: "1px solid rgba(34, 197, 94, 0.35)",
+                                    color: "#4ade80",
+                                    textDecoration: "none",
+                                  }}
+                                >
+                                  <MessageCircle size={15} />
+                                </a>
+
+                                <a
+                                  href={`tel:${cpt.phone}`}
+                                  title="Ø§ØªØµØ§Ù„ Ù‡Ø§ØªÙÙŠ Ø¨Ø§Ù„ÙƒØ§Ø¨ØªÙ†"
+                                  style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    width: "34px",
+                                    height: "34px",
+                                    borderRadius: "8px",
+                                    background: "rgba(255, 255, 255, 0.06)",
+                                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                                    color: "#ffffff",
+                                    textDecoration: "none",
+                                  }}
+                                >
+                                  <Phone size={14} />
+                                </a>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteCaptain(cpt)}
+                                  title="Ø­Ø°Ù Ø§Ù„ÙƒØ§Ø¨ØªÙ† Ù…Ù† Ø§Ù„Ø£Ø³Ø·ÙˆÙ„"
+                                  style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    width: "34px",
+                                    height: "34px",
+                                    borderRadius: "8px",
+                                    background: "rgba(239, 68, 68, 0.15)",
+                                    border: "1px solid rgba(239, 68, 68, 0.3)",
+                                    color: "#f87171",
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Active Orders List with this Captain */}
+                            {activeOrders.length > 0 ? (
+                              <div
+                                style={{
+                                  marginTop: "12px",
+                                  paddingTop: "12px",
+                                  borderTop: "1px dashed rgba(204, 160, 67, 0.2)",
+                                }}
+                              >
+                                <div style={{ fontSize: "11.5px", fontWeight: 800, color: "#cca043", marginBottom: "6px" }}>
+                                  âš¡ Ø£ÙˆØ±Ø¯Ø±Ø§Øª ÙÙŠ Ø§Ù„Ø·Ø±ÙŠÙ‚ Ø­Ø§Ù„ÙŠØ§Ù‹ Ù…Ø¹ Ù‡Ø°Ø§ Ø§Ù„ÙƒØ§Ø¨ØªÙ† ({activeOrders.length}):
+                                </div>
+                                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                                  {activeOrders.map((o) => (
+                                    <div
+                                      key={o.id}
+                                      style={{
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: "6px",
+                                        padding: "4px 8px",
+                                        borderRadius: "6px",
+                                        background: "rgba(0, 0, 0, 0.3)",
+                                        border: "1px solid rgba(204, 160, 67, 0.25)",
+                                        fontSize: "11.5px",
+                                      }}
+                                    >
+                                      <span style={{ fontWeight: 800, color: "#ffffff" }}>
+                                        #{o.orderNumber}
+                                      </span>
+                                      <span style={{ color: "#a8927e" }}>({o.customerName})</span>
+                                      <span style={{ color: "#cca043", fontWeight: 800 }}>
+                                        {o.total} Ø¬
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ) : (
+                              <div style={{ marginTop: "8px", fontSize: "11.5px", color: isOffline ? "#78716c" : "#4ade80" }}>
+                                {isOffline ? "âšª Ø§Ù„Ø·ÙŠØ§Ø± ÙÙŠ Ø§Ø³ØªØ±Ø§Ø­Ø© Ø­Ø§Ù„ÙŠØ§Ù‹" : "ðŸŸ¢ Ù„Ø§ ØªÙˆØ¬Ø¯ Ø£ÙˆØ±Ø¯Ø±Ø§Øª Ø¬Ø§Ø±ÙŠØ© (Ù…ØªØ§Ø­ ÙÙˆØ±Ø§Ù‹ Ù„Ø£ÙŠ Ø£ÙˆØ±Ø¯Ø± Ø¬Ø¯ÙŠØ¯)"}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Fleet Modal Footer */}
+              <div
+                style={{
+                  padding: "14px 24px",
+                  borderTop: "1px solid rgba(204, 160, 67, 0.2)",
+                  background: "#22130a",
+                  display: "flex",
+                  justifyContent: "flex-end",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setFleetModalOpen(false)}
+                  style={{
+                    height: "36px",
+                    padding: "0 18px",
+                    background: "rgba(204, 160, 67, 0.15)",
+                    border: "1px solid rgba(204, 160, 67, 0.35)",
+                    color: "#cca043",
+                    fontWeight: 800,
+                    fontSize: "13px",
+                    borderRadius: "10px",
+                    cursor: "pointer",
+                  }}
+                >
+                  {t("Ø¥ØºÙ„Ø§Ù‚", "Close")}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </ErpLayout>
