@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const downloadUrl =
     process.env.APK_DOWNLOAD_URL ||
-    "https://github.com/hamzaovet/choco-house/releases/download/v1.0.0/choco-house.apk";
+    "https://github.com/hamzaovet/choco-house/releases/latest/download/choco-house.apk";
 
   return NextResponse.redirect(downloadUrl, {
     status: 302,

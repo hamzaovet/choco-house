@@ -5,6 +5,7 @@ import Link from "next/link";
 import { playSound } from "@/lib/sounds";
 import CustomerAccountModal from "@/components/CustomerAccountModal";
 import CustomerChatWidget from "@/components/CustomerChatWidget";
+import { ALL_DELIVERY_ZONES, DEFAULT_ZONE, findZone } from "@/lib/zones";
 import {
   ShoppingCart, X, Plus, Minus, Search,
   MapPin, Phone, Clock, CheckCircle2, Loader2,
@@ -21,6 +22,7 @@ interface OfferCard {
 }
 
 interface OfferData {
+  enabled?: boolean;
   badge: string;
   title: string;
   subtitle: string;
@@ -35,6 +37,7 @@ interface OfferData {
 }
 
 const DEFAULT_OFFERS: OfferData = {
+  enabled: true,
   badge: "عروض محدودة",
   title: "العروض الخاصة",
   subtitle: "عروض متجددة كل أسبوع — اسأل الكاشير عن عرض اليوم",
@@ -91,6 +94,7 @@ interface Product {
   image?: string | null;
   description?: string | null;
   isAvailable: boolean;
+  sortOrder?: number;
 }
 
 interface CartItem {
@@ -269,14 +273,44 @@ const PRODUCT_DESCRIPTIONS_EN: Record<string, string> = {
   "ميلك شيك خوخ بوبا": "Cold peach-infused milkshake complete with delicious signature boba pearls.",
 };
 
+const CATEGORY_ICONS: Record<string, string> = {
+  "الكل": "/categories/waffle.jpg",
+  "وافل": "/categories/waffle.jpg",
+  "تشيز كيك": "/categories/cheesecake.jpg",
+  "بان كيك": "/categories/pancake.jpg",
+  "ميلك شيك": "/categories/milkshake.jpg",
+  "سموزي": "/categories/smoothie.jpg",
+  "بوبا": "/categories/boba.jpg",
+  "كيك وحلويات": "/categories/cake.jpg",
+  "مشروبات": "/categories/drinks.jpg",
+  "عروض خاصة": "/categories/offers.jpg",
+  "مولتن كيك": "/categories/molten.jpg",
+};
+
+const CATEGORY_SUBTITLES: Record<string, string> = {
+  "وافل": "وافل بلجيكي أصلي مقرمش وخفيف محضر لحظة الطلب مع أجود أنواع الشوكولاتة الفاخرة",
+  "تشيز كيك": "قطع تشيز كيك كريمية فاخرة بنكهات الفراولة واللوتس والتوت الأزرق والنوتيلا",
+  "بان كيك": "ميني بان كيك هش ولذيذ يذوب في الفم مع صوصات النوتيلا واللوتس والكراميل الغنية",
+  "ميلك شيك": "ميلك شيك كريمي مثلج ومحضر من آيس كريم فاخر وبسكويت الأوريو واللوتس والنوتيلا",
+  "سموزي": "عصائر وسموزي طبيعية 100% مثلجة ومنعشة ومحضرة من فواكه طبيعية طازجة",
+  "بوبا": "مشروبات البوبا التريند المثلجة مع لآلئ التابيوكا الطبيعية ونكهات الفواكه المنعشة",
+  "كيك وحلويات": "تشكيلة حلويات غربية وكيكات فاخرة محضرة بعناية لتناسب جميع المناسبات",
+  "مشروبات": "مشروبات ساخنة وباردة منعشة محضرة بأجود المكونات",
+  "عروض خاصة": "باقات وكومبوهات حصرية بأسعار مميزة توفر لك ولشلتك تجربة استثنائية",
+};
+
 /* Fallback images per category when product has no image */
 const CATEGORY_FALLBACK: Record<string, string> = {
-  "وافل":      "https://images.unsplash.com/photo-1562376552-0d160a2f238d?w=400&q=80&fit=crop",
-  "تشيز كيك": "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=400&q=80&fit=crop",
-  "بان كيك":  "https://images.unsplash.com/photo-1528207776546-365bb710ee93?w=400&q=80&fit=crop",
-  "ميلك شيك": "https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=400&q=80&fit=crop",
-  "سموزي":    "https://images.unsplash.com/photo-1553530666-ba11a90c3aee?w=400&q=80&fit=crop",
-  "بوبا":     "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80&fit=crop",
+  "وافل": "/categories/waffle.jpg",
+  "تشيز كيك": "/categories/cheesecake.jpg",
+  "بان كيك": "/categories/pancake.jpg",
+  "ميلك شيك": "/categories/milkshake.jpg",
+  "سموزي": "/categories/smoothie.jpg",
+  "بوبا": "/categories/boba.jpg",
+  "كيك وحلويات": "/categories/cake.jpg",
+  "مشروبات": "/categories/drinks.jpg",
+  "عروض خاصة": "/categories/offers.jpg",
+  "مولتن كيك": "/categories/molten.jpg",
 };
 
 const EXTRAS_AR = [
@@ -297,23 +331,19 @@ const EXTRAS_EN = [
   { label: "Nuts",          price: 20 },
 ];
 
-const ZONES_AR = [
-  { name: "الحي الثاني",      fee: 10 },
-  { name: "الحي الأول",       fee: 10 },
-  { name: "الحي الثالث",      fee: 12 },
-  { name: "الحي السادس",      fee: 12 },
-  { name: "الحي السابع",      fee: 15 },
-  { name: "المحور المركزي",   fee: 15 },
-];
+const ZONES_AR = ALL_DELIVERY_ZONES.map((z) => ({
+  name: z.nameAr,
+  fee: z.fee,
+  timeMinutes: z.timeMinutes,
+  code: z.code,
+}));
 
-const ZONES_EN = [
-  { name: "District 2",       fee: 10 },
-  { name: "District 1",       fee: 10 },
-  { name: "District 3",       fee: 12 },
-  { name: "District 6",       fee: 12 },
-  { name: "District 7",       fee: 15 },
-  { name: "Central Axis",     fee: 15 },
-];
+const ZONES_EN = ALL_DELIVERY_ZONES.map((z) => ({
+  name: z.nameEn,
+  fee: z.fee,
+  timeMinutes: z.timeMinutes,
+  code: z.code,
+}));
 
 const ORDER_STATUSES_AR: Record<string, { label: string; color: string }> = {
   new:       { label: "قيد الاستلام 📋",          color: "#3b82f6" },
@@ -347,6 +377,19 @@ export default function HomePage() {
   const [loading, setLoading]       = useState(true);
   const [offers, setOffers]         = useState<OfferData>(DEFAULT_OFFERS);
   const [activeCategory, setActiveCategory] = useState("الكل");
+  const [dbCategories, setDbCategories]     = useState<any[]>([]);
+
+  const categories = ["الكل", ...Array.from(new Set([
+    ...dbCategories.map(c => c.nameAr),
+    ...ORDERED_CATEGORIES.filter(c => c !== "الكل"),
+    ...products.map(p => p.category).filter(Boolean)
+  ]))];
+
+  function getCategoryIcon(cat: string) {
+    const found = dbCategories.find(c => c.nameAr === cat);
+    if (found?.image) return found.image;
+    return CATEGORY_ICONS[cat] || null;
+  }
   const [cart, setCart]             = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen]     = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -436,7 +479,12 @@ export default function HomePage() {
       .then((d) => { setProducts(Array.isArray(d) ? d : []); setLoading(false); })
       .catch(() => setLoading(false));
 
-    fetch("/api/public/offers")
+    fetch("/api/categories", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => { if (Array.isArray(d) && d.length > 0) setDbCategories(d); })
+      .catch(() => {});
+
+    fetch("/api/public/offers", { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => { if (d && d.cards) setOffers(d); })
       .catch(() => {});
@@ -458,9 +506,6 @@ export default function HomePage() {
     };
   }, []);
 
-  const categories = products.length > 0
-    ? ORDERED_CATEGORIES.filter((cat) => cat === "الكل" || products.some((p) => p.category === cat))
-    : ORDERED_CATEGORIES;
   const filtered = activeCategory === "الكل"
     ? [...products].sort((a, b) => (CATEGORY_PRIORITY[a.category] || 99) - (CATEGORY_PRIORITY[b.category] || 99))
     : products.filter((p) => p.category === activeCategory);
@@ -790,7 +835,8 @@ export default function HomePage() {
       {/* ═══════════════════════════════════════════════════════
           SPECIAL OFFERS SECTION — 1:1 Whacka Exact Replica
       ══════════════════════════════════════════════════════════ */}
-      <section id="offers" style={{
+      {offers.enabled !== false && (
+<section id="offers" style={{
         maxWidth: "1320px",
         margin: "0 auto",
         padding: "40px 20px 16px 20px",
@@ -1005,9 +1051,10 @@ export default function HomePage() {
           </div>
         </a>
       </section>
+      )}
 
-      {/* ═══════════════════════════════════════════════════════
-          MENU SECTION — Exact Whacka 1:1 Pixel-Perfect Replica
+            {/* ═══════════════════════════════════════════════════════
+          MENU SECTION — Dark Luxury Horizontal Cards Layout (Mockup Image 2)
       ══════════════════════════════════════════════════════════ */}
       <section id="menu" style={{
         maxWidth: "1320px",
@@ -1015,7 +1062,7 @@ export default function HomePage() {
         padding: "44px 20px 64px 20px",
         boxSizing: "border-box",
       }}>
-        {/* Header — Clean, Luxurious Typography matching Whacka */}
+        {/* Header — Clean, Luxurious Typography matching Choco House */}
         <div style={{ marginBottom: "26px" }}>
           <h2 style={{
             fontSize: "clamp(28px, 3.4vw, 38px)",
@@ -1041,64 +1088,105 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* Category Filter Pills — 1:1 Whacka Styling, Order & Emojis */}
+        {/* Category Navigation Bar — Visual Circular Carousel matching Image 2 */}
         <div style={{
           display: "flex",
-          gap: "8px",
+          gap: "14px",
           overflowX: "auto",
-          paddingBottom: "8px",
-          marginBottom: "32px",
+          padding: "4px 4px 18px 4px",
+          marginBottom: "20px",
           scrollbarWidth: "none",
+          WebkitOverflowScrolling: "touch",
         }}>
           {categories.map((cat) => {
             const isActive = activeCategory === cat;
             const catLabel = lang === "en" ? (CATEGORY_NAMES_EN[cat] || cat) : cat;
+            const imgSrc = getCategoryIcon(cat);
             return (
               <button
                 key={cat}
                 onClick={() => { setActiveCategory(cat); playSound("click"); }}
                 style={{
                   flexShrink: 0,
-                  height: "38px",
-                  padding: "0 16px",
-                  borderRadius: "10px",
-                  fontSize: "13.5px",
-                  fontWeight: isActive ? 800 : 600,
-                  cursor: "pointer",
-                  border: isActive ? "1px solid #cca043" : "1px solid rgba(204, 160, 67, 0.16)",
-                  background: isActive ? "#cca043" : "rgba(36, 22, 12, 0.72)",
-                  color: isActive ? "#180e06" : "#e5dcd3",
-                  boxShadow: isActive ? "0 3px 12px rgba(204, 160, 67, 0.3)" : "none",
-                  display: "inline-flex",
+                  display: "flex",
+                  flexDirection: "column",
                   alignItems: "center",
                   gap: "8px",
-                  transition: "all 0.18s ease",
-                  whiteSpace: "nowrap",
-                  fontFamily: "var(--font-cairo), system-ui, sans-serif",
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.borderColor = "rgba(204, 160, 67, 0.35)";
-                    e.currentTarget.style.background = "rgba(48, 28, 14, 0.85)";
-                    e.currentTarget.style.color = "#ffffff";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.borderColor = "rgba(204, 160, 67, 0.16)";
-                    e.currentTarget.style.background = "rgba(36, 22, 12, 0.72)";
-                    e.currentTarget.style.color = "#e5dcd3";
-                  }
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "4px 6px",
+                  transition: "all 0.2s ease",
                 }}
               >
-                <span>{catLabel}</span>
-                <span style={{ fontSize: "14.5px" }}>{CATEGORY_EMOJI[cat] || "🍫"}</span>
+                {/* Circular image badge in dark chocolate with gold border */}
+                <div style={{
+                  width: "66px",
+                  height: "66px",
+                  borderRadius: "50%",
+                  overflow: "hidden",
+                  backgroundColor: "rgba(36, 22, 12, 0.85)",
+                  border: isActive ? "3px solid #cca043" : "1.5px solid rgba(204, 160, 67, 0.25)",
+                  boxShadow: isActive ? "0 4px 18px rgba(204, 160, 67, 0.45)" : "0 2px 8px rgba(0,0,0,0.3)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transform: isActive ? "scale(1.08)" : "scale(1)",
+                  transition: "all 0.2s ease",
+                  position: "relative",
+                }}>
+                  {imgSrc ? (
+                    <img
+                      src={imgSrc}
+                      alt={catLabel}
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                        const fb = e.currentTarget.parentElement?.querySelector(".cat-emoji-fb") as HTMLElement | null;
+                        if (fb) fb.style.display = "flex";
+                      }}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        display: "block",
+                      }}
+                    />
+                  ) : null}
+                  <span
+                    className="cat-emoji-fb"
+                    style={{
+                      fontSize: "26px",
+                      display: imgSrc ? "none" : "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {CATEGORY_EMOJI[cat] || "🍫"}
+                  </span>
+                </div>
+
+                {/* Category Label Pill */}
+                <span style={{
+                  fontSize: "13px",
+                  fontWeight: isActive ? 900 : 700,
+                  color: isActive ? "#180e06" : "#e5dcd3",
+                  backgroundColor: isActive ? "#cca043" : "rgba(36, 22, 12, 0.72)",
+                  padding: "4px 12px",
+                  borderRadius: "100px",
+                  border: isActive ? "1px solid #cca043" : "1px solid rgba(204, 160, 67, 0.18)",
+                  whiteSpace: "nowrap",
+                  fontFamily: "var(--font-cairo), system-ui, sans-serif",
+                  transition: "all 0.2s ease",
+                  boxShadow: isActive ? "0 3px 12px rgba(204, 160, 67, 0.35)" : "none",
+                }}>
+                  {catLabel}
+                </span>
               </button>
             );
           })}
         </div>
 
-        {/* Products Grid — 1:1 Whacka Luxury Cards */}
+        {/* Products Listing — Horizontal Row Cards Layout matching Image 2 */}
         {loading ? (
           <div style={{ textAlign: "center", padding: "80px 0", color: "#a8927e" }}>
             <div style={{ fontSize: "40px", marginBottom: "16px" }}>🍫</div>
@@ -1107,197 +1195,260 @@ export default function HomePage() {
             </p>
           </div>
         ) : (
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))",
-            gap: "24px",
-          }}>
-            {filtered.map((p) => {
-              const productName = lang === "en" ? (PRODUCT_NAMES_EN[p.nameAr] || p.nameEn || p.nameAr) : p.nameAr;
-              const description = lang === "en"
-                ? (PRODUCT_DESCRIPTIONS_EN[p.nameAr] || PRODUCT_DESCRIPTIONS_EN[p.nameEn] || "Original luxury ingredients prepared fresh to order.")
-                : (PRODUCT_DESCRIPTIONS_AR[p.nameAr] || p.description || "مكونات أصلية فاخرة تُحضّر خصيصاً ولحظة الطلب.");
+          <div>
+            {(activeCategory === "الكل"
+              ? categories.filter(c => c !== "الكل" && products.some(p => p.category === c))
+              : [activeCategory]
+            ).map((catName) => {
+              const catProducts = products.filter(p => p.category === catName);
+              if (catProducts.length === 0) return null;
 
               return (
-                <div
-                  key={p.id}
-                  onClick={() => { setSelectedProduct(p); setSelectedExtras([]); playSound("click"); }}
-                  style={{
-                    background: "rgba(24, 13, 7, 0.88)",
-                    border: "1px solid rgba(204, 160, 67, 0.18)",
-                    borderRadius: "18px",
-                    overflow: "hidden",
-                    cursor: "pointer",
-                    transition: "all 0.25s ease",
-                    display: "flex",
-                    flexDirection: "column",
-                  }}
-                  onMouseEnter={(e) => {
-                    const el = e.currentTarget as HTMLDivElement;
-                    el.style.borderColor = "rgba(204, 160, 67, 0.5)";
-                    el.style.transform = "translateY(-4px)";
-                    el.style.boxShadow = "0 12px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(204, 160, 67, 0.15)";
-                  }}
-                  onMouseLeave={(e) => {
-                    const el = e.currentTarget as HTMLDivElement;
-                    el.style.borderColor = "rgba(204, 160, 67, 0.18)";
-                    el.style.transform = "translateY(0)";
-                    el.style.boxShadow = "none";
-                  }}
-                >
-                  {/* Image Container with Warm Glow & Bottom Fade */}
+                <div key={catName} style={{ marginBottom: "40px" }}>
+                  {/* Category Ornamental Header */}
                   <div style={{
-                    width: "100%",
-                    height: "175px",
-                    background: "radial-gradient(ellipse at center, rgba(140, 80, 20, 0.3) 0%, rgba(18, 10, 5, 0.95) 100%)",
-                    overflow: "hidden",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    position: "relative",
+                    gap: "14px",
+                    margin: "24px 0 20px",
+                    textAlign: "center",
                   }}>
-                    {(p.image || CATEGORY_FALLBACK[p.category]) ? (
-                      <img
-                        src={p.image || CATEGORY_FALLBACK[p.category]}
-                        alt={productName}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                          display: "block",
-                          transition: "transform 0.4s ease",
-                        }}
-                        onMouseEnter={(e) => { (e.target as HTMLImageElement).style.transform = "scale(1.07)"; }}
-                        onMouseLeave={(e) => { (e.target as HTMLImageElement).style.transform = "scale(1)"; }}
-                        onError={(e) => {
-                          const img = e.target as HTMLImageElement;
-                          if (img.src !== CATEGORY_FALLBACK[p.category] && CATEGORY_FALLBACK[p.category]) {
-                            img.src = CATEGORY_FALLBACK[p.category];
-                          } else {
-                            const parent = img.parentElement;
-                            if (parent) {
-                              img.style.display = "none";
-                              parent.innerHTML = `<span style="font-size:52px">${CATEGORY_EMOJI[p.category] || "🍫"}</span>`;
-                            }
-                          }
-                        }}
-                      />
-                    ) : (
-                      <span style={{ fontSize: "52px" }}>{CATEGORY_EMOJI[p.category] || "🍫"}</span>
-                    )}
-
-                    {/* Gradient Fade at bottom of image */}
-                    <div style={{
-                      position: "absolute",
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      height: "45px",
-                      background: "linear-gradient(to top, rgba(24, 13, 7, 0.98) 0%, transparent 100%)",
-                      pointerEvents: "none",
-                    }} />
+                    <div style={{ flex: 1, height: "1px", background: "linear-gradient(to right, transparent, rgba(204, 160, 67, 0.4))" }} />
+                    <div>
+                      <div style={{
+                        fontSize: "22px",
+                        fontWeight: 900,
+                        color: "#ffffff",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        justifyContent: "center",
+                        fontFamily: "var(--font-cairo), system-ui, sans-serif",
+                      }}>
+                        <span style={{ fontSize: "24px" }}>{CATEGORY_EMOJI[catName] || "🍫"}</span>
+                        <span>{lang === "en" ? (CATEGORY_NAMES_EN[catName] || catName) : catName}</span>
+                      </div>
+                      <div style={{
+                        fontSize: "12.5px",
+                        color: "#a8927e",
+                        fontWeight: 600,
+                        marginTop: "2px",
+                        fontFamily: "var(--font-cairo), system-ui, sans-serif",
+                      }}>
+                        {CATEGORY_SUBTITLES[catName] || (lang === "en" ? "Crafted fresh with authentic luxury chocolate" : "مُحضّر طازجاً بأجود أنواع الشوكولاتة البلجيكية والمكونات الفاخرة")}
+                      </div>
+                    </div>
+                    <div style={{ flex: 1, height: "1px", background: "linear-gradient(to left, transparent, rgba(204, 160, 67, 0.4))" }} />
                   </div>
 
-                  {/* Card Body */}
+                  {/* Horizontal Cards Grid */}
                   <div style={{
-                    padding: "16px 18px 18px 18px",
-                    display: "flex",
-                    flexDirection: "column",
-                    flex: 1,
-                    justifyContent: "space-between",
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))",
+                    gap: "16px",
                   }}>
-                    <div>
-                      {/* Product Name */}
-                      <h3 style={{
-                        fontWeight: 800,
-                        color: "#ffffff",
-                        fontSize: "16px",
-                        margin: "0 0 6px 0",
-                        lineHeight: 1.3,
-                        fontFamily: "var(--font-cairo), system-ui, sans-serif",
-                      }}>
-                        {productName}
-                      </h3>
+                    {catProducts.map((p) => {
+                      const productName = lang === "en" ? (PRODUCT_NAMES_EN[p.nameAr] || p.nameEn || p.nameAr) : p.nameAr;
+                      const description = lang === "en"
+                        ? (PRODUCT_DESCRIPTIONS_EN[p.nameAr] || PRODUCT_DESCRIPTIONS_EN[p.nameEn] || "Original luxury ingredients prepared fresh to order.")
+                        : (PRODUCT_DESCRIPTIONS_AR[p.nameAr] || p.description || "مكونات أصلية فاخرة تُحضّر خصيصاً ولحظة الطلب.");
+                      const imgSrc = p.image || CATEGORY_FALLBACK[p.category];
+                      const inCartQty = cart.filter(i => i.product.id === p.id).reduce((s, i) => s + i.qty, 0);
 
-                      {/* Description */}
-                      <p style={{
-                        fontSize: "12.5px",
-                        color: "#9c8573",
-                        margin: "0 0 14px 0",
-                        lineHeight: 1.5,
-                        minHeight: "36px",
-                        fontFamily: "var(--font-cairo), system-ui, sans-serif",
-                      }}>
-                        {description}
-                      </p>
-                    </div>
+                      return (
+                        <div
+                          key={p.id}
+                          onClick={() => { setSelectedProduct(p); setSelectedExtras([]); playSound("click"); }}
+                          style={{
+                            backgroundColor: "rgba(24, 13, 7, 0.88)",
+                            border: "1px solid rgba(204, 160, 67, 0.18)",
+                            borderRadius: "20px",
+                            padding: "14px 16px",
+                            display: "flex",
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: "16px",
+                            cursor: "pointer",
+                            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.4)",
+                            transition: "all 0.2s ease",
+                            position: "relative",
+                            overflow: "hidden",
+                          }}
+                          onMouseEnter={(e) => {
+                            const el = e.currentTarget as HTMLDivElement;
+                            el.style.borderColor = "rgba(204, 160, 67, 0.55)";
+                            el.style.transform = "translateY(-3px)";
+                            el.style.boxShadow = "0 8px 24px rgba(0, 0, 0, 0.6), 0 0 16px rgba(204, 160, 67, 0.2)";
+                          }}
+                          onMouseLeave={(e) => {
+                            const el = e.currentTarget as HTMLDivElement;
+                            el.style.borderColor = "rgba(204, 160, 67, 0.18)";
+                            el.style.transform = "translateY(0)";
+                            el.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.4)";
+                          }}
+                        >
+                          {/* Details (Left in RTL, taking flex: 1) */}
+                          <div style={{
+                            flex: 1,
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "space-between",
+                            minHeight: "105px",
+                          }}>
+                            <div>
+                              <div style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "6px",
+                                marginBottom: "4px",
+                              }}>
+                                <span style={{
+                                  fontSize: "16.5px",
+                                  fontWeight: 900,
+                                  color: "#ffffff",
+                                  lineHeight: 1.3,
+                                  fontFamily: "var(--font-cairo), system-ui, sans-serif",
+                                }}>
+                                  {productName}
+                                </span>
+                                {(p.basePrice >= 120 || p.sortOrder === 1) && (
+                                  <span title="الأكثر طلباً" style={{ fontSize: "14px" }}>👑</span>
+                                )}
+                              </div>
 
-                    {/* Price & Action Row */}
-                    <div style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      paddingTop: "6px",
-                      borderTop: "1px solid rgba(255, 255, 255, 0.05)",
-                    }}>
-                      <div style={{ display: "flex", alignItems: "baseline", gap: "10px" }}>
-                        <span style={{
-                          color: "#cca043",
-                          fontWeight: 900,
-                          fontSize: "20px",
-                          fontFamily: "var(--font-cairo), system-ui, sans-serif",
-                        }}>
-                          {lang === "en" ? (
-                            <>
-                              <span style={{ fontSize: "12.5px", fontWeight: 700, marginRight: "4px" }}>EGP</span>
-                              {p.basePrice}
-                            </>
-                          ) : (
-                            <>
-                              {p.basePrice} <span style={{ fontSize: "13px", fontWeight: 700 }}>ج</span>
-                            </>
-                          )}
-                        </span>
-                        <span style={{
-                          fontSize: "11.5px",
-                          color: "#4ade80",
-                          fontWeight: 700,
-                          fontFamily: "var(--font-cairo), system-ui, sans-serif",
-                        }}>
-                          {lang === "en" ? "Available ✓" : "متاح ✓"}
-                        </span>
-                      </div>
+                              <p style={{
+                                margin: 0,
+                                fontSize: "12.5px",
+                                color: "#a8927e",
+                                lineHeight: 1.45,
+                                display: "-webkit-box",
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: "vertical",
+                                overflow: "hidden",
+                                fontFamily: "var(--font-cairo), system-ui, sans-serif",
+                              }}>
+                                {description}
+                              </p>
+                            </div>
 
-                      {/* Gold Plus Button */}
-                      <button
-                        onClick={(e) => { e.stopPropagation(); addToCart(p, []); }}
-                        style={{
-                          width: "36px",
-                          height: "36px",
-                          borderRadius: "50%",
-                          background: "#cca043",
-                          border: "none",
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          color: "#180e06",
-                          boxShadow: "0 3px 10px rgba(204, 160, 67, 0.35)",
-                          transition: "all 0.15s ease",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = "scale(1.12)";
-                          e.currentTarget.style.background = "#e0b355";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = "scale(1)";
-                          e.currentTarget.style.background = "#cca043";
-                        }}
-                        title={lang === "en" ? "Add to cart" : "أضف للسلة"}
-                      >
-                        <Plus size={18} strokeWidth={2.8} />
-                      </button>
-                    </div>
+                            {/* Bottom row: Price + Add Button */}
+                            <div style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              marginTop: "10px",
+                              paddingTop: "6px",
+                              borderTop: "1px dashed rgba(204, 160, 67, 0.2)",
+                            }}>
+                              <div style={{
+                                fontSize: "17px",
+                                fontWeight: 900,
+                                color: "#cca043",
+                                display: "flex",
+                                alignItems: "baseline",
+                                gap: "4px",
+                                fontFamily: "var(--font-cairo), system-ui, sans-serif",
+                              }}>
+                                <span>{p.basePrice}</span>
+                                <span style={{ fontSize: "12px", color: "#a8927e", fontWeight: 700 }}>
+                                  {lang === "en" ? "EGP" : "ج.م"}
+                                </span>
+                              </div>
+
+                              {/* Quick Add Pill Button */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  addToCart(p, []);
+                                }}
+                                style={{
+                                  backgroundColor: inCartQty > 0 ? "#dfb252" : "#cca043",
+                                  color: "#180e06",
+                                  border: "none",
+                                  borderRadius: "100px",
+                                  padding: "6px 16px",
+                                  fontSize: "12.5px",
+                                  fontWeight: 900,
+                                  cursor: "pointer",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "6px",
+                                  boxShadow: inCartQty > 0 ? "0 2px 10px rgba(204,160,67,0.5)" : "0 2px 8px rgba(0,0,0,0.3)",
+                                  transition: "all 0.15s ease",
+                                  fontFamily: "var(--font-cairo), system-ui, sans-serif",
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.backgroundColor = "#dfb252";
+                                  e.currentTarget.style.transform = "scale(1.05)";
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor = inCartQty > 0 ? "#dfb252" : "#cca043";
+                                  e.currentTarget.style.transform = "scale(1)";
+                                }}
+                              >
+                                <span>{inCartQty > 0 ? `✓ (${inCartQty})` : (lang === "en" ? "+ Add" : "+ أضف")}</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Food Photo Container */}
+                          <div style={{
+                            width: "115px",
+                            height: "115px",
+                            flexShrink: 0,
+                            borderRadius: "16px",
+                            overflow: "hidden",
+                            backgroundColor: "rgba(36, 22, 12, 0.72)",
+                            border: "1px solid rgba(204, 160, 67, 0.25)",
+                            boxShadow: "0 3px 12px rgba(0, 0, 0, 0.4)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            position: "relative",
+                          }}>
+                            {imgSrc ? (
+                              <img
+                                src={imgSrc}
+                                alt={productName}
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  objectFit: "cover",
+                                  display: "block",
+                                  transition: "transform 0.3s ease",
+                                }}
+                                loading="lazy"
+                                onError={(e) => {
+                                  const img = e.currentTarget;
+                                  const fallback = CATEGORY_FALLBACK[p.category];
+                                  if (fallback && !img.dataset.triedFallback) {
+                                    img.dataset.triedFallback = "true";
+                                    img.src = fallback;
+                                  } else {
+                                    img.style.display = "none";
+                                    const fb = img.parentElement?.querySelector(".prod-emoji-fb") as HTMLElement | null;
+                                    if (fb) fb.style.display = "flex";
+                                  }
+                                }}
+                              />
+                            ) : null}
+                            <span
+                              className="prod-emoji-fb"
+                              style={{
+                                fontSize: "38px",
+                                display: imgSrc ? "none" : "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
+                              {CATEGORY_EMOJI[p.category] || "🍫"}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );

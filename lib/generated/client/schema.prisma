@@ -122,6 +122,7 @@ model SystemSettings {
   address        String   @default("الحي الثاني، قطعة 3، مبنى 3، السادس من أكتوبر")
   deliveryZones  String   @default("[]") // JSON: [{name, fee}]
   soundsEnabled  Boolean  @default(true)
+  offersEnabled  Boolean  @default(true)
   specialOffers  String?
   updatedAt      DateTime @updatedAt
 }
@@ -156,4 +157,13 @@ model Purchase {
   recordedBy     String?
   expenseId      String?
   createdAt      DateTime @default(now())
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  nameAr    String   @unique
+  nameEn    String?
+  image     String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
 }

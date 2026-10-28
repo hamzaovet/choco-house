@@ -21,6 +21,7 @@ interface OfferCard {
 }
 
 interface OfferData {
+  enabled?: boolean;
   badge: string;
   title: string;
   subtitle: string;
@@ -35,6 +36,7 @@ interface OfferData {
 }
 
 const DEFAULT_OFFERS: OfferData = {
+  enabled: true,
   badge: "عروض محدودة",
   title: "العروض الخاصة",
   subtitle: "عروض متجددة كل أسبوع — اسأل الكاشير عن عرض اليوم",
@@ -111,7 +113,7 @@ export default function OffersAdminPage() {
   async function fetchOffers() {
     try {
       setLoading(true);
-      const res = await fetch("/api/public/offers");
+      const res = await fetch("/api/public/offers", { cache: "no-store" });
       const data = await res.json();
       if (data && data.cards) {
         setOffers(data);
