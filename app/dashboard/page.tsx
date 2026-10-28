@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -100,7 +100,7 @@ export default function DashboardOrdersPage() {
   const [fleetModalOpen, setFleetModalOpen] = useState(false);
   const [fleetCaptainName, setFleetCaptainName] = useState("");
   const [fleetCaptainPhone, setFleetCaptainPhone] = useState("");
-  const [fleetCaptainVehicle, setFleetCaptainVehicle] = useState("Ø³ÙƒÙˆØªØ±");
+  const [fleetCaptainVehicle, setFleetCaptainVehicle] = useState("سكوتر");
   const [savingFleetCaptain, setSavingFleetCaptain] = useState(false);
 
   // Instant WhatsApp Dispatch Banner after assignment
@@ -128,7 +128,7 @@ export default function DashboardOrdersPage() {
         const existing = map.get(key);
         map.set(key, {
           id: key,
-          name: (!m.isStaff && m.senderName) ? m.senderName : (existing?.name || (m.customerPhone ? "Ø¹Ù…ÙŠÙ„" : "Ø²Ø§Ø¦Ø± Ø¶ÙŠÙ")),
+          name: (!m.isStaff && m.senderName) ? m.senderName : (existing?.name || (m.customerPhone ? "عميل" : "زائر ضيف")),
           phone: m.customerPhone || "",
           token: m.senderId || undefined,
           count: (existing?.count || 0) + 1,
@@ -148,13 +148,13 @@ export default function DashboardOrdersPage() {
   }, [chatCustomers, selectedChatPhone]);
 
   const STATUS_TABS = [
-    { id: "active",     label: t("Ø§Ù„Ù†Ø´Ø·Ø©", "Active") },
-    { id: "new",        label: t("Ø¬Ø¯ÙŠØ¯", "New") },
-    { id: "preparing",  label: t("Ù‚ÙŠØ¯ Ø§Ù„ØªØ­Ø¶ÙŠØ±", "Preparing") },
-    { id: "ready",      label: t("Ø¬Ø§Ù‡Ø² Ù„Ù„ØªØ³Ù„ÙŠÙ…", "Ready") },
-    { id: "delivering", label: t("Ù…Ø¹ Ø§Ù„ÙƒØ§Ø¨ØªÙ†", "With Captain") },
-    { id: "delivered",  label: t("ØªÙ… Ø§Ù„ØªØ³Ù„ÙŠÙ… ÙˆØ§Ù„ØªØ­ØµÙŠÙ„", "Delivered & Settled") },
-    { id: "cancelled",  label: t("Ù…Ù„ØºÙŠ", "Cancelled") },
+    { id: "active",     label: t("النشطة", "Active") },
+    { id: "new",        label: t("جديد", "New") },
+    { id: "preparing",  label: t("قيد التحضير", "Preparing") },
+    { id: "ready",      label: t("جاهز للتسليم", "Ready") },
+    { id: "delivering", label: t("مع الكابتن", "With Captain") },
+    { id: "delivered",  label: t("تم التسليم والتحصيل", "Delivered & Settled") },
+    { id: "cancelled",  label: t("ملغي", "Cancelled") },
   ];
 
   const fetchOrders = useCallback(async () => {
@@ -278,7 +278,7 @@ export default function DashboardOrdersPage() {
   async function handleAddFleetCaptain(e: React.FormEvent) {
     e.preventDefault();
     if (!fleetCaptainName.trim() || !fleetCaptainPhone.trim()) {
-      alert("Ø¨Ø±Ø¬Ø§Ø¡ ÙƒØªØ§Ø¨Ø© Ø§Ø³Ù… ÙˆØ±Ù‚Ù… Ù‡Ø§ØªÙ Ø§Ù„Ø·ÙŠØ§Ø±");
+      alert("برجاء كتابة اسم ورقم هاتف الطيار");
       return;
     }
     setSavingFleetCaptain(true);
@@ -307,7 +307,7 @@ export default function DashboardOrdersPage() {
 
   // Delete Captain
   async function handleDeleteCaptain(cpt: Captain) {
-    if (!confirm(`Ù‡Ù„ Ø£Ù†Øª Ù…ØªØ£ÙƒØ¯ Ù…Ù† Ø­Ø°Ù Ø§Ù„ÙƒØ§Ø¨ØªÙ† ${cpt.name} Ù†Ù‡Ø§Ø¦ÙŠØ§Ù‹ Ù…Ù† Ø£Ø³Ø·ÙˆÙ„ Ø´ÙˆÙƒÙˆ Ù‡Ø§ÙˆØ³ØŸ`)) return;
+    if (!confirm(`هل أنت متأكد من حذف الكابتن ${cpt.name} نهائياً من أسطول شوكو هاوس؟`)) return;
     playSound("alert");
     try {
       const res = await fetch(`/api/captains?id=${cpt.id}`, { method: "DELETE" });
@@ -323,39 +323,39 @@ export default function DashboardOrdersPage() {
     if (!captPhone) return "#";
     const cleanCaptPhone = captPhone.replace(/[^0-9]/g, "");
     const captIntl = cleanCaptPhone.startsWith("0") ? "2" + cleanCaptPhone : cleanCaptPhone;
-    const captName = captainNameOverride || order.captainName || "Ø§Ù„ÙƒØ§Ø¨ØªÙ†";
+    const captName = captainNameOverride || order.captainName || "الكابتن";
 
     const itemsList = parseItems(order.items)
       .map(
         (it) =>
-          `â€¢ ${it.qty} Ã— ${lang === "en" ? it.nameEn || it.nameAr : it.nameAr || it.nameEn} ${
+          `• ${it.qty} × ${lang === "en" ? it.nameEn || it.nameAr : it.nameAr || it.nameEn} ${
             it.extras && it.extras.length ? `(${it.extras.join(" + ")})` : ""
-          } [${it.unitPrice * it.qty} Ø¬]`
+          } [${it.unitPrice * it.qty} ج]`
       )
       .join("\n");
 
     const addressQuery = encodeURIComponent(
-      `${order.address || ""} ${order.zone || "Ø§Ù„Ø³Ø§Ø¯Ø³ Ù…Ù† Ø£ÙƒØªÙˆØ¨Ø±"}`
+      `${order.address || ""} ${order.zone || "السادس من أكتوبر"}`
     );
     const mapsUrl = `https://maps.google.com/?q=${addressQuery}`;
 
     const msg =
-      `ðŸ›µ *Ø¨ÙŠØ§Ù† ØªÙˆØµÙŠÙ„ Ø£ÙˆØ±Ø¯Ø± Ø¬Ø¯ÙŠØ¯ â€” Choco House Desserts ðŸ«ðŸ‘‘*\n\n` +
-      `Ø£Ù‡Ù„Ø§Ù‹ ÙƒØ§Ø¨ØªÙ† ${captName}ØŒ ØªÙØ§ØµÙŠÙ„ Ø§Ù„Ø·Ù„Ø¨ Ù„Ù„ØªÙˆØµÙŠÙ„ Ø§Ù„ÙÙˆØ±ÙŠ:\n` +
-      `â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n` +
-      `ðŸ·ï¸ *Ø£ÙˆØ±Ø¯Ø± Ø±Ù‚Ù…:* #${order.orderNumber}\n` +
-      `ðŸ‘¤ *Ø§Ø³Ù… Ø§Ù„Ø¹Ù…ÙŠÙ„:* ${order.customerName}\n` +
-      `ðŸ“ž *Ù‡Ø§ØªÙ Ø§Ù„Ø¹Ù…ÙŠÙ„:* ${order.phone}\n` +
-      `ðŸ“ *Ø§Ù„Ø¹Ù†ÙˆØ§Ù†:* ${order.address || "ØºÙŠØ± Ù…Ø­Ø¯Ø¯"} (${order.zone || "Ø§Ù„Ø­ÙŠ Ø§Ù„Ø«Ø§Ù†ÙŠ"})\n` +
-      `ðŸ—ºï¸ *Ù„ÙˆÙƒÙŠØ´Ù† Ø§Ù„Ø®Ø±ÙŠØ·Ø© Ø§Ù„Ù…Ø¨Ø§Ø´Ø±:*\n${mapsUrl}\n\n` +
-      `ðŸ« *Ø§Ù„Ø£ØµÙ†Ø§Ù Ø§Ù„Ù…Ø·Ù„ÙˆØ¨Ø©:*\n${itemsList || "Ø£ØµÙ†Ø§Ù Ù…ØªÙ†ÙˆØ¹Ø©"}\n\n` +
-      `ðŸ’° *Ø§Ù„Ù…Ø·Ù„ÙˆØ¨ ØªØ­ØµÙŠÙ„Ù‡ ÙƒØ§Ø´:* ${order.total} Ø¬.Ù… ${
+      `🛵 *بيان توصيل أوردر جديد — Choco House Desserts 🍫👑*\n\n` +
+      `أهلاً كابتن ${captName}، تفاصيل الطلب للتوصيل الفوري:\n` +
+      `━━━━━━━━━━━━━━━━━━━\n` +
+      `🏷️ *أوردر رقم:* #${order.orderNumber}\n` +
+      `👤 *اسم العميل:* ${order.customerName}\n` +
+      `📞 *هاتف العميل:* ${order.phone}\n` +
+      `📍 *العنوان:* ${order.address || "غير محدد"} (${order.zone || "الحي الثاني"})\n` +
+      `🗺️ *لوكيشن الخريطة المباشر:*\n${mapsUrl}\n\n` +
+      `🍫 *الأصناف المطلوبة:*\n${itemsList || "أصناف متنوعة"}\n\n` +
+      `💰 *المطلوب تحصيله كاش:* ${order.total} ج.م ${
         order.paymentMethod === "cash"
-          ? "(ðŸ’µ ÙƒØ§Ø´ Ø¹Ù†Ø¯ Ø§Ù„Ø§Ø³ØªÙ„Ø§Ù…)"
-          : "(ðŸ’³ Ù…Ø¯ÙÙˆØ¹ Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠØ§Ù‹ Ø¨Ø§Ù„ÙƒØ§Ù…Ù„ - Ù„Ø§ ØªØ­ØµÙ„ Ù…Ø¨Ø§Ù„Øº)"
+          ? "(💵 كاش عند الاستلام)"
+          : "(💳 مدفوع إلكترونياً بالكامل - لا تحصل مبالغ)"
       }\n` +
-      (order.notes ? `âš ï¸ *Ù…Ù„Ø§Ø­Ø¸Ø§Øª Ø®Ø§ØµØ©:* ${order.notes}\n\n` : `\n`) +
-      `Ø¨Ø§Ù„ØªÙˆÙÙŠÙ‚ ÙŠØ§ Ø¨Ø·Ù„! ðŸš€`;
+      (order.notes ? `⚠️ *ملاحظات خاصة:* ${order.notes}\n\n` : `\n`) +
+      `بالتوفيق يا بطل! 🚀`;
 
     return `https://wa.me/${captIntl}?text=${encodeURIComponent(msg)}`;
   };
@@ -372,7 +372,7 @@ export default function DashboardOrdersPage() {
         captainName = newCaptainName.trim();
         captainPhone = newCaptainPhone.trim();
         if (!captainName || !captainPhone) {
-          alert("Ø¨Ø±Ø¬Ø§Ø¡ Ø¥Ø¯Ø®Ø§Ù„ Ø§Ø³Ù… ÙˆØ±Ù‚Ù… Ù‡Ø§ØªÙ Ø§Ù„ÙƒØ§Ø¨ØªÙ†");
+          alert("برجاء إدخال اسم ورقم هاتف الكابتن");
           setSavingCaptain(false);
           return;
         }
@@ -389,7 +389,7 @@ export default function DashboardOrdersPage() {
           captainName = found.name;
           captainPhone = found.phone;
         } else {
-          alert("Ø¨Ø±Ø¬Ø§Ø¡ Ø§Ø®ØªÙŠØ§Ø± ÙƒØ§Ø¨ØªÙ†");
+          alert("برجاء اختيار كابتن");
           setSavingCaptain(false);
           return;
         }
@@ -428,7 +428,7 @@ export default function DashboardOrdersPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          senderName: currentUser?.name || "ÙØ±ÙŠÙ‚ Choco House",
+          senderName: currentUser?.name || "فريق Choco House",
           senderRole: currentUser?.role || "staff",
           text: chatReplyText.trim(),
           isStaff: true,
@@ -485,9 +485,9 @@ export default function DashboardOrdersPage() {
   const getCustomerWhatsAppUrl = (order: Order) => {
     const cleanPhone = order.phone.replace(/[^0-9]/g, "");
     const egyptianPhone = cleanPhone.startsWith("0") ? "2" + cleanPhone : cleanPhone;
-    const msg = `Ù…Ø±Ø­Ø¨Ø§Ù‹ ${order.customerName} Ù…Ù† Choco House ðŸ«\nØ£ÙˆØ±Ø¯Ø± Ø±Ù‚Ù…: #${order.orderNumber}\nØ§Ù„Ø­Ø§Ù„Ø© Ø§Ù„Ø­Ø§Ù„ÙŠØ©: ${
-      order.status === "delivering" ? `Ù…Ø¹ Ø§Ù„ÙƒØ§Ø¨ØªÙ† ${order.captainName || ""} ðŸ›µ` : "Ù‚ÙŠØ¯ Ø§Ù„ØªØ¬Ù‡ÙŠØ² ðŸ‘¨â€ðŸ³"
-    }\nØ§Ù„Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø§Ù„Ù…Ø·Ù„ÙˆØ¨: ${order.total} Ø¬.Ù…\nÙ„Ø£ÙŠ Ø§Ø³ØªÙØ³Ø§Ø± ØªÙˆØ§ØµÙ„ Ù…Ø¹Ù†Ø§!`;
+    const msg = `مرحباً ${order.customerName} من Choco House 🍫\nأوردر رقم: #${order.orderNumber}\nالحالة الحالية: ${
+      order.status === "delivering" ? `مع الكابتن ${order.captainName || ""} 🛵` : "قيد التجهيز 👨‍🍳"
+    }\nالإجمالي المطلوب: ${order.total} ج.م\nلأي استفسار تواصل معنا!`;
     return `https://wa.me/${egyptianPhone}?text=${encodeURIComponent(msg)}`;
   };
 
@@ -496,14 +496,14 @@ export default function DashboardOrdersPage() {
     if (!order.captainPhone) return "#";
     const cleanPhone = order.captainPhone.replace(/[^0-9]/g, "");
     const egyptianPhone = cleanPhone.startsWith("0") ? "2" + cleanPhone : cleanPhone;
-    const msg = `Ø£Ù‡Ù„Ø§Ù‹ ÙƒØ§Ø¨ØªÙ† ${order.captainName} ðŸ›µ\nØªÙØ§ØµÙŠÙ„ Ø§Ù„Ø£ÙˆØ±Ø¯Ø± Ù„Ù„ØªØ³Ù„ÙŠÙ…:\nØ±Ù‚Ù… Ø§Ù„Ø£ÙˆØ±Ø¯Ø±: #${order.orderNumber}\nØ§Ù„Ø¹Ù…ÙŠÙ„: ${order.customerName}\nØ§Ù„Ù‡Ø§ØªÙ: ${order.phone}\nØ§Ù„Ø¹Ù†ÙˆØ§Ù†: ${order.address || "ØºÙŠØ± Ù…Ø­Ø¯Ø¯"} (${order.zone || ""})\nØ§Ù„Ù…Ø·Ù„ÙˆØ¨ ØªØ­ØµÙŠÙ„Ù‡: ${order.total} Ø¬.Ù…\nØ·Ø±ÙŠÙ‚Ø© Ø§Ù„Ø¯ÙØ¹: ${order.paymentMethod === "cash" ? "ÙƒØ§Ø´ ðŸ’µ" : "Ù…Ø¯ÙÙˆØ¹ Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠØ§Ù‹ ðŸ’³"}`;
+    const msg = `أهلاً كابتن ${order.captainName} 🛵\nتفاصيل الأوردر للتسليم:\nرقم الأوردر: #${order.orderNumber}\nالعميل: ${order.customerName}\nالهاتف: ${order.phone}\nالعنوان: ${order.address || "غير محدد"} (${order.zone || ""})\nالمطلوب تحصيله: ${order.total} ج.م\nطريقة الدفع: ${order.paymentMethod === "cash" ? "كاش 💵" : "مدفوع إلكترونياً 💳"}`;
     return `https://wa.me/${egyptianPhone}?text=${encodeURIComponent(msg)}`;
   };
 
   return (
     <ErpLayout activeItem="orders">
       <div>
-        {/* â”€â”€ Assigned Dispatch Success Notification (1-Click WhatsApp Send) â”€â”€ */}
+        {/* ── Assigned Dispatch Success Notification (1-Click WhatsApp Send) ── */}
         {assignedDispatch && (
           <div
             style={{
@@ -533,14 +533,14 @@ export default function DashboardOrdersPage() {
                   fontSize: "22px",
                 }}
               >
-                ðŸ›µ
+                🛵
               </div>
               <div>
                 <h4 style={{ margin: 0, fontSize: "15px", fontWeight: 900, color: "#ffffff" }}>
-                  ØªÙ… Ø¥Ø³Ù†Ø§Ø¯ Ø§Ù„Ø£ÙˆØ±Ø¯Ø± #{assignedDispatch.order.orderNumber} Ù„Ù„Ø·ÙŠØ§Ø± ({assignedDispatch.captainName}) Ø¨Ù†Ø¬Ø§Ø­!
+                  تم إسناد الأوردر #{assignedDispatch.order.orderNumber} للطيار ({assignedDispatch.captainName}) بنجاح!
                 </h4>
                 <p style={{ margin: "2px 0 0 0", fontSize: "12px", color: "#a8927e" }}>
-                  Ø§Ø¶ØºØ· Ø§Ù„Ø²Ø± Ø§Ù„Ø£Ø®Ø¶Ø± Ù„Ø¥Ø±Ø³Ø§Ù„ Ø¨ÙŠØ§Ù† Ø§Ù„Ø£ÙˆØ±Ø¯Ø± Ø¨Ø§Ù„ÙƒØ§Ù…Ù„ Ù…Ø¹ Ø±Ø§Ø¨Ø· Ù„ÙˆÙƒÙŠØ´Ù† Ø¬ÙˆØ¬Ù„ Ù…Ø§Ø¨Ø³ Ù„Ù„Ø·ÙŠØ§Ø± Ø¹Ø¨Ø± ÙˆØ§ØªØ³Ø§Ø¨ Ø¨Ù†Ù‚Ø±Ø© ÙˆØ§Ø­Ø¯Ø©
+                  اضغط الزر الأخضر لإرسال بيان الأوردر بالكامل مع رابط لوكيشن جوجل مابس للطيار عبر واتساب بنقرة واحدة
                 </p>
               </div>
             </div>
@@ -571,7 +571,7 @@ export default function DashboardOrdersPage() {
                 }}
               >
                 <MessageCircle size={17} />
-                <span>ðŸ“² Ø¥Ø±Ø³Ø§Ù„ Ø¨ÙŠØ§Ù† Ø§Ù„Ø£ÙˆØ±Ø¯Ø± ÙˆØ§Ù„Ù„ÙˆÙƒÙŠØ´Ù† Ø¹Ø¨Ø± ÙˆØ§ØªØ³Ø§Ø¨ ÙÙˆØ±Ø§Ù‹ ðŸš€</span>
+                <span>📲 إرسال بيان الأوردر واللوكيشن عبر واتساب فوراً 🚀</span>
               </a>
 
               <button
@@ -587,12 +587,12 @@ export default function DashboardOrdersPage() {
                   fontWeight: 700,
                 }}
               >
-                Ø¥ØºÙ„Ø§Ù‚ âœ•
+                إغلاق ✕
               </button>
             </div>
           </div>
         )}
-        {/* â”€â”€ Persistent Alarm Flashing Banner â”€â”€ */}
+        {/* ── Persistent Alarm Flashing Banner ── */}
         {newOrdersCount > 0 && (
           <div
             style={{
@@ -625,13 +625,13 @@ export default function DashboardOrdersPage() {
               <div>
                 <h3 style={{ margin: 0, fontSize: "16.5px", fontWeight: 900 }}>
                   {t(
-                    `ðŸš¨ ØªÙ†Ø¨ÙŠÙ‡ ÙÙˆØ±ÙŠ: ÙŠÙˆØ¬Ø¯ ${newOrdersCount} Ø·Ù„Ø¨ Ø¬Ø¯ÙŠØ¯ Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ø³ØªÙ„Ø§Ù…Ùƒ ÙˆØ§Ù„ØªØ­Ø¶ÙŠØ±!`,
-                    `ðŸš¨ Alert: ${newOrdersCount} new order(s) waiting for acceptance & prep!`
+                    `🚨 تنبيه فوري: يوجد ${newOrdersCount} طلب جديد بانتظار استلامك والتحضير!`,
+                    `🚨 Alert: ${newOrdersCount} new order(s) waiting for acceptance & prep!`
                   )}
                 </h3>
                 <p style={{ margin: "2px 0 0 0", fontSize: "12.5px", opacity: 0.9 }}>
                   {t(
-                    "ØµÙˆØª Ø§Ù„Ù…Ù†Ø¨Ù‡ ÙŠØ¹Ù…Ù„ Ø¨Ø§Ø³ØªÙ…Ø±Ø§Ø± Ù„ØªÙ†Ø¨ÙŠÙ‡ Ø§Ù„Ù…Ø·Ø¨Ø® ÙˆØ§Ù„ÙƒØ§Ø´ÙŠØ± Ø­ØªÙ‰ ÙŠØªÙ… Ù‚Ø¨ÙˆÙ„ Ø§Ù„Ø·Ù„Ø¨",
+                    "صوت المنبه يعمل باستمرار لتنبيه المطبخ والكاشير حتى يتم قبول الطلب",
                     "Continuous kitchen alarm ringing until order is accepted or muted"
                   )}
                 </p>
@@ -661,19 +661,19 @@ export default function DashboardOrdersPage() {
               {alarmMuted ? (
                 <>
                   <Volume2 size={18} />
-                  <span>{t("ØªØ´ØºÙŠÙ„ Ø§Ù„ØµÙˆØª ðŸ””", "Unmute Alarm ðŸ””")}</span>
+                  <span>{t("تشغيل الصوت 🔔", "Unmute Alarm 🔔")}</span>
                 </>
               ) : (
                 <>
                   <VolumeX size={18} />
-                  <span>{t("ÙƒØªÙ… Ø§Ù„ØµÙˆØª Ù…Ø¤Ù‚ØªØ§Ù‹ ðŸ”•", "Mute Alarm ðŸ”•")}</span>
+                  <span>{t("كتم الصوت مؤقتاً 🔕", "Mute Alarm 🔕")}</span>
                 </>
               )}
             </button>
           </div>
         )}
 
-        {/* â”€â”€ Page Header & Top Quick Actions â”€â”€ */}
+        {/* ── Page Header & Top Quick Actions ── */}
         <div
           style={{
             display: "flex",
@@ -694,7 +694,7 @@ export default function DashboardOrdersPage() {
                 lineHeight: 1.2,
               }}
             >
-              {t("Ø´Ø§Ø´Ø© Ø§Ù„Ù…Ø·Ø¨Ø® ÙˆØ§Ù„Ø·Ù„Ø¨Ø§Øª ÙˆÙ„ÙˆØ¬Ø³ØªÙŠØ§Øª Ø§Ù„ØªÙˆØµÙŠÙ„", "Kitchen & Delivery Logistics Board")}
+              {t("شاشة المطبخ والطلبات ولوجستيات التوصيل", "Kitchen & Delivery Logistics Board")}
             </h1>
             <p
               style={{
@@ -705,8 +705,8 @@ export default function DashboardOrdersPage() {
               }}
             >
               {t(
-                "Ø¥Ø¯Ø§Ø±Ø© Ø¯ÙˆØ±Ø© Ø­ÙŠØ§Ø© Ø§Ù„Ø£ÙˆØ±Ø¯Ø± â€” Ø·Ø¨Ø§Ø¹Ø© Ø±ÙŠØ³ÙŠØª Ø­Ø±Ø§Ø±ÙŠ 80mm â€” ØªØ¹ÙŠÙŠÙ† Ø§Ù„Ø·ÙŠØ§Ø± â€” ØªØ­ØµÙŠÙ„ Ø§Ù„ÙÙ„ÙˆØ³",
-                "Full order lifecycle â€” 80mm thermal receipt printing â€” Captain assignment & cash settlement"
+                "إدارة دورة حياة الأوردر — طباعة ريسيت حراري 80mm — تعيين الطيار — تحصيل الفلوس",
+                "Full order lifecycle — 80mm thermal receipt printing — Captain assignment & cash settlement"
               )}
             </p>
           </div>
@@ -734,7 +734,7 @@ export default function DashboardOrdersPage() {
               }}
             >
               <MessageSquare size={16} />
-              <span>{t("Ø´Ø§Øª ÙˆØ§Ø³ØªÙØ³Ø§Ø±Ø§Øª Ø§Ù„Ø¹Ù…Ù„Ø§Ø¡ ðŸ’¬", "Customer Live Chat ðŸ’¬")}</span>
+              <span>{t("شات واستفسارات العملاء 💬", "Customer Live Chat 💬")}</span>
               {chatMessages.length > 0 && (
                 <span
                   style={{
@@ -773,7 +773,7 @@ export default function DashboardOrdersPage() {
               }}
             >
               <Bike size={16} />
-              <span>{t("Ø£Ø³Ø·ÙˆÙ„ Ø§Ù„Ø¯Ù„ÙŠÙØ±ÙŠ ÙˆØ§Ù„Ø·ÙŠØ§Ø±ÙŠÙ† ðŸ›µ", "Delivery Fleet ðŸ›µ")}</span>
+              <span>{t("أسطول الدليفري والطيارين 🛵", "Delivery Fleet 🛵")}</span>
               <span
                 style={{
                   background: "#cca043",
@@ -809,12 +809,12 @@ export default function DashboardOrdersPage() {
               }}
             >
               <RefreshCw size={15} />
-              <span>{t("ØªØ­Ø¯ÙŠØ« ðŸ”„", "Refresh ðŸ”„")}</span>
+              <span>{t("تحديث 🔄", "Refresh 🔄")}</span>
             </button>
           </div>
         </div>
 
-        {/* â”€â”€ Horizontal Status Tabs â”€â”€ */}
+        {/* ── Horizontal Status Tabs ── */}
         <div
           style={{
             display: "flex",
@@ -869,7 +869,7 @@ export default function DashboardOrdersPage() {
           })}
         </div>
 
-        {/* â”€â”€ Orders Display Container â”€â”€ */}
+        {/* ── Orders Display Container ── */}
         {filteredOrders.length === 0 ? (
           <div
             style={{
@@ -910,7 +910,7 @@ export default function DashboardOrdersPage() {
                 margin: "0 0 6px 0",
               }}
             >
-              {t("Ù„Ø§ ØªÙˆØ¬Ø¯ Ø·Ù„Ø¨Ø§Øª ÙÙŠ Ù‡Ø°Ø§ Ø§Ù„Ù‚Ø³Ù…", "No orders in this section")}
+              {t("لا توجد طلبات في هذا القسم", "No orders in this section")}
             </h3>
             <p
               style={{
@@ -922,7 +922,7 @@ export default function DashboardOrdersPage() {
               }}
             >
               {t(
-                "Ø£ÙŠ Ø·Ù„Ø¨ Ø¬Ø¯ÙŠØ¯ Ù…Ù† Ø§Ù„Ù…ÙˆÙ‚Ø¹ Ù‡ÙŠØ¸Ù‡Ø± Ù‡Ù†Ø§ ÙÙˆØ±Ø§Ù‹ Ù…Ø¹ ØªÙ†Ø¨ÙŠÙ‡ ØµÙˆØªÙŠ Ù…Ø³ØªÙ…Ø±",
+                "أي طلب جديد من الموقع هيظهر هنا فوراً مع تنبيه صوتي مستمر",
                 "Any new order from the website will appear here immediately with continuous sound alert"
               )}
             </p>
@@ -984,7 +984,7 @@ export default function DashboardOrdersPage() {
                         {/* Direct Print Thermal Receipt Button */}
                         <button
                           onClick={() => printThermalReceipt(order as any)}
-                          title={t("Ø·Ø¨Ø§Ø¹Ø© Ø±ÙŠØ³ÙŠØª Ø­Ø±Ø§Ø±ÙŠ ÙÙˆØ±ÙŠ ðŸ–¨ï¸", "Print Thermal Receipt ðŸ–¨ï¸")}
+                          title={t("طباعة ريسيت حراري فوري 🖨️", "Print Thermal Receipt 🖨️")}
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
@@ -1009,7 +1009,7 @@ export default function DashboardOrdersPage() {
                             setQrModalOrder(order);
                             playSound("click");
                           }}
-                          title={t("ÙƒÙŠÙˆ Ø§Ø± Ø§Ù„ÙØ§ØªÙˆØ±Ø© Ø§Ù„Ø°ÙƒÙŠØ© Ù„Ù„Ù…ÙˆØ¨Ø§ÙŠÙ„ ðŸ“±", "Digital QR Receipt ðŸ“±")}
+                          title={t("كيو ار الفاتورة الذكية للموبايل 📱", "Digital QR Receipt 📱")}
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
@@ -1025,7 +1025,7 @@ export default function DashboardOrdersPage() {
                           }}
                         >
                           <QrCode size={13} />
-                          <span>QR ðŸ“±</span>
+                          <span>QR 📱</span>
                         </button>
 
                         {/* Edit Order Button */}
@@ -1035,7 +1035,7 @@ export default function DashboardOrdersPage() {
                               setOrderToEdit(order);
                               playSound("click");
                             }}
-                            title={t("ØªØ¹Ø¯ÙŠÙ„ Ø£ØµÙ†Ø§Ù ÙˆØªÙØ§ØµÙŠÙ„ Ø§Ù„Ø£ÙˆØ±Ø¯Ø± âœï¸", "Edit Order Items & Details âœï¸")}
+                            title={t("تعديل أصناف وتفاصيل الأوردر ✏️", "Edit Order Items & Details ✏️")}
                             style={{
                               display: "inline-flex",
                               alignItems: "center",
@@ -1051,13 +1051,13 @@ export default function DashboardOrdersPage() {
                             }}
                           >
                             <Edit3 size={13} />
-                            <span>{t("ØªØ¹Ø¯ÙŠÙ„ âœï¸", "Edit âœï¸")}</span>
+                            <span>{t("تعديل ✏️", "Edit ✏️")}</span>
                           </button>
                         )}
 
                         <button
                           onClick={() => setPreviewOrder(order)}
-                          title={t("Ù…Ø¹Ø§ÙŠÙ†Ø© Ø§Ù„ÙØ§ØªÙˆØ±Ø©", "Preview Receipt")}
+                          title={t("معاينة الفاتورة", "Preview Receipt")}
                           style={{
                             background: "transparent",
                             border: "none",
@@ -1083,9 +1083,9 @@ export default function DashboardOrdersPage() {
                               border: "1px solid rgba(249, 115, 22, 0.4)",
                               color: "#fb923c",
                             }}
-                            title={t("ØªÙ… ØªØ¹Ø¯ÙŠÙ„ Ø£ØµÙ†Ø§Ù Ù‡Ø°Ø§ Ø§Ù„Ø·Ù„Ø¨", "Order has been edited")}
+                            title={t("تم تعديل أصناف هذا الطلب", "Order has been edited")}
                           >
-                            Ù…Ø¹Ø¯Ù‘Ù„ âœï¸
+                            معدّل ✏️
                           </span>
                         )}
                         <span
@@ -1121,16 +1121,16 @@ export default function DashboardOrdersPage() {
                         }}
                       >
                         {order.status === "new"
-                          ? t("Ø¬Ø¯ÙŠØ¯ ðŸ“‹", "New ðŸ“‹")
+                          ? t("جديد 📋", "New 📋")
                           : order.status === "preparing"
-                          ? t("Ù‚ÙŠØ¯ Ø§Ù„ØªØ­Ø¶ÙŠØ± ðŸ‘¨â€ðŸ³", "Preparing ðŸ‘¨â€ðŸ³")
+                          ? t("قيد التحضير 👨‍🍳", "Preparing 👨‍🍳")
                           : order.status === "ready"
-                          ? t("Ø¬Ø§Ù‡Ø² Ù„Ù„ØªØ³Ù„ÙŠÙ… ðŸ›µ", "Ready ðŸ›µ")
+                          ? t("جاهز للتسليم 🛵", "Ready 🛵")
                           : order.status === "delivering"
-                          ? t("Ù…Ø¹ Ø§Ù„ÙƒØ§Ø¨ØªÙ† ðŸš´", "With Captain ðŸš´")
+                          ? t("مع الكابتن 🚴", "With Captain 🚴")
                           : order.status === "delivered"
-                          ? t("ØªÙ… Ø§Ù„ØªØ³Ù„ÙŠÙ… ÙˆØ§Ù„ØªØ­ØµÙŠÙ„ ðŸŽ‰", "Delivered ðŸŽ‰")
-                          : t("Ù…Ù„ØºÙŠ âŒ", "Cancelled âŒ")}
+                          ? t("تم التسليم والتحصيل 🎉", "Delivered 🎉")
+                          : t("ملغي ❌", "Cancelled ❌")}
                       </span>
                     </div>
                   </div>
@@ -1170,7 +1170,7 @@ export default function DashboardOrdersPage() {
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={() => playSound("click")}
-                          title={t("Ù…Ø±Ø§Ø³Ù„Ø© Ø§Ù„Ø¹Ù…ÙŠÙ„ Ø¹Ø¨Ø± ÙˆØ§ØªØ³Ø§Ø¨ Ù…Ø¬Ø§Ù†Ø§Ù‹", "Message Customer on WhatsApp")}
+                          title={t("مراسلة العميل عبر واتساب مجاناً", "Message Customer on WhatsApp")}
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
@@ -1186,7 +1186,7 @@ export default function DashboardOrdersPage() {
                           }}
                         >
                           <MessageCircle size={12} />
-                          <span>ÙˆØ§ØªØ³Ø§Ø¨ ðŸ’¬</span>
+                          <span>واتساب 💬</span>
                         </a>
                       </div>
 
@@ -1222,7 +1222,7 @@ export default function DashboardOrdersPage() {
                         >
                           <MapPin size={13} color="#cca043" />
                           <span>
-                            {order.address} ({order.zone || "6 Ø£ÙƒØªÙˆØ¨Ø±"})
+                            {order.address} ({order.zone || "6 أكتوبر"})
                           </span>
                         </div>
                       )}
@@ -1238,7 +1238,7 @@ export default function DashboardOrdersPage() {
                             borderRadius: "6px",
                           }}
                         >
-                          âš ï¸ {order.notes}
+                          ⚠️ {order.notes}
                         </div>
                       )}
                     </div>
@@ -1261,7 +1261,7 @@ export default function DashboardOrdersPage() {
                           <Bike size={18} color="#c084fc" />
                           <div>
                             <div style={{ fontSize: "11px", color: "#c084fc", fontWeight: 700 }}>
-                              {t("Ø·ÙŠØ§Ø± Ø§Ù„ØªÙˆØµÙŠÙ„ Ø§Ù„Ù…Ø³Ø¤ÙˆÙ„:", "Assigned Captain:")}
+                              {t("طيار التوصيل المسؤول:", "Assigned Captain:")}
                             </div>
                             <div style={{ fontSize: "13.5px", fontWeight: 900, color: "#ffffff" }}>
                               {order.captainName}
@@ -1294,7 +1294,7 @@ export default function DashboardOrdersPage() {
                             }}
                           >
                             <Send size={11} />
-                            <span>Ø¨ÙŠØ§Ù†Ø§ØªÙ‡ ðŸ“±</span>
+                            <span>بياناته 📱</span>
                           </a>
                         )}
                       </div>
@@ -1324,7 +1324,7 @@ export default function DashboardOrdersPage() {
                         >
                           <div>
                             <span style={{ color: "#ffffff", fontWeight: 700 }}>
-                              {it.qty} Ã—{" "}
+                              {it.qty} ×{" "}
                               {lang === "en"
                                 ? it.nameEn || it.nameAr
                                 : it.nameAr || it.nameEn}
@@ -1336,7 +1336,7 @@ export default function DashboardOrdersPage() {
                             )}
                           </div>
                           <span style={{ color: "#cca043", fontWeight: 800 }}>
-                            {it.unitPrice * it.qty} {t("Ø¬", "EGP")}
+                            {it.unitPrice * it.qty} {t("ج", "EGP")}
                           </span>
                         </div>
                       ))}
@@ -1357,15 +1357,15 @@ export default function DashboardOrdersPage() {
                     >
                       <div>
                         <span style={{ fontSize: "12px", color: "#8a7565", display: "block" }}>
-                          {t("Ø§Ù„Ù…Ø·Ù„ÙˆØ¨ ØªØ­ØµÙŠÙ„Ù‡", "To Collect")}{" "}
-                          {order.paymentMethod === "cash" ? "(ÙƒØ§Ø´ ðŸ’µ)" : "(Ù…Ø¯ÙÙˆØ¹ ðŸ’³)"}
+                          {t("المطلوب تحصيله", "To Collect")}{" "}
+                          {order.paymentMethod === "cash" ? "(كاش 💵)" : "(مدفوع 💳)"}
                         </span>
                         <span style={{ fontSize: "11px", color: "#cca043" }}>
-                          + ØªÙˆØµÙŠÙ„ {order.deliveryFee} Ø¬
+                          + توصيل {order.deliveryFee} ج
                         </span>
                       </div>
                       <span style={{ fontSize: "20px", color: "#cca043", fontWeight: 900 }}>
-                        {order.total} {t("Ø¬", "EGP")}
+                        {order.total} {t("ج", "EGP")}
                       </span>
                     </div>
 
@@ -1393,7 +1393,7 @@ export default function DashboardOrdersPage() {
                           }}
                         >
                           <ChefHat size={16} />
-                          <span>{t("Ø¨Ø¯Ø¡ Ø§Ù„ØªØ­Ø¶ÙŠØ± ðŸ‘¨â€ðŸ³", "Start Preparing ðŸ‘¨â€ðŸ³")}</span>
+                          <span>{t("بدء التحضير 👨‍🍳", "Start Preparing 👨‍🍳")}</span>
                         </button>
                       )}
 
@@ -1419,7 +1419,7 @@ export default function DashboardOrdersPage() {
                           }}
                         >
                           <CheckCircle2 size={16} />
-                          <span>{t("Ø¬Ø§Ù‡Ø² Ù„Ù„ØªÙˆØµÙŠÙ„ ðŸ›µ", "Ready for Delivery ðŸ›µ")}</span>
+                          <span>{t("جاهز للتوصيل 🛵", "Ready for Delivery 🛵")}</span>
                         </button>
                       )}
 
@@ -1450,7 +1450,7 @@ export default function DashboardOrdersPage() {
                           }}
                         >
                           <Bike size={16} />
-                          <span>{t("ØªØ³Ù„ÙŠÙ… Ù„Ù„Ø·ÙŠØ§Ø± ðŸ›µ", "Assign to Captain ðŸ›µ")}</span>
+                          <span>{t("تسليم للطيار 🛵", "Assign to Captain 🛵")}</span>
                         </button>
                       )}
 
@@ -1477,7 +1477,7 @@ export default function DashboardOrdersPage() {
                           }}
                         >
                           <DollarSign size={16} />
-                          <span>{t("ØªÙ… Ø§Ù„ØªØ­ØµÙŠÙ„ ÙˆØ§Ù„ØªØ³Ù„ÙŠÙ… ðŸŽ‰", "Collect Cash & Deliver ðŸŽ‰")}</span>
+                          <span>{t("تم التحصيل والتسليم 🎉", "Collect Cash & Deliver 🎉")}</span>
                         </button>
                       )}
 
@@ -1497,9 +1497,9 @@ export default function DashboardOrdersPage() {
                             fontWeight: 700,
                             cursor: "pointer",
                           }}
-                          title={t("Ø¥Ù„ØºØ§Ø¡ Ø§Ù„Ø·Ù„Ø¨", "Cancel Order")}
+                          title={t("إلغاء الطلب", "Cancel Order")}
                         >
-                          {t("Ø¥Ù„ØºØ§Ø¡ âŒ", "Cancel âŒ")}
+                          {t("إلغاء ❌", "Cancel ❌")}
                         </button>
                       )}
                     </div>
@@ -1510,9 +1510,9 @@ export default function DashboardOrdersPage() {
           </div>
         )}
 
-        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        {/* ═══════════════════════════════════════════════════════
             MODAL 1: ASSIGN CAPTAIN TO ORDER
-        â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+        ══════════════════════════════════════════════════════════ */}
         {captainModalOrder && (
           <div
             style={{
@@ -1563,10 +1563,10 @@ export default function DashboardOrdersPage() {
                   </div>
                   <div>
                     <h3 style={{ margin: 0, fontSize: "17px", fontWeight: 900 }}>
-                      {t("Ø±Ø¨Ø· Ø§Ù„Ø·ÙŠØ§Ø± Ø¨Ø§Ù„Ø£ÙˆØ±Ø¯Ø±", "Assign Delivery Captain")}
+                      {t("ربط الطيار بالأوردر", "Assign Delivery Captain")}
                     </h3>
                     <p style={{ margin: "2px 0 0 0", fontSize: "12px", color: "#cca043" }}>
-                      Ø£ÙˆØ±Ø¯Ø± Ø±Ù‚Ù… {captainModalOrder.orderNumber} â€” Ø§Ù„Ù…Ø·Ù„ÙˆØ¨: {captainModalOrder.total} Ø¬
+                      أوردر رقم {captainModalOrder.orderNumber} — المطلوب: {captainModalOrder.total} ج
                     </p>
                   </div>
                 </div>
@@ -1595,7 +1595,7 @@ export default function DashboardOrdersPage() {
                     marginBottom: "8px",
                   }}
                 >
-                  {t("Ø§Ø®ØªØ± Ø§Ù„Ø·ÙŠØ§Ø± Ù…Ù† Ø§Ù„Ù‚Ø§Ø¦Ù…Ø© Ø§Ù„Ù…Ø³Ø¬Ù„Ø©:", "Select Captain from Registered Staff:")}
+                  {t("اختر الطيار من القائمة المسجلة:", "Select Captain from Registered Staff:")}
                 </label>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -1668,16 +1668,16 @@ export default function DashboardOrdersPage() {
                               }}
                             >
                               {isOffline
-                                ? "âšª ØºÙŠØ± Ù…ØªØ§Ø­ (Ø§Ø³ØªØ±Ø§Ø­Ø©)"
+                                ? "⚪ غير متاح (استراحة)"
                                 : activeLoad.length === 0
-                                ? "ðŸŸ¢ Ù…ØªØ§Ø­ ÙˆØ¬Ø§Ù‡Ø² (0 Ø£ÙˆØ±Ø¯Ø±Ø§Øª) â­"
+                                ? "🟢 متاح وجاهز (0 أوردرات) ⭐"
                                 : activeLoad.length === 1
-                                ? `ðŸŸ¡ ÙÙŠ Ø§Ù„Ø·Ø±ÙŠÙ‚ (Ø£ÙˆØ±Ø¯Ø± #${activeLoad[0].orderNumber})`
-                                : `ðŸ”´ Ø­Ù…ÙˆÙ„Ø© (${activeLoad.length} Ø£ÙˆØ±Ø¯Ø±Ø§Øª)`}
+                                ? `🟡 في الطريق (أوردر #${activeLoad[0].orderNumber})`
+                                : `🔴 حمولة (${activeLoad.length} أوردرات)`}
                             </span>
                           </div>
                           <div style={{ fontSize: "11.5px", color: "#a8927e" }} dir="ltr">
-                            {cpt.phone} â€¢ {cpt.vehicle || "Ø³ÙƒÙˆØªØ± Ø¯Ù„ÙŠÙØ±ÙŠ"}
+                            {cpt.phone} • {cpt.vehicle || "سكوتر دليفري"}
                           </div>
                         </div>
                       </label>
@@ -1710,7 +1710,7 @@ export default function DashboardOrdersPage() {
                       onChange={() => setSelectedCaptainPhone("custom")}
                     />
                     <div style={{ fontWeight: 800, fontSize: "13.5px", color: "#ffffff" }}>
-                      {t("Ø·ÙŠØ§Ø± Ø¬Ø¯ÙŠØ¯ / Ø®Ø§Ø±Ø¬ÙŠ âž•", "Add New / External Captain âž•")}
+                      {t("طيار جديد / خارجي ➕", "Add New / External Captain ➕")}
                     </div>
                   </label>
                 </div>
@@ -1732,11 +1732,11 @@ export default function DashboardOrdersPage() {
                 >
                   <div>
                     <label style={{ fontSize: "12px", color: "#b0957e", display: "block", marginBottom: "4px" }}>
-                      Ø§Ø³Ù… Ø§Ù„ÙƒØ§Ø¨ØªÙ†:
+                      اسم الكابتن:
                     </label>
                     <input
                       type="text"
-                      placeholder="Ù…Ø«Ø§Ù„: ÙƒØ§Ø¨ØªÙ† Ø®Ø§Ù„Ø¯ Ø§Ù„Ù…ØµØ±ÙŠ"
+                      placeholder="مثال: كابتن خالد المصري"
                       value={newCaptainName}
                       onChange={(e) => setNewCaptainName(e.target.value)}
                       style={{
@@ -1754,7 +1754,7 @@ export default function DashboardOrdersPage() {
                   </div>
                   <div>
                     <label style={{ fontSize: "12px", color: "#b0957e", display: "block", marginBottom: "4px" }}>
-                      Ø±Ù‚Ù… Ù…ÙˆØ¨Ø§ÙŠÙ„ Ø§Ù„ÙƒØ§Ø¨ØªÙ†:
+                      رقم موبايل الكابتن:
                     </label>
                     <input
                       type="tel"
@@ -1796,8 +1796,8 @@ export default function DashboardOrdersPage() {
                   }}
                 >
                   {savingCaptain
-                    ? t("Ø¬Ø§Ø±ÙŠ Ø§Ù„ØªØ¹ÙŠÙŠÙ†...", "Assigning...")
-                    : t("ØªØ£ÙƒÙŠØ¯ ÙˆØ¥Ø³Ù†Ø§Ø¯ Ø§Ù„Ø£ÙˆØ±Ø¯Ø± Ù„Ù„Ø·ÙŠØ§Ø± ðŸ›µ", "Confirm & Assign ðŸ›µ")}
+                    ? t("جاري التعيين...", "Assigning...")
+                    : t("تأكيد وإسناد الأوردر للطيار 🛵", "Confirm & Assign 🛵")}
                 </button>
                 <button
                   onClick={() => setCaptainModalOrder(null)}
@@ -1813,16 +1813,16 @@ export default function DashboardOrdersPage() {
                     cursor: "pointer",
                   }}
                 >
-                  {t("Ø¥Ù„ØºØ§Ø¡", "Cancel")}
+                  {t("إلغاء", "Cancel")}
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        {/* ═══════════════════════════════════════════════════════
             MODAL 2: CUSTOMER INQUIRIES & LIVE CHAT DRAWER
-        â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+        ══════════════════════════════════════════════════════════ */}
         {chatDrawerOpen && (
           <div
             style={{
@@ -1884,7 +1884,7 @@ export default function DashboardOrdersPage() {
                       }}
                     >
                       {dir === "rtl" ? <ArrowRight size={14} /> : <ArrowLeft size={14} />}
-                      <span>{t("Ø§Ù„Ù…Ø­Ø§Ø¯Ø«Ø§Øª", "Chats")}</span>
+                      <span>{t("المحادثات", "Chats")}</span>
                     </button>
                   )}
 
@@ -1893,13 +1893,13 @@ export default function DashboardOrdersPage() {
                     <div>
                       <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 900, color: "#ffffff" }}>
                         {chatView === "thread" && selectedChatPhone
-                          ? chatCustomers.find((c) => c.id === selectedChatPhone)?.name || "Ù…Ø­Ø§Ø¯Ø«Ø© Ø¹Ù…ÙŠÙ„"
-                          : t("Ø´Ø§Øª ÙˆØ§Ø³ØªÙØ³Ø§Ø±Ø§Øª Ø§Ù„Ø¹Ù…Ù„Ø§Ø¡", "Customer Inquiries Chat")}
+                          ? chatCustomers.find((c) => c.id === selectedChatPhone)?.name || "محادثة عميل"
+                          : t("شات واستفسارات العملاء", "Customer Inquiries Chat")}
                       </h3>
                       <p style={{ margin: 0, fontSize: "11px", color: "#8a7565" }}>
                         {chatView === "thread" && selectedChatPhone
-                          ? (chatCustomers.find((c) => c.id === selectedChatPhone)?.phone || "Ø¹Ù…ÙŠÙ„ Ø¹Ø¨Ø± Ø§Ù„Ù…ØªØ¬Ø±")
-                          : `${chatCustomers.length} ${t("Ù…Ø­Ø§Ø¯Ø«Ø© Ù†Ø´Ø·Ø©", "active chats")}`}
+                          ? (chatCustomers.find((c) => c.id === selectedChatPhone)?.phone || "عميل عبر المتجر")
+                          : `${chatCustomers.length} ${t("محادثة نشطة", "active chats")}`}
                       </p>
                     </div>
                   </div>
@@ -1912,10 +1912,10 @@ export default function DashboardOrdersPage() {
                         selectedChatPhone.replace(/[^0-9]/g, "").startsWith("0")
                           ? "2" + selectedChatPhone.replace(/[^0-9]/g, "")
                           : selectedChatPhone.replace(/[^0-9]/g, "")
-                      }?text=${encodeURIComponent("Ù…Ø±Ø­Ø¨Ø§Ù‹ Ù…Ù† ÙØ±ÙŠÙ‚ Choco House ðŸ«")}`}
+                      }?text=${encodeURIComponent("مرحباً من فريق Choco House 🍫")}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      title="Ù…Ø±Ø§Ø³Ù„Ø© Ø§Ù„Ø¹Ù…ÙŠÙ„ Ø¹Ø¨Ø± ÙˆØ§ØªØ³Ø§Ø¨ Ù…Ø¨Ø§Ø´Ø±Ø©"
+                      title="مراسلة العميل عبر واتساب مباشرة"
                       style={{
                         background: "rgba(34, 197, 94, 0.15)",
                         border: "1px solid rgba(34, 197, 94, 0.35)",
@@ -1931,7 +1931,7 @@ export default function DashboardOrdersPage() {
                       }}
                     >
                       <MessageCircle size={13} />
-                      <span>ÙˆØ§ØªØ³Ø§Ø¨</span>
+                      <span>واتساب</span>
                     </a>
                   )}
 
@@ -1980,19 +1980,19 @@ export default function DashboardOrdersPage() {
                         fontWeight: 900,
                         fontSize: "14px",
                       }}>
-                        ðŸ“¢
+                        📢
                       </div>
                       <div>
                         <div style={{ fontSize: "13px", fontWeight: 800, color: "#f5ede4" }}>
-                          {t("Ø¨Ø« Ø±Ø³Ø§Ù„Ø© Ø¹Ø§Ù…Ø© Ù„Ù„Ø¬Ù…ÙŠØ¹", "Broadcast Message to All")}
+                          {t("بث رسالة عامة للجميع", "Broadcast Message to All")}
                         </div>
                         <div style={{ fontSize: "11px", color: "#8a7565" }}>
-                          Ø¥Ø±Ø³Ø§Ù„ ØªÙ†Ø¨ÙŠÙ‡ Ø£Ùˆ Ø¥Ø´Ø¹Ø§Ø± Ù„Ø¬Ù…ÙŠØ¹ Ø²ÙˆØ§Ø± Ø§Ù„Ù…ØªØ¬Ø±
+                          إرسال تنبيه أو إشعار لجميع زوار المتجر
                         </div>
                       </div>
                     </div>
                     <span style={{ fontSize: "11px", color: "#cca043", fontWeight: 700 }}>
-                      {chatMessages.length} Ø±Ø³Ø§Ù„Ø©
+                      {chatMessages.length} رسالة
                     </span>
                   </div>
 
@@ -2000,10 +2000,10 @@ export default function DashboardOrdersPage() {
                     <div style={{ textAlign: "center", padding: "60px 20px", color: "#8a7565" }}>
                       <MessageSquare size={36} color="#7a5c3e" style={{ margin: "0 auto 12px", opacity: 0.5 }} />
                       <div style={{ fontSize: "14px", fontWeight: 700, color: "#f5ede4", marginBottom: "4px" }}>
-                        Ù„Ø§ ØªÙˆØ¬Ø¯ Ù…Ø­Ø§Ø¯Ø«Ø§Øª Ø¹Ù…Ù„Ø§Ø¡ Ø­ØªÙ‰ Ø§Ù„Ø¢Ù†
+                        لا توجد محادثات عملاء حتى الآن
                       </div>
                       <div style={{ fontSize: "12px" }}>
-                        Ø£ÙŠ Ø§Ø³ØªÙØ³Ø§Ø± ÙŠÙƒØªØ¨Ù‡ Ø¹Ù…ÙŠÙ„ ÙÙŠ Ø§Ù„Ù…ØªØ¬Ø± Ø³ÙŠØ¸Ù‡Ø± Ù‡Ù†Ø§ ÙÙˆØ±Ø§Ù‹ Ù„Ù„ØªÙˆØ§ØµÙ„ Ù…Ø¹Ù‡
+                        أي استفسار يكتبه عميل في المتجر سيظهر هنا فوراً للتواصل معه
                       </div>
                     </div>
                   ) : (
@@ -2045,7 +2045,7 @@ export default function DashboardOrdersPage() {
                             fontSize: "15px",
                             flexShrink: 0,
                           }}>
-                            {cust.name.slice(0, 1) || "Ø¹"}
+                            {cust.name.slice(0, 1) || "ع"}
                           </div>
 
                           {/* Info & Last Message */}
@@ -2069,7 +2069,7 @@ export default function DashboardOrdersPage() {
                                 textOverflow: "ellipsis",
                                 whiteSpace: "nowrap",
                               }}>
-                                {cust.lastMessage || (cust.phone ? `Ù‡Ø§ØªÙ: ${cust.phone}` : "Ù…Ø­Ø§Ø¯Ø«Ø© Ù†Ø´Ø·Ø©")}
+                                {cust.lastMessage || (cust.phone ? `هاتف: ${cust.phone}` : "محادثة نشطة")}
                               </p>
                               <span style={{
                                 background: "#cca043",
@@ -2104,7 +2104,7 @@ export default function DashboardOrdersPage() {
                   >
                     {chatMessages.length === 0 ? (
                       <div style={{ textAlign: "center", padding: "40px 0", color: "#8a7565", fontSize: "13px" }}>
-                        Ù„Ø§ ØªÙˆØ¬Ø¯ Ø±Ø³Ø§Ø¦Ù„ ÙÙŠ Ù‡Ø°Ù‡ Ø§Ù„Ù…Ø­Ø§Ø¯Ø«Ø© Ø­ØªÙ‰ Ø§Ù„Ø¢Ù†
+                        لا توجد رسائل في هذه المحادثة حتى الآن
                       </div>
                     ) : (
                       (selectedChatPhone
@@ -2169,11 +2169,11 @@ export default function DashboardOrdersPage() {
                   >
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "11.5px" }}>
                       <span style={{ color: "#cca043", fontWeight: 700 }}>
-                        Ø§Ù„Ø±Ø¯ Ù…ÙˆØ¬Ù‡ Ø¥Ù„Ù‰:{" "}
+                        الرد موجه إلى:{" "}
                         <strong>
                           {selectedChatPhone
                             ? chatCustomers.find((c) => c.id === selectedChatPhone)?.name || selectedChatPhone
-                            : "Ø¬Ù…ÙŠØ¹ Ø§Ù„Ø¹Ù…Ù„Ø§Ø¡ (Ø¨Ø« Ø¹Ø§Ù…)"}
+                            : "جميع العملاء (بث عام)"}
                         </strong>
                       </span>
                     </div>
@@ -2181,7 +2181,7 @@ export default function DashboardOrdersPage() {
                     <div style={{ display: "flex", gap: "8px" }}>
                       <input
                         type="text"
-                        placeholder="Ø§ÙƒØªØ¨ Ø±Ø¯Ùƒ Ù„Ù„Ø¹Ù…ÙŠÙ„..."
+                        placeholder="اكتب ردك للعميل..."
                         value={chatReplyText}
                         onChange={(e) => setChatReplyText(e.target.value)}
                         onKeyDown={(e) => {
@@ -2225,9 +2225,9 @@ export default function DashboardOrdersPage() {
           </div>
         )}
 
-        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        {/* ═══════════════════════════════════════════════════════
             MODAL 3: THERMAL RECEIPT MODAL PREVIEW
-        â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+        ══════════════════════════════════════════════════════════ */}
         {previewOrder && (
           <ThermalReceiptModal
             order={previewOrder as any}
@@ -2235,9 +2235,9 @@ export default function DashboardOrdersPage() {
           />
         )}
 
-        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        {/* ═══════════════════════════════════════════════════════
             MODAL 4: DIGITAL QR RECEIPT MODAL
-        â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+        ══════════════════════════════════════════════════════════ */}
         {qrModalOrder && (
           <div
             style={{
@@ -2268,7 +2268,7 @@ export default function DashboardOrdersPage() {
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                   <QrCode size={22} color="#cca043" />
                   <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 900, color: "#ffffff" }}>
-                    Ø§Ù„ÙØ§ØªÙˆØ±Ø© Ø§Ù„Ø°ÙƒÙŠØ© ÙˆØ§Ù„ØªØªØ¨Ø¹ (QR) ðŸ“±
+                    الفاتورة الذكية والتتبع (QR) 📱
                   </h3>
                 </div>
                 <button
@@ -2280,7 +2280,7 @@ export default function DashboardOrdersPage() {
               </div>
 
               <p style={{ margin: "0 0 16px 0", fontSize: "12.5px", color: "#8a7565" }}>
-                Ø§Ù…Ø³Ø­ Ø§Ù„Ø±Ù…Ø² Ø¨ÙƒØ§Ù…ÙŠØ±Ø§ Ø§Ù„Ù…ÙˆØ¨Ø§ÙŠÙ„ Ù„ÙØªØ­ Ø§Ù„ÙØ§ØªÙˆØ±Ø© Ø§Ù„Ø°ÙƒÙŠØ© ÙˆØ§Ù„ØªØªØ¨Ø¹ Ù„Ù„Ø·ÙŠØ§Ø± Ø£Ùˆ Ø§Ù„Ø¹Ù…ÙŠÙ„ Ø¨Ø¯ÙˆÙ† Ø·Ø§Ø¨Ø¹Ø©
+                امسح الرمز بكاميرا الموبايل لفتح الفاتورة الذكية والتتبع للطيار أو العميل بدون طابعة
               </p>
 
               <div
@@ -2309,14 +2309,14 @@ export default function DashboardOrdersPage() {
                   {qrModalOrder.orderNumber}
                 </div>
                 <div style={{ color: "#ffffff", fontWeight: 700, marginTop: "2px" }}>
-                  Ø§Ù„Ø¹Ù…ÙŠÙ„: {qrModalOrder.customerName} ({qrModalOrder.phone})
+                  العميل: {qrModalOrder.customerName} ({qrModalOrder.phone})
                 </div>
                 <div style={{ color: "#4ade80", fontWeight: 800, marginTop: "2px" }}>
-                  Ø§Ù„Ù…Ø·Ù„ÙˆØ¨ ØªØ­ØµÙŠÙ„Ù‡: {qrModalOrder.total} Ø¬.Ù…
+                  المطلوب تحصيله: {qrModalOrder.total} ج.م
                 </div>
                 {qrModalOrder.captainName && (
                   <div style={{ color: "#c084fc", fontSize: "12px", marginTop: "4px" }}>
-                    ðŸ›µ Ø§Ù„ÙƒØ§Ø¨ØªÙ†: {qrModalOrder.captainName}
+                    🛵 الكابتن: {qrModalOrder.captainName}
                   </div>
                 )}
               </div>
@@ -2350,7 +2350,7 @@ export default function DashboardOrdersPage() {
                   }}
                 >
                   {copiedQrLink ? <Check size={16} /> : <Copy size={16} />}
-                  <span>{copiedQrLink ? "ØªÙ… Ø§Ù„Ù†Ø³Ø®!" : "Ù†Ø³Ø® Ø§Ù„Ø±Ø§Ø¨Ø· ðŸ“‹"}</span>
+                  <span>{copiedQrLink ? "تم النسخ!" : "نسخ الرابط 📋"}</span>
                 </button>
 
                 <a
@@ -2373,16 +2373,16 @@ export default function DashboardOrdersPage() {
                   }}
                 >
                   <ExternalLink size={16} />
-                  <span>ÙØªØ­ Ø§Ù„ÙØ§ØªÙˆØ±Ø© ðŸ”—</span>
+                  <span>فتح الفاتورة 🔗</span>
                 </a>
               </div>
             </div>
           </div>
         )}
 
-        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+        {/* ═══════════════════════════════════════════════════════
             MODAL 5: ORDER EDIT MODAL
-        â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+        ══════════════════════════════════════════════════════════ */}
         {orderToEdit && (
           <OrderEditModal
             order={orderToEdit}
@@ -2398,9 +2398,9 @@ export default function DashboardOrdersPage() {
             lang={lang}
           />
         )}
-        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-            NEW MODAL: FLEET OPERATIONS COMMAND CENTER (ØºØ±ÙØ© Ø¹Ù…Ù„ÙŠØ§Øª ÙˆØ¥Ø¯Ø§Ø±Ø© Ø£Ø³Ø·ÙˆÙ„ Ø§Ù„Ø·ÙŠØ§Ø±ÙŠÙ† ðŸ›µ)
-        â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+        {/* ═══════════════════════════════════════════════════════
+            NEW MODAL: FLEET OPERATIONS COMMAND CENTER (غرفة عمليات وإدارة أسطول الطيارين 🛵)
+        ══════════════════════════════════════════════════════════ */}
         {fleetModalOpen && (
           <div
             style={{
@@ -2459,11 +2459,11 @@ export default function DashboardOrdersPage() {
                   </div>
                   <div>
                     <h2 style={{ margin: 0, fontSize: "18px", fontWeight: 900, color: "#cca043" }}>
-                      {t("ØºØ±ÙØ© Ø¹Ù…Ù„ÙŠØ§Øª ÙˆØ¥Ø¯Ø§Ø±Ø© Ø£Ø³Ø·ÙˆÙ„ Ø§Ù„ØªÙˆØµÙŠÙ„ ÙˆØ§Ù„Ø·ÙŠØ§Ø±ÙŠÙ† ðŸ›µ", "Delivery Fleet Operations Center")}
+                      {t("غرفة عمليات وإدارة أسطول التوصيل والطيارين 🛵", "Delivery Fleet Operations Center")}
                     </h2>
                     <p style={{ margin: "2px 0 0 0", fontSize: "12px", color: "#a8927e" }}>
                       {t(
-                        "Ù…ØªØ§Ø¨Ø¹Ø© Ø­ÙŠØ© Ù„Ø­Ù…ÙˆÙ„Ø© ÙƒÙ„ Ø·ÙŠØ§Ø±ØŒ Ø¥Ø±Ø³Ø§Ù„ Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ù„ÙˆÙƒÙŠØ´Ù†ØŒ Ø§Ù„ØªØ¨Ø¯ÙŠÙ„ Ø¨ÙŠÙ† Ù…ØªØ§Ø­ ÙˆØ§Ø³ØªØ±Ø§Ø­Ø©ØŒ ÙˆØ¥Ø¶Ø§ÙØ© Ø·ÙŠØ§Ø±ÙŠÙ†",
+                        "متابعة حية لحمولة كل طيار، إرسال بيانات اللوكيشن، التبديل بين متاح واستراحة، وإضافة طيارين",
                         "Live courier workload tracking, WhatsApp GPS dispatch, active toggles & fleet CRUD"
                       )}
                     </p>
@@ -2508,10 +2508,10 @@ export default function DashboardOrdersPage() {
                     }}
                   >
                     <div style={{ fontSize: "11px", color: "#a8927e", fontWeight: 700 }}>
-                      Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø§Ù„Ø£Ø³Ø·ÙˆÙ„
+                      إجمالي الأسطول
                     </div>
                     <div style={{ fontSize: "22px", fontWeight: 900, color: "#ffffff", marginTop: "2px" }}>
-                      {captains.length} ðŸ›µ
+                      {captains.length} 🛵
                     </div>
                   </div>
 
@@ -2525,10 +2525,10 @@ export default function DashboardOrdersPage() {
                     }}
                   >
                     <div style={{ fontSize: "11px", color: "#4ade80", fontWeight: 700 }}>
-                      Ù…ØªØ§Ø­ÙˆÙ† Ù„Ù„Ø·Ù„Ø¨ Ø§Ù„Ø¢Ù†
+                      متاحون للطلب الآن
                     </div>
                     <div style={{ fontSize: "22px", fontWeight: 900, color: "#4ade80", marginTop: "2px" }}>
-                      {captains.filter((c) => c.isActive !== false).length} ðŸŸ¢
+                      {captains.filter((c) => c.isActive !== false).length} 🟢
                     </div>
                   </div>
 
@@ -2542,10 +2542,10 @@ export default function DashboardOrdersPage() {
                     }}
                   >
                     <div style={{ fontSize: "11px", color: "#cca043", fontWeight: 700 }}>
-                      Ø£ÙˆØ±Ø¯Ø±Ø§Øª ÙÙŠ Ø§Ù„Ø·Ø±ÙŠÙ‚ Ø­Ø§Ù„ÙŠØ§Ù‹
+                      أوردرات في الطريق حالياً
                     </div>
                     <div style={{ fontSize: "22px", fontWeight: 900, color: "#cca043", marginTop: "2px" }}>
-                      {orders.filter((o) => o.status === "delivering").length} âš¡
+                      {orders.filter((o) => o.status === "delivering").length} ⚡
                     </div>
                   </div>
 
@@ -2559,10 +2559,10 @@ export default function DashboardOrdersPage() {
                     }}
                   >
                     <div style={{ fontSize: "11px", color: "#86efac", fontWeight: 700 }}>
-                      Ø·Ù„Ø¨Ø§Øª Ø³ÙÙ„Ù…Øª Ø¨Ø§Ù„ÙƒØ§Ù…Ù„
+                      طلبات سُلمت بالكامل
                     </div>
                     <div style={{ fontSize: "22px", fontWeight: 900, color: "#86efac", marginTop: "2px" }}>
-                      {orders.filter((o) => o.status === "delivered").length} âœ…
+                      {orders.filter((o) => o.status === "delivered").length} ✅
                     </div>
                   </div>
                 </div>
@@ -2578,7 +2578,7 @@ export default function DashboardOrdersPage() {
                   }}
                 >
                   <div style={{ fontSize: "13.5px", fontWeight: 900, color: "#ffffff", marginBottom: "10px" }}>
-                    {t("Ø¥Ø¶Ø§ÙØ© Ø·ÙŠØ§Ø± Ø¬Ø¯ÙŠØ¯ Ù„Ø£Ø³Ø·ÙˆÙ„ Ø´ÙˆÙƒÙˆ Ù‡Ø§ÙˆØ³ âž•", "Add New Courier to Fleet âž•")}
+                    {t("إضافة طيار جديد لأسطول شوكو هاوس ➕", "Add New Courier to Fleet ➕")}
                   </div>
                   <div
                     style={{
@@ -2591,7 +2591,7 @@ export default function DashboardOrdersPage() {
                     <div>
                       <input
                         type="text"
-                        placeholder="Ø§Ø³Ù… Ø§Ù„ÙƒØ§Ø¨ØªÙ† (Ù…Ø«Ø§Ù„: ÙƒØ§Ø¨ØªÙ† Ø£Ø­Ù…Ø¯ Ø­Ø³Ù†)"
+                        placeholder="اسم الكابتن (مثال: كابتن أحمد حسن)"
                         value={fleetCaptainName}
                         onChange={(e) => setFleetCaptainName(e.target.value)}
                         style={{
@@ -2611,7 +2611,7 @@ export default function DashboardOrdersPage() {
                     <div>
                       <input
                         type="tel"
-                        placeholder="Ø±Ù‚Ù… Ø§Ù„Ù…ÙˆØ¨Ø§ÙŠÙ„ (Ù…Ø«Ø§Ù„: 010XXXXXXXX)"
+                        placeholder="رقم الموبايل (مثال: 010XXXXXXXX)"
                         value={fleetCaptainPhone}
                         onChange={(e) => setFleetCaptainPhone(e.target.value)}
                         dir="ltr"
@@ -2646,10 +2646,10 @@ export default function DashboardOrdersPage() {
                           outline: "none",
                         }}
                       >
-                        <option value="Ø³ÙƒÙˆØªØ±">ðŸ›µ Ø³ÙƒÙˆØªØ± Ø¯Ù„ÙŠÙØ±ÙŠ</option>
-                        <option value="Ù…ÙˆØªÙˆØ³ÙŠÙƒÙ„">ðŸï¸ Ù…ÙˆØªÙˆØ³ÙŠÙƒÙ„</option>
-                        <option value="Ø¹Ø¬Ù„Ø©">ðŸš² Ø¯Ø±Ø§Ø¬Ø© / Ø¹Ø¬Ù„Ø©</option>
-                        <option value="Ø³ÙŠØ§Ø±Ø©">ðŸš— Ø³ÙŠØ§Ø±Ø© Ø®Ø§ØµØ©</option>
+                        <option value="سكوتر">🛵 سكوتر دليفري</option>
+                        <option value="موتوسيكل">🏍️ موتوسيكل</option>
+                        <option value="عجلة">🚲 دراجة / عجلة</option>
+                        <option value="سيارة">🚗 سيارة خاصة</option>
                       </select>
                     </div>
                   </div>
@@ -2674,20 +2674,20 @@ export default function DashboardOrdersPage() {
                     }}
                   >
                     <Plus size={16} />
-                    <span>{savingFleetCaptain ? t("Ø¬Ø§Ø±ÙŠ Ø§Ù„Ø­ÙØ¸...", "Saving...") : t("Ø­ÙØ¸ ÙˆØ¥Ø¶Ø§ÙØ© Ù„Ù„Ø£Ø³Ø·ÙˆÙ„ ðŸš€", "Save Courier ðŸš€")}</span>
+                    <span>{savingFleetCaptain ? t("جاري الحفظ...", "Saving...") : t("حفظ وإضافة للأسطول 🚀", "Save Courier 🚀")}</span>
                   </button>
                 </form>
 
                 {/* Section 2: Fleet Directory & Live Operations List */}
                 <div>
                   <div style={{ fontSize: "14px", fontWeight: 900, color: "#cca043", marginBottom: "12px" }}>
-                    {t("Ù‚Ø§Ø¦Ù…Ø© Ø§Ù„Ø·ÙŠØ§Ø±ÙŠÙ† ÙˆØ§Ù„ØªØ´ØºÙŠÙ„ Ø§Ù„Ù…Ø¨Ø§Ø´Ø±:", "Active Fleet Couriers & Real-Time Status:")}
+                    {t("قائمة الطيارين والتشغيل المباشر:", "Active Fleet Couriers & Real-Time Status:")}
                   </div>
 
                   <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                     {captains.length === 0 ? (
                       <div style={{ textAlign: "center", padding: "30px 20px", color: "#a8927e" }}>
-                        Ù„Ø§ ÙŠÙˆØ¬Ø¯ Ø·ÙŠØ§Ø±ÙŠÙ† Ù…Ø³Ø¬Ù„ÙŠÙ† Ø¨Ø¹Ø¯. Ø£Ø¶Ù Ø£ÙˆÙ„ Ø·ÙŠØ§Ø± Ù…Ù† Ø§Ù„Ù†Ù…ÙˆØ°Ø¬ Ø£Ø¹Ù„Ø§Ù‡.
+                        لا يوجد طيارين مسجلين بعد. أضف أول طيار من النموذج أعلاه.
                       </div>
                     ) : (
                       captains.map((cpt) => {
@@ -2729,13 +2729,13 @@ export default function DashboardOrdersPage() {
                                     fontSize: "20px",
                                   }}
                                 >
-                                  {cpt.vehicle?.includes("Ù…ÙˆØªÙˆØ³ÙŠÙƒÙ„")
-                                    ? "ðŸï¸"
-                                    : cpt.vehicle?.includes("Ø¹Ø¬Ù„Ø©")
-                                    ? "ðŸš²"
-                                    : cpt.vehicle?.includes("Ø³ÙŠØ§Ø±Ø©")
-                                    ? "ðŸš—"
-                                    : "ðŸ›µ"}
+                                  {cpt.vehicle?.includes("موتوسيكل")
+                                    ? "🏍️"
+                                    : cpt.vehicle?.includes("عجلة")
+                                    ? "🚲"
+                                    : cpt.vehicle?.includes("سيارة")
+                                    ? "🚗"
+                                    : "🛵"}
                                 </div>
                                 <div>
                                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -2753,11 +2753,11 @@ export default function DashboardOrdersPage() {
                                         border: isOffline ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(34, 197, 94, 0.35)",
                                       }}
                                     >
-                                      {isOffline ? "âšª Ø®Ø§Ø±Ø¬ Ø§Ù„Ø®Ø¯Ù…Ø© (Ø¥Ø¬Ø§Ø²Ø©)" : "ðŸŸ¢ Ù†Ø´Ø· Ø¨Ø§Ù„Ø®Ø¯Ù…Ø©"}
+                                      {isOffline ? "⚪ خارج الخدمة (إجازة)" : "🟢 نشط بالخدمة"}
                                     </span>
                                   </div>
                                   <div style={{ fontSize: "12px", color: "#a8927e", marginTop: "2px" }} dir="ltr">
-                                    {cpt.phone} â€¢ {cpt.vehicle || "Ø³ÙƒÙˆØªØ± Ø¯Ù„ÙŠÙØ±ÙŠ"}
+                                    {cpt.phone} • {cpt.vehicle || "سكوتر دليفري"}
                                   </div>
                                 </div>
                               </div>
@@ -2767,7 +2767,7 @@ export default function DashboardOrdersPage() {
                                 <button
                                   type="button"
                                   onClick={() => handleToggleCaptainActive(cpt)}
-                                  title={isOffline ? "ØªÙØ¹ÙŠÙ„ Ø§Ù„ÙƒØ§Ø¨ØªÙ† Ù„Ù„Ø®Ø¯Ù…Ø©" : "ØªØ¹Ø·ÙŠÙ„ Ø§Ù„ÙƒØ§Ø¨ØªÙ† Ù…Ø¤Ù‚ØªØ§Ù‹"}
+                                  title={isOffline ? "تفعيل الكابتن للخدمة" : "تعطيل الكابتن مؤقتاً"}
                                   style={{
                                     display: "inline-flex",
                                     alignItems: "center",
@@ -2784,7 +2784,7 @@ export default function DashboardOrdersPage() {
                                   }}
                                 >
                                   <Power size={13} />
-                                  <span>{isOffline ? "ØªÙØ¹ÙŠÙ„ ðŸŸ¢" : "Ø§Ø³ØªØ±Ø§Ø­Ø© âšª"}</span>
+                                  <span>{isOffline ? "تفعيل 🟢" : "استراحة ⚪"}</span>
                                 </button>
 
                                 <a
@@ -2792,10 +2792,10 @@ export default function DashboardOrdersPage() {
                                     cpt.phone.replace(/[^0-9]/g, "").startsWith("0")
                                       ? "2" + cpt.phone.replace(/[^0-9]/g, "")
                                       : cpt.phone.replace(/[^0-9]/g, "")
-                                  }?text=${encodeURIComponent("Ù…Ø±Ø­Ø¨Ø§Ù‹ ÙƒØ§Ø¨ØªÙ† " + cpt.name + " Ù…Ù† Ø¥Ø¯Ø§Ø±Ø© Ø´ÙˆÙƒÙˆ Ù‡Ø§ÙˆØ³ Choco House ðŸ«ðŸ‘‘")}`}
+                                  }?text=${encodeURIComponent("مرحباً كابتن " + cpt.name + " من إدارة شوكو هاوس Choco House 🍫👑")}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  title="Ù…Ø±Ø§Ø³Ù„Ø© Ø§Ù„ÙƒØ§Ø¨ØªÙ† Ø¹Ø¨Ø± ÙˆØ§ØªØ³Ø§Ø¨"
+                                  title="مراسلة الكابتن عبر واتساب"
                                   style={{
                                     display: "inline-flex",
                                     alignItems: "center",
@@ -2814,7 +2814,7 @@ export default function DashboardOrdersPage() {
 
                                 <a
                                   href={`tel:${cpt.phone}`}
-                                  title="Ø§ØªØµØ§Ù„ Ù‡Ø§ØªÙÙŠ Ø¨Ø§Ù„ÙƒØ§Ø¨ØªÙ†"
+                                  title="اتصال هاتفي بالكابتن"
                                   style={{
                                     display: "inline-flex",
                                     alignItems: "center",
@@ -2834,7 +2834,7 @@ export default function DashboardOrdersPage() {
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteCaptain(cpt)}
-                                  title="Ø­Ø°Ù Ø§Ù„ÙƒØ§Ø¨ØªÙ† Ù…Ù† Ø§Ù„Ø£Ø³Ø·ÙˆÙ„"
+                                  title="حذف الكابتن من الأسطول"
                                   style={{
                                     display: "inline-flex",
                                     alignItems: "center",
@@ -2863,7 +2863,7 @@ export default function DashboardOrdersPage() {
                                 }}
                               >
                                 <div style={{ fontSize: "11.5px", fontWeight: 800, color: "#cca043", marginBottom: "6px" }}>
-                                  âš¡ Ø£ÙˆØ±Ø¯Ø±Ø§Øª ÙÙŠ Ø§Ù„Ø·Ø±ÙŠÙ‚ Ø­Ø§Ù„ÙŠØ§Ù‹ Ù…Ø¹ Ù‡Ø°Ø§ Ø§Ù„ÙƒØ§Ø¨ØªÙ† ({activeOrders.length}):
+                                  ⚡ أوردرات في الطريق حالياً مع هذا الكابتن ({activeOrders.length}):
                                 </div>
                                 <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
                                   {activeOrders.map((o) => (
@@ -2885,7 +2885,7 @@ export default function DashboardOrdersPage() {
                                       </span>
                                       <span style={{ color: "#a8927e" }}>({o.customerName})</span>
                                       <span style={{ color: "#cca043", fontWeight: 800 }}>
-                                        {o.total} Ø¬
+                                        {o.total} ج
                                       </span>
                                     </div>
                                   ))}
@@ -2893,7 +2893,7 @@ export default function DashboardOrdersPage() {
                               </div>
                             ) : (
                               <div style={{ marginTop: "8px", fontSize: "11.5px", color: isOffline ? "#78716c" : "#4ade80" }}>
-                                {isOffline ? "âšª Ø§Ù„Ø·ÙŠØ§Ø± ÙÙŠ Ø§Ø³ØªØ±Ø§Ø­Ø© Ø­Ø§Ù„ÙŠØ§Ù‹" : "ðŸŸ¢ Ù„Ø§ ØªÙˆØ¬Ø¯ Ø£ÙˆØ±Ø¯Ø±Ø§Øª Ø¬Ø§Ø±ÙŠØ© (Ù…ØªØ§Ø­ ÙÙˆØ±Ø§Ù‹ Ù„Ø£ÙŠ Ø£ÙˆØ±Ø¯Ø± Ø¬Ø¯ÙŠØ¯)"}
+                                {isOffline ? "⚪ الطيار في استراحة حالياً" : "🟢 لا توجد أوردرات جارية (متاح فوراً لأي أوردر جديد)"}
                               </div>
                             )}
                           </div>
@@ -2929,7 +2929,7 @@ export default function DashboardOrdersPage() {
                     cursor: "pointer",
                   }}
                 >
-                  {t("Ø¥ØºÙ„Ø§Ù‚", "Close")}
+                  {t("إغلاق", "Close")}
                 </button>
               </div>
             </div>
