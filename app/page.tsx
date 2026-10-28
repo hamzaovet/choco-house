@@ -1953,7 +1953,7 @@ export default function HomePage() {
               fontFamily: "var(--font-playfair), Georgia, serif",
               fontSize: "17px", fontWeight: 700, color: "#f5ede4",
             }}>
-              Choco House <span style={{ color: "#cca043", fontSize: "11px", letterSpacing: "2px" }}>{lang === "en" ? "DESSERTS" : "ديسرتس"}</span>
+              Choco House <span style={{ color: "#cca043", fontSize: "11px", letterSpacing: "2px" }}>Dessert</span>
             </span>
           </div>
 
@@ -1982,9 +1982,34 @@ export default function HomePage() {
 
           <p style={{ fontSize: "13px", color: C.muted, margin: 0 }}>
             {lang === "en"
-              ? "© 2026 Choco House Desserts. Luxury desserts made to order in 6th of October."
-              : "© 2026 شوكو هاوس ديسرتس. حلويات فاخرة تُحضّر طازجة لحظة الطلب في 6 أكتوبر."}
+              ? "© 2026 Choco House Dessert. Luxury chocolate desserts & waffles made to order in 6th of October."
+              : "© 2026 شوكو هاوس Dessert. ألذ وأفخر حلويات وشوكولاتة بلجيكية ووافل طازج في 6 أكتوبر."}
           </p>
+
+          <div style={{ marginTop: "6px" }}>
+            <a
+              href="https://wa.me/201018671000"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: "#38bdf8",
+                textDecoration: "none",
+                fontSize: "12px",
+                fontWeight: 700,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "8px 18px",
+                borderRadius: "100px",
+                background: "rgba(56, 189, 248, 0.08)",
+                border: "1px solid rgba(56, 189, 248, 0.22)",
+                transition: "all 0.2s ease",
+              }}
+            >
+              <span>{lang === "en" ? "System Developed & Powered by Orca Cloud Solutions" : "تم تطوير وبرمجة النظام بواسطة شركة أوركا للحلول البرمجية والخدمات السحابية"}</span>
+              <span style={{ direction: "ltr", fontFamily: "monospace" }}>01018671000</span>
+            </a>
+          </div>
         </div>
       </footer>
 

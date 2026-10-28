@@ -216,15 +216,15 @@ export default function Navbar() {
                   Choco House
                 </span>
                 <span style={{
-                  fontSize: lang === "en" ? "9.5px" : "10.5px",
+                  fontSize: "10px",
                   color: "#cca043",
                   fontWeight: 700,
-                  letterSpacing: lang === "en" ? "3.5px" : "3px",
-                  marginTop: "3px",
-                  fontFamily: lang === "en" ? "var(--font-playfair), Georgia, serif" : "var(--font-cairo), system-ui, sans-serif",
+                  letterSpacing: "3.5px",
+                  marginTop: "2px",
+                  fontFamily: "var(--font-playfair), Georgia, serif",
                   textTransform: "uppercase",
                 }}>
-                  {lang === "en" ? "DESSERTS" : "ديسرتس"}
+                  Dessert
                 </span>
               </div>
             </Link>
